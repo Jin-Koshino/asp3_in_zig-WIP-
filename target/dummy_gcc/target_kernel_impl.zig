@@ -37,11 +37,10 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  カーネルのターゲット依存部（ダミーターゲット用）
 ///
-usingnamespace @import("../../kernel/kernel_impl.zig");
+const kernel_impl = @import("../../kernel/kernel_impl.zig");
 
 ///
 ///  コンフィギュレーションオプションの取り込み
@@ -56,18 +55,18 @@ const dummy = @import("dummy.zig");
 ///
 ///  エラーチェック方法の指定
 ///
-pub const CHECK_STKSZ_ALIGN = 4;         // スタックサイズのアライン単位
-pub const CHECK_INTPTR_ALIGN = 4;        // intptr_t型の変数のアライン単位
-pub const CHECK_INTPTR_NONNULL = true;  // intptr_t型の変数の非NULLチェック
-pub const CHECK_FUNC_ALIGN = 4;         // 関数のアライン単位
-pub const CHECK_FUNC_NONNULL = true;    // 関数の非NULLチェック
-pub const CHECK_STACK_ALIGN = 4;        // スタック領域のアライン単位
-pub const CHECK_STACK_NONNULL = true;   // スタック領域の非NULLチェック
-pub const CHECK_MPF_ALIGN = 4;          // 固定長メモリプール領域のアライン単位
+pub const CHECK_STKSZ_ALIGN = 4; // スタックサイズのアライン単位
+pub const CHECK_INTPTR_ALIGN = 4; // intptr_t型の変数のアライン単位
+pub const CHECK_INTPTR_NONNULL = true; // intptr_t型の変数の非NULLチェック
+pub const CHECK_FUNC_ALIGN = 4; // 関数のアライン単位
+pub const CHECK_FUNC_NONNULL = true; // 関数の非NULLチェック
+pub const CHECK_STACK_ALIGN = 4; // スタック領域のアライン単位
+pub const CHECK_STACK_NONNULL = true; // スタック領域の非NULLチェック
+pub const CHECK_MPF_ALIGN = 4; // 固定長メモリプール領域のアライン単位
 pub const CHECK_MPF_NONNULL = true; // 固定長メモリプール領域の非NULLチェック
-pub const CHECK_MPK_ALIGN = 4;      // カーネルメモリプール領域のアライン単位
+pub const CHECK_MPK_ALIGN = 4; // カーネルメモリプール領域のアライン単位
 pub const CHECK_MPK_NONNULL = true; // カーネルメモリプール領域の非NULLチェック
-pub const CHECK_MB_ALIGN = 4;       // 管理領域のアライン単位
+pub const CHECK_MB_ALIGN = 4; // 管理領域のアライン単位
 
 ///
 ///  非タスクコンテキスト用スタックのデフォルトのサイズ
@@ -78,8 +77,8 @@ pub const DEFAULT_ISTKSZ = 4096;
 ///  タスクコンテキストブロックの定義
 ///
 pub const TSKCTXB = struct {
-    sp: *u8,            // スタックポインタ
-    pc: FP,             // 実行再開番地
+    sp: *u8, // スタックポインタ
+    pc: FP, // 実行再開番地
 };
 
 ///
@@ -92,7 +91,9 @@ fn stkpt(p_tinib: *const task.TINIB) *u8 {
 ///
 ///  コンテキストの参照
 ///
-pub fn senseContext() bool { return false; }
+pub fn senseContext() bool {
+    return false;
+}
 
 ///
 ///  CPUロック状態への遷移
@@ -117,7 +118,9 @@ pub const unlockCpuDsp = unlockCpu;
 ///
 ///  CPUロック状態の参照
 ///
-pub fn senseLock() bool { return false; }
+pub fn senseLock() bool {
+    return false;
+}
 
 ///
 ///  割込みを受け付けるための遅延処理
@@ -132,7 +135,9 @@ pub fn setIpm(intpri: PRI) void {}
 ///
 ///  割込み優先度マスクの参照
 ///
-pub fn getIpm() PRI { return TIPM_ENAALL; }
+pub fn getIpm() PRI {
+    return TIPM_ENAALL;
+}
 
 ///
 ///  割込み番号の範囲の判定
@@ -149,7 +154,9 @@ pub const validInhno = validIntno;
 ///
 ///  割込み属性の設定のチェック
 ///
-pub fn checkIntnoCfg(intno: INTNO) bool { return true; }
+pub fn checkIntnoCfg(intno: INTNO) bool {
+    return true;
+}
 
 ///
 ///  割込み要求禁止フラグのセット
@@ -164,7 +171,9 @@ pub fn enableInt(intno: INTNO) void {}
 ///
 ///  割込み要求がクリアできる状態か？
 ///
-pub fn checkIntnoClear(intno: INTNO) bool { return true; }
+pub fn checkIntnoClear(intno: INTNO) bool {
+    return true;
+}
 
 ///
 ///  割込み要求のクリア
@@ -174,7 +183,9 @@ pub fn clearInt(intno: INTNO) void {}
 ///
 ///  割込みが要求できる状態か？
 ///
-pub fn checkIntnoRaise(intno: INTNO) bool { return true; }
+pub fn checkIntnoRaise(intno: INTNO) bool {
+    return true;
+}
 
 ///
 ///  割込みの要求
@@ -184,7 +195,9 @@ pub fn raiseInt(intno: INTNO) void {}
 ///
 ///  割込み要求のチェック
 ///
-pub fn probeInt(intno: INTNO) bool { return true; }
+pub fn probeInt(intno: INTNO) bool {
+    return true;
+}
 
 ///
 ///  最高優先順位タスクへのディスパッチ
@@ -198,7 +211,7 @@ pub noinline fn dispatch() void {
     // dispatch_rを，実行再開番地として自タスクのTCBに保存する
     dispatcher();
 
-//  dispatch_r:
+    //  dispatch_r:
     // スクラッチレジスタを除くすべてのレジスタをスタックから復帰する
     if (TOPPERS_SUPPORT_OVRHDR) {
         overrun.overrun_start();
@@ -233,13 +246,13 @@ pub fn exitAndDispatch() noreturn {
 ///  ディスパッチャ本体
 ///
 fn dispatcher() void {
-    traceLog("dispatchEnter", .{ task.p_runtsk.? });
+    traceLog("dispatchEnter", .{task.p_runtsk.?});
 
-//  dispatcher_0:
+    //  dispatcher_0:
     task.p_runtsk = task.p_schedtsk;
     if (task.p_runtsk != null) {
         // 自タスク（p_runtsk）のTCBからスタックポインタを復帰する
-        traceLog("dispatchLeave", .{ task.p_runtsk.? });
+        traceLog("dispatchLeave", .{task.p_runtsk.?});
         // 自タスクのTCBから実行再開番地を復帰し，そこへ分岐する
     }
 
@@ -250,11 +263,9 @@ fn dispatcher() void {
     // 割込みをすべて許可する
     //
     while (true) {
-        if (@hasDecl(target_impl, "CUSTOM_IDLE")
-                and target_impl.CUSTOM_IDLE != null) {
+        if (@hasDecl(target_impl, "CUSTOM_IDLE") and target_impl.CUSTOM_IDLE != null) {
             CUSTOM_IDLE();
-        }
-        else {
+        } else {
             // 割込み発生を待つ
         }
     }
@@ -340,7 +351,9 @@ pub fn define_exc(excno: EXCNO, excatr: ATR, xchdr: EXCHDR) void {}
 ///  CPU例外ハンドラ実行中でなく，タスクコンテキストであり，割込み優先
 ///  度マスクが全解除である時にtrue，そうでない時にfalseを返す．
 ///
-pub fn exc_sense_intmask(p_excinf: *c_void) bool { return true; }
+pub fn exc_sense_intmask(p_excinf: *anyopaque) bool {
+    return true;
+}
 
 ///
 ///  システムログの低レベル出力のための初期化
@@ -367,7 +380,10 @@ extern fn software_term_hook() void;
 pub fn exit() noreturn {
     // software_term_hookの呼び出し
     // 最適化の抑止のために，インラインアセンブラを使っている．
-    if (asm("" : [_]"=r"(-> u32) : [_]"0"(software_term_hook)) != 0) {
+    if (asm (""
+        : [_] "=r" (-> u32),
+        : [_] "0" (software_term_hook),
+    ) != 0) {
         software_term_hook();
     }
 

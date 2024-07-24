@@ -39,23 +39,59 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  周期通知機能
 ///
-usingnamespace @import("kernel_impl.zig");
-usingnamespace time_event;
-usingnamespace check;
+const kernel_impl = @import("kernel_impl.zig");
+///usingnamespace kernel_impl.time_event;
+const time_event = kernel_impl.time_event;
+///usingnamespace kernel_impl.check;
+const check = kernel_impl.check;
+
+////
+const zig = kernel_impl.zig;
+const t_stddef = zig.t_stddef;
+
+const ATR = t_stddef.ATR;
+const EXINF = t_stddef.EXINF;
+const NFYHDR = kernel_impl.NFYHDR;
+const RELTIM = t_stddef.RELTIM;
+const TMEVTB = time_event.TMEVTB;
+const ID = t_stddef.ID;
+const TMIN_CYCID = kernel_impl.TMIN_CYCID;
+const cfg = kernel_impl.cfg;
+const ItronError = t_stddef.ItronError;
+const checkId = check.checkId;
+const TA_STA = zig.TA_STA;
+const EVTTIM = time_event.EVTTIM;
+const tmevtb_register = time_event.tmevtb_register;
+const traceLog = kernel_impl.traceLog;
+const checkContextTaskUnlock = check.checkContextTaskUnlock;
+const target_impl = kernel_impl.target_impl;
+const tmevtb_dequeue = time_event.tmevtb_dequeue;
+const tmevtb_enqueue_reltim = time_event.tmevtb_enqueue_reltim;
+const T_RCYC = zig.T_RCYC;
+const TCYC_STA = zig.TCYC_STA;
+const tmevt_lefttim = time_event.tmevt_lefttim;
+const TCYC_STP = zig.TCYC_STP;
+const T_CCYC = zig.T_CCYC;
+const checkValidAtr = check.checkValidAtr;
+const checkParameter = check.checkParameter;
+const validRelativeTime = check.validRelativeTime;
+const notify = kernel_impl.notify;
+const exportCheck = kernel_impl.exportCheck;
+const option = kernel_impl.option;
+////
 
 ///
 ///  周期通知初期化ブロック
 ///
 pub const CYCINIB = struct {
-    cycatr: ATR,                // 周期通知属性
-    exinf: EXINF,               // 通知ハンドラの拡張情報
-    nfyhdr: NFYHDR,             // 通知ハンドラの起動番地
-    cyctim: RELTIM,             // 周期通知の起動周期
-    cycphs: RELTIM,             // 周期通知の起動位相
+    cycatr: ATR, // 周期通知属性
+    exinf: EXINF, // 通知ハンドラの拡張情報
+    nfyhdr: NFYHDR, // 通知ハンドラの起動番地
+    cyctim: RELTIM, // 周期通知の起動周期
+    cycphs: RELTIM, // 周期通知の起動位相
 };
 
 ///
@@ -65,9 +101,9 @@ pub const CYCINIB = struct {
 ///  のタイムイベントの発生時刻（evttim）で保持する．
 ///
 pub const CYCCB = struct {
-    p_cycinib: *const CYCINIB,  // 初期化ブロックへのポインタ
-    cycsta: bool,               // 周期通知の動作状態
-    tmevtb: TMEVTB,             // タイムイベントブロック
+    p_cycinib: *const CYCINIB, // 初期化ブロックへのポインタ
+    cycsta: bool, // 周期通知の動作状態
+    tmevtb: TMEVTB, // タイムイベントブロック
 };
 
 ///
@@ -108,8 +144,7 @@ fn checkAndGetCycCB(cycid: ID) ItronError!*CYCCB {
 ///  周期通知機能の初期化
 ///
 pub fn initialize_cyclic() void {
-    for (cfg._kernel_cyccb_table[0 .. cfg._kernel_cycinib_table.len])
-                                                        |*p_cyccb, i| {
+    for (cfg._kernel_cyccb_table[0..cfg._kernel_cycinib_table.len]) |*p_cyccb, i| {
         p_cyccb.p_cycinib = &cfg._kernel_cycinib_table[i];
         p_cyccb.tmevtb.callback = callCyclic;
         p_cyccb.tmevtb.arg = @ptrToInt(p_cyccb);
@@ -117,11 +152,9 @@ pub fn initialize_cyclic() void {
             // 初回の起動のためのタイムイベントを登録する［ASPD1035］
             // ［ASPD1062］．
             p_cyccb.cycsta = true;
-            p_cyccb.tmevtb.evttim = @intCast(EVTTIM,
-                                             p_cyccb.p_cycinib.cycphs);
+            p_cyccb.tmevtb.evttim = @intCast(EVTTIM, p_cyccb.p_cycinib.cycphs);
             tmevtb_register(&p_cyccb.tmevtb);
-        }
-        else {
+        } else {
             p_cyccb.cycsta = false;
         }
     }
@@ -131,45 +164,44 @@ pub fn initialize_cyclic() void {
 ///  周期通知の動作開始
 ///
 pub fn sta_cyc(cycid: ID) ItronError!void {
-    traceLog("staCycEnter", .{ cycid });
-    errdefer |err| traceLog("staCycLeave", .{ err });
+    traceLog("staCycEnter", .{cycid});
+    errdefer |err| traceLog("staCycLeave", .{err});
     try checkContextTaskUnlock();
     const p_cyccb = try checkAndGetCycCB(cycid);
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (p_cyccb.cycsta) {
             tmevtb_dequeue(&p_cyccb.tmevtb);
-        }
-        else {
+        } else {
             p_cyccb.cycsta = true;
         }
 
         // 初回の起動のためのタイムイベントを登録する［ASPD1036］．
         tmevtb_enqueue_reltim(&p_cyccb.tmevtb, p_cyccb.p_cycinib.cycphs);
     }
-    traceLog("staCycLeave", .{ null });
+    traceLog("staCycLeave", .{null});
 }
 
 ///
 /// 周期通知の動作停止
 ///
 pub fn stp_cyc(cycid: ID) ItronError!void {
-    traceLog("stpCycEnter", .{ cycid });
-    errdefer |err| traceLog("stpCycLeave", .{ err });
+    traceLog("stpCycEnter", .{cycid});
+    errdefer |err| traceLog("stpCycLeave", .{err});
     try checkContextTaskUnlock();
     const p_cyccb = try checkAndGetCycCB(cycid);
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (p_cyccb.cycsta) {
             p_cyccb.cycsta = false;
             tmevtb_dequeue(&p_cyccb.tmevtb);
         }
     }
-    traceLog("stpCycLeave", .{ null });
+    traceLog("stpCycLeave", .{null});
 }
 
 ///
@@ -181,14 +213,13 @@ pub fn ref_cyc(cycid: ID, pk_rcyc: *T_RCYC) ItronError!void {
     try checkContextTaskUnlock();
     const p_cyccb = try checkAndGetCycCB(cycid);
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (p_cyccb.cycsta) {
             pk_rcyc.cycstat = TCYC_STA;
             pk_rcyc.lefttim = tmevt_lefttim(&p_cyccb.tmevtb);
-        }
-        else {
+        } else {
             pk_rcyc.cycstat = TCYC_STP;
         }
     }
@@ -202,18 +233,18 @@ fn callCyclic(arg: usize) void {
     const p_cyccb = @intToPtr(*CYCCB, arg);
 
     // 次回の起動のためのタイムイベントを登録する［ASPD1037］．
-    p_cyccb.tmevtb.evttim += p_cyccb.p_cycinib.cyctim;      //［ASPD1038］
+    p_cyccb.tmevtb.evttim += p_cyccb.p_cycinib.cyctim; //［ASPD1038］
     tmevtb_register(&p_cyccb.tmevtb);
 
     // 通知ハンドラを，CPUロック解除状態で呼び出す．
-    target_impl.unlockCpu();
+    target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
-    traceLog("cyclicEnter", .{ p_cyccb });
+    traceLog("cyclicEnter", .{p_cyccb});
     p_cyccb.p_cycinib.nfyhdr(p_cyccb.p_cycinib.exinf);
-    traceLog("cyclicLeave", .{ p_cyccb });
+    traceLog("cyclicLeave", .{p_cyccb});
 
-    if (!target_impl.senseLock()) {
-        target_impl.lockCpu();
+    if (!target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock()) {
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
     }
 }
 
@@ -234,11 +265,13 @@ pub fn cre_cyc(comptime ccyc: T_CCYC) ItronError!CYCINIB {
     try checkParameter(validRelativeTime(ccyc.cycphs));
 
     // 周期通知初期化ブロックの生成
-    return CYCINIB{ .cycatr = ccyc.cycatr | notify.genFlag(ccyc.nfyinfo),
-                    .exinf = notify.genExinf(ccyc.nfyinfo),
-                    .nfyhdr = notify.genHandler(ccyc.nfyinfo),
-                    .cyctim = ccyc.cyctim,
-                    .cycphs = ccyc.cycphs, };
+    return CYCINIB{
+        .cycatr = ccyc.cycatr | notify.genFlag(ccyc.nfyinfo),
+        .exinf = notify.genExinf(ccyc.nfyinfo),
+        .nfyhdr = notify.genHandler(ccyc.nfyinfo),
+        .cyctim = ccyc.cyctim,
+        .cycphs = ccyc.cycphs,
+    };
 }
 
 ///
@@ -247,9 +280,9 @@ pub fn cre_cyc(comptime ccyc: T_CCYC) ItronError!CYCINIB {
 pub fn ExportCycCfg(cycinib_table: []CYCINIB) type {
     // チェック処理用の定義の生成
     exportCheck(@sizeOf(CYCINIB), "sizeof_CYCINIB");
-    exportCheck(@byteOffsetOf(CYCINIB, "cycatr"), "offsetof_CYCINIB_cycatr");
-    exportCheck(@byteOffsetOf(CYCINIB, "exinf"), "offsetof_CYCINIB_exinf");
-    exportCheck(@byteOffsetOf(CYCINIB, "nfyhdr"), "offsetof_CYCINIB_nfyhdr");
+    exportCheck(@offsetOf(CYCINIB, "cycatr"), "offsetof_CYCINIB_cycatr");
+    exportCheck(@offsetOf(CYCINIB, "exinf"), "offsetof_CYCINIB_exinf");
+    exportCheck(@offsetOf(CYCINIB, "nfyhdr"), "offsetof_CYCINIB_nfyhdr");
 
     const tnum_cyc = cycinib_table.len;
     return struct {
@@ -257,8 +290,8 @@ pub fn ExportCycCfg(cycinib_table: []CYCINIB) type {
 
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする
-        pub export var _kernel_cyccb_table:
-            [if (option.BIND_CFG == null or tnum_cyc > 0) tnum_cyc
-                 else 1]CYCCB = undefined;
+        pub export var _kernel_cyccb_table: [
+            if (option.BIND_CFG == null or tnum_cyc > 0) tnum_cyc else 1
+        ]CYCCB = undefined;
     };
 }

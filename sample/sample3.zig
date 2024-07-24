@@ -39,7 +39,6 @@
 /// 
 ///  $Id$
 ///
-
 /// 
 ///  サンプルプログラム(1)の本体
 ///
@@ -111,12 +110,11 @@
 ///  'v' : 発行したシステムコールを表示する（デフォルト）．
 ///  'q' : 発行したシステムコールを表示しない．
 ///
-
 ///
 ///  使用するカーネルおよびライブラリ
 ///
-usingnamespace @import("../include/kernel.zig");
-usingnamespace @import("../include/t_syslog.zig");
+const zig = @import("../include/kernel.zig");
+const t_syslog = @import("../include/t_syslog.zig");
 
 ///
 ///  コンフィギュレーションオプションの取り込み
@@ -148,8 +146,7 @@ extern const ALMHDR1: ID;
 ///
 fn svc_perror(ercd: ER) void {
     if (ercd < 0) {
-        syslog(LOG_ERROR, "%s (%d) reported.",
-               .{ c.itron_strerror(ercd), SERCD(ercd) });
+        syslog(LOG_ERROR, "%s (%d) reported.", .{ c.itron_strerror(ercd), SERCD(ercd) });
     }
 }
 
@@ -171,17 +168,25 @@ noinline fn consume_time(ctime: u32) void {
 ///
 ///  並行実行されるタスクへのメッセージ領域
 ///
-var message = [_]u8{ 0, 0, 0, };
+var message = [_]u8{
+    0,
+    0,
+    0,
+};
 
 ///
 ///  ループ回数
 ///
-var task_loop: u32 = undefined;         // タスク内でのループ回数
+var task_loop: u32 = undefined; // タスク内でのループ回数
 
 ///
 ///  タスクの表示用文字列
 ///
-const graph = [3][]const u8{ "|    ", "  +  ", "    *", };
+const graph = [3][]const u8{
+    "|    ",
+    "  +  ",
+    "    *",
+};
 
 ///
 ///  並行実行されるタスク
@@ -197,65 +202,58 @@ export fn task(exinf: EXINF) void {
         if (TOPPERS_SUPPORT_OVRHDR) {
             svc_perror(c.ref_ovr(TSK_SELF, &pk_rovr));
             if ((pk_rovr.ovrstat & TOVR_STA) != 0) {
-                syslog(LOG_NOTICE, "task%d is running (%03d).   %s  [%ld]",
-                       .{ tskno, n, graph[tskno-1], pk_rovr.leftotm });
+                syslog(LOG_NOTICE, "task%d is running (%03d).   %s  [%ld]", .{ tskno, n, graph[tskno - 1], pk_rovr.leftotm });
+            } else {
+                syslog(LOG_NOTICE, "task%d is running (%03d).   %s", .{ tskno, n, graph[tskno - 1] });
             }
-            else {
-                syslog(LOG_NOTICE, "task%d is running (%03d).   %s",
-                       .{ tskno, n, graph[tskno-1]});
-            }
-        }
-        else {
-            syslog(LOG_NOTICE, "task%d is running (%03d).   %s",
-                   .{ tskno, n, graph[tskno-1] });
+        } else {
+            syslog(LOG_NOTICE, "task%d is running (%03d).   %s", .{ tskno, n, graph[tskno - 1] });
         }
 
         consume_time(task_loop);
-        ch = message[tskno-1];
-        message[tskno-1] = 0;
+        ch = message[tskno - 1];
+        message[tskno - 1] = 0;
         switch (ch) {
             'e' => {
-                syslog(LOG_INFO, "#%d#ext_tsk()", .{ tskno });
+                syslog(LOG_INFO, "#%d#ext_tsk()", .{tskno});
                 svc_perror(c.ext_tsk());
                 assert(false);
             },
             's' => {
-                syslog(LOG_INFO, "#%d#slp_tsk()", .{ tskno });
+                syslog(LOG_INFO, "#%d#slp_tsk()", .{tskno});
                 svc_perror(c.slp_tsk());
             },
             'S' => {
-                syslog(LOG_INFO, "#%d#tslp_tsk(10_000_000)", .{ tskno });
+                syslog(LOG_INFO, "#%d#tslp_tsk(10_000_000)", .{tskno});
                 svc_perror(c.tslp_tsk(10_000_000));
             },
             'd' => {
-                syslog(LOG_INFO, "#%d#dly_tsk(10_000_000)", .{ tskno });
+                syslog(LOG_INFO, "#%d#dly_tsk(10_000_000)", .{tskno});
                 svc_perror(c.dly_tsk(10_000_000));
             },
             'y' => {
-                syslog(LOG_INFO, "#%d#dis_ter()", .{ tskno });
+                syslog(LOG_INFO, "#%d#dis_ter()", .{tskno});
                 svc_perror(c.dis_ter());
             },
             'Y' => {
-                syslog(LOG_INFO, "#%d#ena_ter()", .{ tskno });
+                syslog(LOG_INFO, "#%d#ena_ter()", .{tskno});
                 svc_perror(c.ena_ter());
             },
             'z' => {
                 if (@hasDecl(option.target._test, "CPUEXC1")) {
-                    syslog(LOG_NOTICE, "#%d#raise CPU exception", .{ tskno });
+                    syslog(LOG_NOTICE, "#%d#raise CPU exception", .{tskno});
                     option.target._test.raiseCpuException();
-                }
-                else {
+                } else {
                     syslog(LOG_NOTICE, "CPU exception is not supported.", .{});
                 }
             },
             'Z' => {
                 if (@hasDecl(option.target._test, "CPUEXC1")) {
                     svc_perror(c.loc_cpu());
-                    syslog(LOG_NOTICE, "#%d#raise CPU exception", .{ tskno });
+                    syslog(LOG_NOTICE, "#%d#raise CPU exception", .{tskno});
                     option.target._test.raiseCpuException();
                     svc_perror(c.unl_cpu());
-                }
-                else {
+                } else {
                     syslog(LOG_NOTICE, "CPU exception is not supported.", .{});
                 }
             },
@@ -282,21 +280,17 @@ export fn intno1_isr(exinf: EXINF) void {
 ///
 ///  CPU例外ハンドラ
 ///
-var cpuexc_tskid: ID = undefined;       // CPU例外を起こしたタスクのID
+var cpuexc_tskid: ID = undefined; // CPU例外を起こしたタスクのID
 //
-export fn cpuexc_handler(p_excinf: *c_void) void {
-    syslog(LOG_NOTICE, "CPU exception handler (p_excinf = %08p).",
-           .{ p_excinf });
+export fn cpuexc_handler(p_excinf: *anyopaque) void {
+    syslog(LOG_NOTICE, "CPU exception handler (p_excinf = %08p).", .{p_excinf});
     if (c.sns_ctx() == 0) {
-        syslog(LOG_WARNING,
-               "sns_ctx() is not true in CPU exception handler.", .{});
+        syslog(LOG_WARNING, "sns_ctx() is not true in CPU exception handler.", .{});
     }
     if (c.sns_dpn() == 0) {
-        syslog(LOG_WARNING,
-               "sns_dpn() is not true in CPU exception handler.", .{});
+        syslog(LOG_WARNING, "sns_dpn() is not true in CPU exception handler.", .{});
     }
-    syslog(LOG_INFO, "sns_loc = %d, sns_dsp = %d, xsns_dpn = %d",
-           .{ c.sns_loc(), c.sns_dsp(), c.xsns_dpn(p_excinf) });
+    syslog(LOG_INFO, "sns_loc = %d, sns_dsp = %d, xsns_dpn = %d", .{ c.sns_loc(), c.sns_dsp(), c.xsns_dpn(p_excinf) });
 
     if (c.xsns_dpn(p_excinf) != 0) {
         syslog(LOG_NOTICE, "Sample program ends with exception.", .{});
@@ -344,7 +338,7 @@ export fn exc_task(exinf: EXINF) void {
 ///
 export fn overrun_handler(tskid: ID, exinf: EXINF) void {
     const tskno = @intCast(u32, @ptrToInt(exinf));
-    syslog(LOG_NOTICE, "Overrun handler for task%d.", .{ tskno });
+    syslog(LOG_NOTICE, "Overrun handler for task%d.", .{tskno});
 }
 
 ///
@@ -362,8 +356,8 @@ export fn main_task(exinf: EXINF) void {
     var hrtcnt2: HRTCNT = undefined;
 
     svc_perror(c.syslog_msk_log(c.LOG_UPTO(LOG_INFO), c.LOG_UPTO(LOG_EMERG)));
-    syslog(LOG_NOTICE, "Sample program starts (exinf = %d).", .{ exinf });
-           
+    syslog(LOG_NOTICE, "Sample program starts (exinf = %d).", .{exinf});
+
     //
     //  シリアルポートの初期化
     //
@@ -373,12 +367,9 @@ export fn main_task(exinf: EXINF) void {
     //
     ercd = c.serial_opn_por(c.TASK_PORTID);
     if (ercd < 0 and MERCD(ercd) != c.E_OBJ) {
-        syslog(LOG_ERROR, "%s (%d) reported by `serial_opn_por'.",
-               .{ c.itron_strerror(ercd), SERCD(ercd) });
-
+        syslog(LOG_ERROR, "%s (%d) reported by `serial_opn_por'.", .{ c.itron_strerror(ercd), SERCD(ercd) });
     }
-    svc_perror(c.serial_ctl_por(c.TASK_PORTID,
-                                (c.IOCTL_CRLF|c.IOCTL_FCSND|c.IOCTL_FCRCV)));
+    svc_perror(c.serial_ctl_por(c.TASK_PORTID, (c.IOCTL_CRLF | c.IOCTL_FCSND | c.IOCTL_FCRCV)));
 
     //
     //  ループ回数の設定
@@ -408,8 +399,7 @@ export fn main_task(exinf: EXINF) void {
     //
     if (@hasDecl(@This(), "TASK_LOOP")) {
         task_loop = TASK_LOOP;
-    }
-    else {
+    } else {
         if (@hasDecl(@This(), "MEASURE_TWICE")) {
             svc_perror(c.get_tim(&stime1));
             consume_time(c.LOOP_REF);
@@ -419,8 +409,7 @@ export fn main_task(exinf: EXINF) void {
         consume_time(c.LOOP_REF);
         svc_perror(c.get_tim(&stime2));
 
-        task_loop = @as(u32, c.LOOP_REF * 400)
-                        / @intCast(u32, stime2 - stime1) * 1000;
+        task_loop = @as(u32, c.LOOP_REF * 400) / @intCast(u32, stime2 - stime1) * 1000;
     }
 
     //
@@ -437,7 +426,7 @@ export fn main_task(exinf: EXINF) void {
         svc_perror(c.serial_rea_dat(c.TASK_PORTID, &ch, 1));
         switch (ch) {
             'e', 's', 'S', 'd', 'y', 'Y', 'z', 'Z' => {
-                message[tskno-1] = ch;
+                message[tskno - 1] = ch;
             },
             '1' => {
                 tskno = 1;
@@ -452,70 +441,67 @@ export fn main_task(exinf: EXINF) void {
                 tskid = TASK3;
             },
             'a' => {
-                syslog(LOG_INFO, "#act_tsk(%d)", .{ tskno });
+                syslog(LOG_INFO, "#act_tsk(%d)", .{tskno});
                 svc_perror(c.act_tsk(tskid));
             },
             'A' => {
-                syslog(LOG_INFO, "#can_act(%d)", .{ tskno });
+                syslog(LOG_INFO, "#can_act(%d)", .{tskno});
                 ercd = c.can_act(tskid);
                 svc_perror(ercd);
                 if (ercd >= 0) {
-                    syslog(LOG_NOTICE, "can_act(%d) returns %d.",
-                           .{ tskno, ercd });
+                    syslog(LOG_NOTICE, "can_act(%d) returns %d.", .{ tskno, ercd });
                 }
             },
             't' => {
-                syslog(LOG_INFO, "#ter_tsk(%d)", .{ tskno });
+                syslog(LOG_INFO, "#ter_tsk(%d)", .{tskno});
                 svc_perror(c.ter_tsk(tskid));
             },
             '>' => {
-                syslog(LOG_INFO, "#chg_pri(%d, HIGH_PRIORITY)", .{ tskno });
+                syslog(LOG_INFO, "#chg_pri(%d, HIGH_PRIORITY)", .{tskno});
                 svc_perror(c.chg_pri(tskid, c.HIGH_PRIORITY));
             },
             '=' => {
-                syslog(LOG_INFO, "#chg_pri(%d, MID_PRIORITY)", .{ tskno });
+                syslog(LOG_INFO, "#chg_pri(%d, MID_PRIORITY)", .{tskno});
                 svc_perror(c.chg_pri(tskid, c.MID_PRIORITY));
             },
             '<' => {
-                syslog(LOG_INFO, "#chg_pri(%d, LOW_PRIORITY)", .{ tskno });
+                syslog(LOG_INFO, "#chg_pri(%d, LOW_PRIORITY)", .{tskno});
                 svc_perror(c.chg_pri(tskid, c.LOW_PRIORITY));
             },
             'G' => {
-                syslog(LOG_INFO, "#get_pri(%d, &tskpri)", .{ tskno });
+                syslog(LOG_INFO, "#get_pri(%d, &tskpri)", .{tskno});
                 ercd = c.get_pri(tskid, &tskpri);
                 svc_perror(ercd);
                 if (ercd >= 0) {
-                    syslog(LOG_NOTICE, "priority of task %d is %d",
-                           .{ tskno, tskpri});
+                    syslog(LOG_NOTICE, "priority of task %d is %d", .{ tskno, tskpri });
                 }
             },
             'w' => {
-                syslog(LOG_INFO, "#wup_tsk(%d)", .{ tskno });
+                syslog(LOG_INFO, "#wup_tsk(%d)", .{tskno});
                 svc_perror(c.wup_tsk(tskid));
             },
             'W' => {
-                syslog(LOG_INFO, "#can_wup(%d)", .{ tskno });
+                syslog(LOG_INFO, "#can_wup(%d)", .{tskno});
                 ercd = c.can_wup(tskid);
                 svc_perror(ercd);
                 if (ercd >= 0) {
-                    syslog(LOG_NOTICE, "can_wup(%d) returns %d",
-                           .{ tskno, ercd });
+                    syslog(LOG_NOTICE, "can_wup(%d) returns %d", .{ tskno, ercd });
                 }
             },
             'l' => {
-                syslog(LOG_INFO, "#rel_wai(%d)", .{ tskno });
+                syslog(LOG_INFO, "#rel_wai(%d)", .{tskno});
                 svc_perror(c.rel_wai(tskid));
             },
             'u' => {
-                syslog(LOG_INFO, "#sus_tsk(%d)", .{ tskno });
+                syslog(LOG_INFO, "#sus_tsk(%d)", .{tskno});
                 svc_perror(c.sus_tsk(tskid));
             },
             'm' => {
-                syslog(LOG_INFO, "#rsm_tsk(%d)", .{ tskno });
+                syslog(LOG_INFO, "#rsm_tsk(%d)", .{tskno});
                 svc_perror(c.rsm_tsk(tskid));
             },
             'x' => {
-                syslog(LOG_INFO, "#ras_ter(%d)", .{ tskno });
+                syslog(LOG_INFO, "#ras_ter(%d)", .{tskno});
                 svc_perror(c.ras_ter(tskid));
             },
             'r' => {
@@ -545,40 +531,35 @@ export fn main_task(exinf: EXINF) void {
                 hrtcnt1 = c.fch_hrt();
                 consume_time(1000);
                 hrtcnt2 = c.fch_hrt();
-                syslog(LOG_NOTICE, "hrtcnt1 = %tu, hrtcnt2 = %tu",
-                       .{ hrtcnt1, hrtcnt2 });
+                syslog(LOG_NOTICE, "hrtcnt1 = %tu, hrtcnt2 = %tu", .{ hrtcnt1, hrtcnt2 });
             },
 
             'o' => {
                 if (TOPPERS_SUPPORT_OVRHDR) {
-                    syslog(LOG_INFO, "#sta_ovr(%d, 2_000_000)", .{ tskno });
+                    syslog(LOG_INFO, "#sta_ovr(%d, 2_000_000)", .{tskno});
                     svc_perror(c.sta_ovr(tskid, 2_000_000));
-                }
-                else {
+                } else {
                     syslog(LOG_NOTICE, "sta_ovr is not supported.", .{});
                 }
             },
             'O' => {
                 if (TOPPERS_SUPPORT_OVRHDR) {
-                    syslog(LOG_INFO, "#stp_ovr(%d)", .{ tskno });
+                    syslog(LOG_INFO, "#stp_ovr(%d)", .{tskno});
                     svc_perror(c.stp_ovr(tskid));
-                }
-                else {
+                } else {
                     syslog(LOG_NOTICE, "stp_ovr is not supported.", .{});
                 }
             },
 
             'v' => {
-                svc_perror(c.syslog_msk_log(c.LOG_UPTO(LOG_INFO),
-                                            c.LOG_UPTO(LOG_EMERG)));
+                svc_perror(c.syslog_msk_log(c.LOG_UPTO(LOG_INFO), c.LOG_UPTO(LOG_EMERG)));
             },
             'q' => {
-                svc_perror(c.syslog_msk_log(c.LOG_UPTO(LOG_NOTICE),
-                                            c.LOG_UPTO(LOG_EMERG)));
+                svc_perror(c.syslog_msk_log(c.LOG_UPTO(LOG_NOTICE), c.LOG_UPTO(LOG_EMERG)));
             },
             '\x03', 'Q' => {},
             else => {
-                syslog(LOG_INFO, "Unknown command: '%c'.", .{ ch });
+                syslog(LOG_INFO, "Unknown command: '%c'.", .{ch});
             },
         }
     }

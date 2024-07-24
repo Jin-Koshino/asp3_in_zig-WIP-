@@ -1,14 +1,13 @@
 ///
 ///  コンフィギュレーションオプションのターゲット依存部（CT11MPCore用）
 ///
-
 ///
 ///  コンパイルオプションによるマクロ定義の取り込み
 ///
 const opt = @cImport({});
 pub const TOPPERS_USE_QEMU = @hasDecl(opt, "TOPPERS_USE_QEMU");
 pub const TOPPERS_OMIT_QEMU_SEMIHOSTING =
-            @hasDecl(opt, "TOPPERS_OMIT_QEMU_SEMIHOSTING");
+    @hasDecl(opt, "TOPPERS_OMIT_QEMU_SEMIHOSTING");
 pub const OMIT_XLOG_SYS = @hasDecl(opt, "OMIT_XLOG_SYS");
 pub const TOPPERS_OMIT_BSS_INIT = @hasDecl(opt, "TOPPERS_OMIT_BSS_INIT");
 pub const TOPPERS_OMIT_DATA_INIT = @hasDecl(opt, "TOPPERS_OMIT_DATA_INIT");
@@ -16,7 +15,7 @@ pub const TOPPERS_OMIT_DATA_INIT = @hasDecl(opt, "TOPPERS_OMIT_DATA_INIT");
 ///
 ///  コア依存部（チップ依存部は飛ばす）
 ///
-usingnamespace @import("../../arch/arm_gcc/common/core_option.zig");
+const core_option = @import("../../arch/arm_gcc/common/core_option.zig");
 
 ///
 ///  ターゲットのハードウェア資源の定義
@@ -59,7 +58,10 @@ pub const EB_IRQNO_TIMER01 = ct11mpcore.EB_IRQNO_TIMER01;
 pub fn abort() noreturn {
     if (TOPPERS_USE_QEMU and !TOPPERS_OMIT_QEMU_SEMIHOSTING) {
         // QEMUを終了させる．
-        asm volatile("svc 0x00123456" :: [code] "{r0}" (@as(u32, 24)));
+        asm volatile ("svc 0x00123456"
+            :
+            : [code] "{r0}" (@as(u32, 24)),
+        );
     }
 
     // 無限ループに入る
@@ -70,13 +72,18 @@ pub fn abort() noreturn {
 ///  サンプルプログラム／テストプログラムのための定義
 ///
 pub const _test = struct {
-    usingnamespace @import("../../include/kernel.zig");
+    const zig = @import("../../include/kernel.zig");
+
+    ////
+    const TA_ENAINT = zig.TA_ENAINT;
+    const TA_EDGE = zig.TA_EDGE;
+    ////
 
     // コアで共通な定義の取り込み
-    usingnamespace core_test;
+    usingnamespace core_option.core_test;
 
     // サンプルプログラム／テストプログラムで使用する割込みに関する定義
-    pub const INTNO1 = 35;              // USBからの割込み
+    pub const INTNO1 = 35; // USBからの割込み
     pub const INTNO1_INTATR = TA_ENAINT | TA_EDGE;
     pub const INTNO1_INTPRI = -15;
     pub fn intno1_clear() void {}

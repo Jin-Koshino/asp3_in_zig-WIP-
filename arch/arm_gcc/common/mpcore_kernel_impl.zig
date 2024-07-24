@@ -1,7 +1,7 @@
 ///
 ///  kernel_impl.zigのMPCore依存部
 ///
-usingnamespace @import("../../../kernel/kernel_impl.zig");
+const kernel_impl = @import("../../../kernel/kernel_impl.zig");
 
 ///
 ///  MPCoreのハードウェア資源の定義
@@ -11,12 +11,24 @@ const mpcore = @import("mpcore.zig");
 ///
 ///  コア依存部
 ///
-pub usingnamespace @import("core_kernel_impl.zig");
+pub const core_kernel_impl = @import("core_kernel_impl.zig");
+
+////
+const core_initialize = core_kernel_impl.core_initialize;
+const core_terminate = core_kernel_impl.core_terminate;
+////
 
 ///
 ///  GIC依存部
 ///
-pub usingnamespace @import("gic_kernel_impl.zig");
+pub const gic_kernel_impl = @import("gic_kernel_impl.zig");
+
+////
+const gicd_initialize = gic_kernel_impl.gicd_initialize;
+const gicc_initialize = gic_kernel_impl.gicc_initialize;
+const gicc_terminate = gic_kernel_impl.gicc_terminate;
+const gicd_terminate = gic_kernel_impl.gicd_terminate;
+////
 
 ///
 ///  用いるライブラリ

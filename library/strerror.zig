@@ -38,11 +38,14 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  エラーメッセージ文字列を返す関数
 ///
-usingnamespace @import("../include/t_stddef.zig");
+const t_stddef = @import("../include/t_stddef.zig");
+
+////
+const ItronError = t_stddef.ItronError;
+////
 
 pub fn itronErrorString(err: ?ItronError) []const u8 {
     if (err) |ercd| {
@@ -72,8 +75,7 @@ pub fn itronErrorString(err: ?ItronError) []const u8 {
             ItronError.BufferOverflow => "E_BOVR",
             ItronError.CommunicationError => "E_COMM",
         };
-    }
-    else {
+    } else {
         return "E_OK";
     }
 }

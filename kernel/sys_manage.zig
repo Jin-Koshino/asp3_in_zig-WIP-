@@ -39,13 +39,64 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  システム状態管理機能
 ///
-usingnamespace @import("kernel_impl.zig");
-usingnamespace task;
-usingnamespace check;
+const kernel_impl = @import("kernel_impl.zig");
+///usingnamespace task;
+const task = kernel_impl.task;
+///usingnamespace check;
+const check = kernel_impl.check;
+
+////
+const zig = kernel_impl.zig;
+const t_stddef = zig.t_stddef;
+
+const ATR = t_stddef.ATR;
+const OVRHDR = zig.OVRHDR;
+const TOPPERS_SUPPORT_OVRHDR = zig.TOPPERS_SUPPORT_OVRHDR;
+
+const target_timer = kernel_impl.target_timer;
+const ID = t_stddef.ID;
+const PRCTIM = t_stddef.PRCTIM;
+const ItronError = t_stddef.ItronError;
+const TCB = task.TCB;
+const traceLog = kernel_impl.traceLog;
+const checkNotSupported = check.checkNotSupported;
+const checkContextUnlock = check.checkContextUnlock;
+const checkObjectState = check.checkObjectState;
+const cfg = check.cfg;
+const TSK_SELF = zig.TSK_SELF;
+const target_impl = kernel_impl.target_impl;
+const checkAndGetTCB = task.checkAndGetTCB;
+const checkParameter = check.checkParameter;
+const TMAX_OVRTIM = zig.TMAX_OVRTIM;
+const T_ROVR = zig.T_ROVR;
+const checkContextTaskUnlock = check.checkContextTaskUnlock;
+const TOVR_STP = zig.TOVR_STP;
+const TOVR_STA = zig.TOVR_STA;
+const assert = t_stddef.assert;
+const getTskIdFromTCB = task.getTskIdFromTCB;
+const T_DOVR = zig.T_DOVR;
+const checkValidAtr = check.checkValidAtr;
+const TA_NULL = t_stddef.TA_NULL;
+const exportCheck = kernel_impl.exportCheck;
+const PRI = t_stddef.PRI;
+const TaskPrio = task.TaskPrio;
+const TPRI_SELF = zig.TPRI_SELF;
+const validTaskPri = task.validTaskPri;
+const internalTaskPrio = task.internalTaskPrio;
+const rotate_ready_queue = task.rotate_ready_queue;
+const requestTaskDispatch = task.requestTaskDispatch;
+const TSK_NONE = zig.TPRI_SELF;
+const getTCBFromQueue = task.getTCBFromQueue;
+
+const TIPM_ENAALL = zig.TIPM_ENAALL;
+const set_dspflg = task.set_dspflg;
+const task_terminate = task.task_terminate;
+const taskDispatch = task.taskDispatch;
+const startup = kernel_impl.startup;
+////
 
 ///
 ///  タスクの優先順位の回転［NGKI3548］
@@ -53,39 +104,37 @@ usingnamespace check;
 pub fn rot_rdq(tskpri: PRI) ItronError!void {
     var prio: TaskPrio = undefined;
 
-    traceLog("rotRdqEnter", .{ tskpri });
-    errdefer |err| traceLog("rotRdqLeave", .{ err });
-    try checkContextUnlock();                   //［NGKI2684］
-    if (tskpri == TPRI_SELF and !target_impl.senseContext()) {
-        prio = p_runtsk.?.bprio;                //［NGKI2689］
-    }
-    else {
-        try checkParameter(validTaskPri(tskpri));   //［NGKI2685］
+    traceLog("rotRdqEnter", .{tskpri});
+    errdefer |err| traceLog("rotRdqLeave", .{err});
+    try checkContextUnlock(); //［NGKI2684］
+    if (tskpri == TPRI_SELF and !target_impl.mpcore_kernel_impl.core_kernel_impl.senseContext()) {
+        prio = task.p_runtsk.?.bprio; //［NGKI2689］
+    } else {
+        try checkParameter(validTaskPri(tskpri)); //［NGKI2685］
         prio = internalTaskPrio(tskpri);
     }
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         rotate_ready_queue(prio);
         requestTaskDispatch();
     }
-    traceLog("rotRdqLeave", .{ null });
+    traceLog("rotRdqLeave", .{null});
 }
 
 ///
 ///  実行状態のタスクIDの参照［NGKI3550］
 ///
 pub fn get_tid(p_tskid: *ID) ItronError!void {
-    traceLog("getTidEnter", .{ p_tskid });
+    traceLog("getTidEnter", .{p_tskid});
     errdefer |err| traceLog("getTidLeave", .{ err, p_tskid });
-    try checkContextUnlock();                   //［NGKI2707］
+    try checkContextUnlock(); //［NGKI2707］
 
-    if (p_runtsk) |p_tcb| {
-        p_tskid.* = getTskIdFromTCB(p_tcb);    //［NGKI2709］
-    }
-    else {
-        p_tskid.* = TSK_NONE;                   //［NGKI2710］
+    if (task.p_runtsk) |p_tcb| {
+        p_tskid.* = getTskIdFromTCB(p_tcb); //［NGKI2709］
+    } else {
+        p_tskid.* = TSK_NONE; //［NGKI2710］
     }
     traceLog("getTidLeave", .{ null, p_tskid });
 }
@@ -99,21 +148,20 @@ pub fn get_lod(tskpri: PRI, p_load: *c_uint) ItronError!void {
 
     traceLog("getLodEnter", .{ tskpri, p_load });
     errdefer |err| traceLog("getLodLeave", .{ err, p_load });
-    try checkContextTaskUnlock();               //［NGKI3624］［NGKI3625］
+    try checkContextTaskUnlock(); //［NGKI3624］［NGKI3625］
     if (tskpri == TPRI_SELF) {
-        prio = p_runtsk.?.bprio;                //［NGKI3631］
-    }
-    else {
-        try checkParameter(validTaskPri(tskpri));   //［NGKI3626］
+        prio = task.p_runtsk.?.bprio; //［NGKI3631］
+    } else {
+        try checkParameter(validTaskPri(tskpri)); //［NGKI3626］
         prio = internalTaskPrio(tskpri);
     }
-    var p_queue = &ready_queue[prio];
+    var p_queue = &task.ready_queue[prio];
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         var p_entry = p_queue.p_next;
-        while (p_entry != p_queue): (p_entry = p_entry.p_next) {
+        while (p_entry != p_queue) : (p_entry = p_entry.p_next) {
             load += 1;
         }
         p_load.* = load;
@@ -129,29 +177,27 @@ pub fn get_nth(tskpri: PRI, nth: c_uint, p_tskid: *ID) ItronError!void {
 
     traceLog("getNthEnter", .{ tskpri, nth, p_tskid });
     errdefer |err| traceLog("getNthLeave", .{ err, p_tskid });
-    try checkContextTaskUnlock();               //［NGKI3642］［NGKI3643］
+    try checkContextTaskUnlock(); //［NGKI3642］［NGKI3643］
     if (tskpri == TPRI_SELF) {
-        prio = p_runtsk.?.bprio;                //［NGKI3650］
-    }
-    else {
-        try checkParameter(validTaskPri(tskpri));   //［NGKI3644］
+        prio = task.p_runtsk.?.bprio; //［NGKI3650］
+    } else {
+        try checkParameter(validTaskPri(tskpri)); //［NGKI3644］
         prio = internalTaskPrio(tskpri);
     }
-    var p_queue = &ready_queue[prio];
+    var p_queue = &task.ready_queue[prio];
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         var count: c_uint = 0;
         var p_entry = p_queue.p_next;
-        while (p_entry != p_queue): (p_entry = p_entry.p_next) {
+        while (p_entry != p_queue) : (p_entry = p_entry.p_next) {
             if (count == nth) {
                 p_tskid.* = getTskIdFromTCB(getTCBFromQueue(p_entry));
                 break;
             }
             count += 1;
-        }
-        else {
+        } else {
             p_tskid.* = TSK_NONE;
         }
     }
@@ -163,10 +209,10 @@ pub fn get_nth(tskpri: PRI, nth: c_uint, p_tskid: *ID) ItronError!void {
 ///
 pub fn loc_cpu() ItronError!void {
     traceLog("locCpuEnter", .{});
-    if (!target_impl.senseLock()) {             //［NGKI2731］
-        target_impl.lockCpu();                  //［NGKI2730］
+    if (!target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock()) { //［NGKI2731］
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu(); //［NGKI2730］
     }
-    traceLog("locCpuLeave", .{ null });
+    traceLog("locCpuLeave", .{null});
 }
 
 ///
@@ -178,10 +224,10 @@ pub fn loc_cpu() ItronError!void {
 ///
 pub fn unl_cpu() ItronError!void {
     traceLog("unlCpuEnter", .{});
-    if (target_impl.senseLock()) {              //［NGKI2738］
-        target_impl.unlockCpu();                //［NGKI2737］
+    if (target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock()) { //［NGKI2738］
+        target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu(); //［NGKI2737］
     }
-    traceLog("unlCpuLeave", .{ null });
+    traceLog("unlCpuLeave", .{null});
 }
 
 ///
@@ -189,16 +235,16 @@ pub fn unl_cpu() ItronError!void {
 ///
 pub fn dis_dsp() ItronError!void {
     traceLog("disDspEnter", .{});
-    errdefer |err| traceLog("disDspLeave", .{ err });
-    try checkContextTaskUnlock();               //［NGKI2741］［NGKI2742］
+    errdefer |err| traceLog("disDspLeave", .{err});
+    try checkContextTaskUnlock(); //［NGKI2741］［NGKI2742］
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
-        enadsp = false;
-        dspflg = false;
+        task.enadsp = false;
+        task.dspflg = false;
     }
-    traceLog("disDspLeave", .{ null });
+    traceLog("disDspLeave", .{null});
 }
 
 ///
@@ -206,30 +252,29 @@ pub fn dis_dsp() ItronError!void {
 ///
 pub fn ena_dsp() ItronError!void {
     traceLog("enaDspEnter", .{});
-    errdefer |err| traceLog("enaDspLeave", .{ err });
-    try checkContextTaskUnlock();               //［NGKI2747］［NGKI2748］
+    errdefer |err| traceLog("enaDspLeave", .{err});
+    try checkContextTaskUnlock(); //［NGKI2747］［NGKI2748］
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
-        enadsp = true;
-        if (target_impl.getIpm() == TIPM_ENAALL) {
+        task.enadsp = true;
+        if (target_impl.mpcore_kernel_impl.gic_kernel_impl.getIpm() == TIPM_ENAALL) {
             set_dspflg();
-            if (p_runtsk.?.flags.raster and p_runtsk.?.flags.enater) {
+            if (task.p_runtsk.?.flags.raster and task.p_runtsk.?.flags.enater) {
                 if (TOPPERS_SUPPORT_OVRHDR) {
-                    if (p_runtsk.?.flags.staovr) {
+                    if (task.p_runtsk.?.flags.staovr) {
                         _ = target_timer.ovrtimer.stop();
                     }
                 }
-                task_terminate(p_runtsk.?);
-                target_impl.exitAndDispatch();
-            }
-            else {
+                task_terminate(task.p_runtsk.?);
+                target_impl.mpcore_kernel_impl.core_kernel_impl.exitAndDispatch();
+            } else {
                 taskDispatch();
             }
         }
     }
-    traceLog("enaDspLeave", .{ null });
+    traceLog("enaDspLeave", .{null});
 }
 
 ///
@@ -237,8 +282,8 @@ pub fn ena_dsp() ItronError!void {
 ///
 pub fn sns_ctx() bool {
     traceLog("snsCtxEnter", .{});
-    var state = target_impl.senseContext();
-    traceLog("snsCtxLeave", .{ state });
+    var state = target_impl.mpcore_kernel_impl.core_kernel_impl.senseContext();
+    traceLog("snsCtxLeave", .{state});
     return state;
 }
 
@@ -247,8 +292,8 @@ pub fn sns_ctx() bool {
 ///
 pub fn sns_loc() bool {
     traceLog("snsLocEnter", .{});
-    var state = target_impl.senseLock();
-    traceLog("snsLocLeave", .{ state });
+    var state = target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock();
+    traceLog("snsLocLeave", .{state});
     return state;
 }
 
@@ -257,8 +302,8 @@ pub fn sns_loc() bool {
 ///
 pub fn sns_dsp() bool {
     traceLog("snsDspEnter", .{});
-    var state = !enadsp;
-    traceLog("snsDspLeave", .{ state });
+    var state = !task.enadsp;
+    traceLog("snsDspLeave", .{state});
     return state;
 }
 
@@ -267,9 +312,8 @@ pub fn sns_dsp() bool {
 ///
 pub fn sns_dpn() bool {
     traceLog("snsDpnEnter", .{});
-    var state = target_impl.senseContext() or target_impl.senseLock()
-                                           or !dspflg;
-    traceLog("snsDpnLeave", .{ state });
+    var state = target_impl.mpcore_kernel_impl.core_kernel_impl.senseContext() or target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock() or !task.dspflg;
+    traceLog("snsDpnLeave", .{state});
     return state;
 }
 
@@ -279,6 +323,6 @@ pub fn sns_dpn() bool {
 pub fn sns_ker() bool {
     traceLog("snsKerEnter", .{});
     var state = !startup.kerflg;
-    traceLog("snsKerLeave", .{ state });
+    traceLog("snsKerLeave", .{state});
     return state;
 }

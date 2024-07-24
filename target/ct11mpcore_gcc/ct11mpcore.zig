@@ -1,7 +1,6 @@
 ///
 ///  CT11MPcore with RealView Emulation Baseboard サポートモジュール
 ///
-
 ///
 ///  コンフィギュレーションオプションの取り込み
 ///
@@ -25,10 +24,10 @@ pub const GIC_ARM11MPCORE = true;
 ///
 pub const EB_IRQNO_TIMER01 = 33;
 pub const EB_IRQNO_TIMER23 = 34;
-pub const EB_IRQNO_UART0   = 36;
-pub const EB_IRQNO_UART1   = 37;
-pub const EB_IRQNO_UART2   = 44;    // 要検討
-pub const EB_IRQNO_UART3   = 45;    // 要検討
+pub const EB_IRQNO_UART0 = 36;
+pub const EB_IRQNO_UART1 = 37;
+pub const EB_IRQNO_UART2 = 44; // 要検討
+pub const EB_IRQNO_UART3 = 45; // 要検討
 
 ///
 ///  MPCore Private Memory Regionの先頭番地
@@ -77,7 +76,6 @@ pub const EB_PLD_CTRL1_INTMODE_MASK = 0x01c00000;
 ///
 ///  UART関連の定義
 ///
-
 /// 
 ///  UARTレジスタのベースアドレス
 ///
@@ -95,7 +93,6 @@ pub const EB_UART_FBRD_38400 = 0x04;
 ///
 ///  タイマ関連の定義
 ///
-
 /// 
 ///  タイマレジスタのベースアドレス
 ///

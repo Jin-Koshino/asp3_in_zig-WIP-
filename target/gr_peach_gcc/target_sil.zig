@@ -1,7 +1,6 @@
 ///
 ///  sil.zigのターゲット依存部（GR-PEACH用）
 ///
-
 ///
 ///  微少時間待ちのための定義
 ///
@@ -11,7 +10,7 @@ const DLY_TIM2 = 72;
 ///
 ///  コア依存部（チップ依存部は飛ばす）
 ///
-pub usingnamespace @import("../../arch/arm_gcc/common/core_sil.zig");
+pub const core_sil = @import("../../arch/arm_gcc/common/core_sil.zig");
 
 ///
 ///  微少時間待ち

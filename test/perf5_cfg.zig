@@ -3,9 +3,9 @@
 ///
 ///  $Id$
 ///
-usingnamespace @import("../kernel/kernel_cfg.zig");
+const kernel_cfg = @import("../kernel/kernel_cfg.zig");
 
-const tecs = @import("../" ++ TECSGENDIR ++ "/tecsgen_cfg.zig");
+const tecs = @import("../OBJ-ARM/gen/tecsgen_cfg.zig");
 
 usingnamespace @cImport({
     @cDefine("UINT_C(val)", "val");
@@ -105,8 +105,7 @@ fn configuration(comptime cfg: *CfgData) void {
     cfg.CRE_ALM("ALM88", CALM(TA_NULL, NFY_TMEHDR(88, alarm_handler)));
     cfg.CRE_ALM("ALM89", CALM(TA_NULL, NFY_TMEHDR(89, alarm_handler)));
     cfg.CRE_ALM("ALM90", CALM(TA_NULL, NFY_TMEHDR(90, alarm_handler)));
-    cfg.CRE_TSK("MAIN_TASK", CTSK(TA_ACT, 0, main_task, MAIN_PRIORITY,
-                                  STACK_SIZE, null));
+    cfg.CRE_TSK("MAIN_TASK", CTSK(TA_ACT, 0, main_task, MAIN_PRIORITY, STACK_SIZE, null));
 }
 
 //

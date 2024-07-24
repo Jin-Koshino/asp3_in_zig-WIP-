@@ -39,15 +39,88 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  セマフォ機能
 ///
-usingnamespace @import("kernel_impl.zig");
-usingnamespace task;
-usingnamespace wait;
-usingnamespace time_event;
-usingnamespace check;
+const kernel_impl = @import("kernel_impl.zig");
+///usingnamespace task;
+const task = kernel_impl.task;
+///usingnamespace wait;
+const wait = kernel_impl.wait;
+///usingnamespace time_event;
+const time_event = kernel_impl.time_event;
+///usingnamespace check;
+const check = kernel_impl.check;
+
+////
+const zig = kernel_impl.zig;
+const t_stddef = zig.t_stddef;
+const queue = kernel_impl.queue;
+
+const WINFO = wait.WINFO;
+const checkWinfoWobj = wait.checkWinfoWobj;
+const ID = t_stddef.ID;
+const TMIN_DTQID = kernel_impl.TMIN_DTQID;
+const cfg = kernel_impl.cfg;
+const ItronError = t_stddef.ItronError;
+const checkId = check.checkId;
+const getTCBFromQueue = task.getTCBFromQueue;
+const wait_complete = wait.wait_complete;
+const traceLog = kernel_impl.traceLog;
+const checkDispatch = check.checkDispatch;
+const target_impl = kernel_impl.target_impl;
+
+const taskDispatch = task.taskDispatch;
+const wobj_make_wait = wait.wobj_make_wait;
+const TS_WAITING_SDTQ = task.TS_WAITING_SDTQ;
+const checkContextUnlock = check.checkContextUnlock;
+const requestTaskDispatch = task.requestTaskDispatch;
+const TMO = t_stddef.TMO;
+const checkParameter = check.checkParameter;
+const validTimeout = check.validTimeout;
+const TMO_POL = t_stddef.TMO_POL;
+const TMEVTB = time_event.TMEVTB;
+const wobj_make_wait_tmout = wait.wobj_make_wait_tmout;
+const checkIllegalUse = check.checkIllegalUse;
+const wobj_make_rwait = wait.wobj_make_rwait;
+const TS_WAITING_RDTQ = task.TS_WAITING_RDTQ;
+const checkContextTaskUnlock = check.checkContextTaskUnlock;
+const wobj_make_rwait_tmout = wait.wobj_make_rwait_tmout;
+const init_wait_queue = wait.init_wait_queue;
+const T_RDTQ = zig.T_RDTQ;
+const wait_tskid = wait.wait_tskid;
+const T_CDTQ = zig.T_CDTQ;
+const checkValidAtr = check.checkValidAtr;
+const TA_TPRI = zig.TA_TPRI;
+const checkNotSupported = check.checkNotSupported;
+const option = kernel_impl.option;
+const TMIN_MPFID = kernel_impl.TMIN_MPFID;
+const TS_WAITING_MPF = task.TS_WAITING_MPF;
+const ptrAlignCast = kernel_impl.ptrAlignCast;
+const T_RMPF = zig.T_RMPF;
+const T_CMPF = zig.T_CMPF;
+const TOPPERS_ROUND_SZ = zig.TOPPERS_ROUND_SZ;
+const exportCheck = kernel_impl.exportCheck;
+const TCB = task.TCB;
+const TMIN_MTXID = kernel_impl.TMIN_MTXID;
+const TA_CEILING = zig.TA_CEILING;
+const TaskPrio = task.TaskPrio;
+const isWaitingMtx = task.isWaitingMtx;
+const change_priority = task.change_priority;
+const wait_dequeue_tmevtb = wait.wait_dequeue_tmevtb;
+const make_non_wait = wait.make_non_wait;
+const assert = t_stddef.assert;
+
+const TS_WAITING_MTX = task.TS_WAITING_MTX;
+const T_RMTX = zig.T_RMTX;
+const getTskIdFromTCB = task.getTskIdFromTCB;
+const TSK_NONE = zig.TSK_NONE;
+const TMIN_SEMID = kernel_impl.TMIN_SEMID;
+const TS_WAITING_SEM = task.TS_WAITING_SEM;
+const T_RSEM = zig.T_RSEM;
+const T_CSEM = zig.T_CSEM;
+const TMAX_MAXSEM = zig.TMAX_MAXSEM;
+////
 
 ///
 ///  セマフォ初期化ブロック
@@ -57,14 +130,14 @@ usingnamespace check;
 ///  最初のフィールドが共通になっている．
 ///
 pub const SEMINIB = struct {
-    wobjatr: ATR,               // セマフォ属性
-    isemcnt: u32,               // セマフォの資源数の初期値
-    maxsem: u32,                // セマフォの最大資源数
+    wobjatr: t_stddef.ATR, // セマフォ属性
+    isemcnt: u32, // セマフォの資源数の初期値
+    maxsem: u32, // セマフォの最大資源数
 };
 
 // セマフォ初期化ブロックのチェック
 comptime {
-    checkWobjIniB(SEMINIB);
+    wait.checkWobjIniB(SEMINIB);
 }
 
 ///
@@ -75,14 +148,14 @@ comptime {
 ///  最初の2つのフィールドが共通になっている．
 ///
 const SEMCB = struct {
-    wait_queue: queue.Queue,    // セマフォ待ちキュー
+    wait_queue: queue.Queue, // セマフォ待ちキュー
     p_wobjinib: *const SEMINIB, // 初期化ブロックへのポインタ
-    semcnt: u32,                // セマフォ現在カウント値
+    semcnt: u32, // セマフォ現在カウント値
 };
 
 // セマフォ管理ブロックのチェック
 comptime {
-    checkWobjCB(SEMCB);
+    wait.checkWobjCB(SEMCB);
 }
 
 ///
@@ -93,8 +166,8 @@ comptime {
 ///  で，すべてのフィールドが共通になっている．
 ///
 const WINFO_SEM = struct {
-    winfo: WINFO,               // 標準の待ち情報ブロック
-    p_wobjcb: *SEMCB,           // 待っているセマフォの管理ブロック
+    winfo: WINFO, // 標準の待ち情報ブロック
+    p_wobjcb: *SEMCB, // 待っているセマフォの管理ブロック
 };
 
 // セマフォ待ち情報ブロックのチェック
@@ -140,9 +213,7 @@ fn checkAndGetSemCB(semid: ID) ItronError!*SEMCB {
 ///  セマフォ管理ブロックからセマフォIDを取り出すための関数
 ///
 fn getSemIdFromSemCB(p_semcb: *SEMCB) ID {
-    return @intCast(ID, (@ptrToInt(p_semcb)
-                             - @ptrToInt(&cfg._kernel_semcb_table))
-                        / @sizeOf(SEMCB)) + TMIN_SEMID;
+    return @intCast(ID, (@ptrToInt(p_semcb) - @ptrToInt(&cfg._kernel_semcb_table)) / @sizeOf(SEMCB)) + TMIN_SEMID;
 }
 
 ///
@@ -163,8 +234,7 @@ pub fn getSemIdFromWinfo(p_winfo: *WINFO) ID {
 ///  セマフォ機能の初期化
 ///
 pub fn initialize_semaphore() void {
-    for (cfg._kernel_semcb_table[0 .. cfg._kernel_seminib_table.len])
-                                                        |*p_semcb, i| {
+    for (cfg._kernel_semcb_table[0..cfg._kernel_seminib_table.len]) |*p_semcb, i| {
         p_semcb.wait_queue.initialize();
         p_semcb.p_wobjinib = &cfg._kernel_seminib_table[i];
         p_semcb.semcnt = p_semcb.p_wobjinib.isemcnt;
@@ -175,79 +245,74 @@ pub fn initialize_semaphore() void {
 ///  セマフォ資源の返却
 ///
 pub fn sig_sem(semid: ID) ItronError!void {
-    traceLog("sigSemEnter", .{ semid });
-    errdefer |err| traceLog("sigSemLeave", .{ err });
+    traceLog("sigSemEnter", .{semid});
+    errdefer |err| traceLog("sigSemLeave", .{err});
     try checkContextUnlock();
     const p_semcb = try checkAndGetSemCB(semid);
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (!p_semcb.wait_queue.isEmpty()) {
             const p_tcb = getTCBFromQueue(p_semcb.wait_queue.deleteNext());
             wait_complete(p_tcb);
             requestTaskDispatch();
-        }
-        else if (p_semcb.semcnt < p_semcb.p_wobjinib.maxsem) {
+        } else if (p_semcb.semcnt < p_semcb.p_wobjinib.maxsem) {
             p_semcb.semcnt += 1;
-        }
-        else {
+        } else {
             return ItronError.QueueingOverflow;
         }
     }
-    traceLog("sigSemLeave", .{ null });
+    traceLog("sigSemLeave", .{null});
 }
 
 ///
 ///  セマフォ資源の獲得
 ///
 pub fn wai_sem(semid: ID) ItronError!void {
-    traceLog("waiSemEnter", .{ semid });
-    errdefer |err| traceLog("waiSemLeave", .{ err });
+    traceLog("waiSemEnter", .{semid});
+    errdefer |err| traceLog("waiSemLeave", .{err});
     try checkDispatch();
     const p_semcb = try checkAndGetSemCB(semid);
     {
-        target_impl.lockCpuDsp();
-        defer target_impl.unlockCpuDsp();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpuDsp();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpuDsp();
 
-        if (p_runtsk.?.flags.raster) {
+        if (task.p_runtsk.?.flags.raster) {
             return ItronError.TerminationRequestRaised;
-        }
-        else if (p_semcb.semcnt >= 1) {
+        } else if (p_semcb.semcnt >= 1) {
             p_semcb.semcnt -= 1;
-        }
-        else {
+        } else {
             var winfo_sem: WINFO_SEM = undefined;
             wobj_make_wait(p_semcb, TS_WAITING_SEM, &winfo_sem);
-            target_impl.dispatch();
+            target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_sem.winfo.werror) |werror| {
                 return werror;
             }
         }
     }
-    traceLog("waiSemLeave", .{ null });
+    traceLog("waiSemLeave", .{null});
 }
 
 ///
 ///  セマフォ資源の獲得（ポーリング）
 ///
 pub fn pol_sem(semid: ID) ItronError!void {
-    traceLog("polSemEnter", .{ semid });
-    errdefer |err| traceLog("polSemLeave", .{ err });
+    traceLog("polSemEnter", .{semid});
+    errdefer |err| traceLog("polSemLeave", .{err});
     try checkContextTaskUnlock();
     const p_semcb = try checkAndGetSemCB(semid);
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (p_semcb.semcnt >= 1) {
             p_semcb.semcnt -= 1;
-        }
-        else {
+        } else {
             return ItronError.TimeoutError;
         }
     }
-    traceLog("polSemLeave", .{ null });
+    traceLog("polSemLeave", .{null});
 }
 
 ///
@@ -255,54 +320,50 @@ pub fn pol_sem(semid: ID) ItronError!void {
 ///
 pub fn twai_sem(semid: ID, tmout: TMO) ItronError!void {
     traceLog("tWaiSemEnter", .{ semid, tmout });
-    errdefer |err| traceLog("tWaiSemLeave", .{ err });
+    errdefer |err| traceLog("tWaiSemLeave", .{err});
     try checkDispatch();
     const p_semcb = try checkAndGetSemCB(semid);
     try checkParameter(validTimeout(tmout));
     {
-        target_impl.lockCpuDsp();
-        defer target_impl.unlockCpuDsp();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpuDsp();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpuDsp();
 
-        if (p_runtsk.?.flags.raster) {
+        if (task.p_runtsk.?.flags.raster) {
             return ItronError.TerminationRequestRaised;
-        }
-        else if (p_semcb.semcnt >= 1) {
+        } else if (p_semcb.semcnt >= 1) {
             p_semcb.semcnt -= 1;
-        }
-        else if (tmout == TMO_POL) {
+        } else if (tmout == TMO_POL) {
             return ItronError.TimeoutError;
-        }
-        else {
+        } else {
             var winfo_sem: WINFO_SEM = undefined;
             var tmevtb: TMEVTB = undefined;
-            wobj_make_wait_tmout(p_semcb, TS_WAITING_SEM, &winfo_sem,
-                                 &tmevtb, tmout);
-            target_impl.dispatch();
+            wobj_make_wait_tmout(p_semcb, TS_WAITING_SEM, &winfo_sem, &tmevtb, tmout);
+            target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_sem.winfo.werror) |werror| {
                 return werror;
             }
         }
     }
-    traceLog("tWaiSemLeave", .{ null });
+    traceLog("tWaiSemLeave", .{null});
 }
 
 ///
 ///  セマフォの再初期化
 ///
 pub fn ini_sem(semid: ID) ItronError!void {
-    traceLog("iniSemEnter", .{ semid });
-    errdefer |err| traceLog("iniSemLeave", .{ err });
+    traceLog("iniSemEnter", .{semid});
+    errdefer |err| traceLog("iniSemLeave", .{err});
     try checkContextTaskUnlock();
     const p_semcb = try checkAndGetSemCB(semid);
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         init_wait_queue(&p_semcb.wait_queue);
         p_semcb.semcnt = p_semcb.p_wobjinib.isemcnt;
         taskDispatch();
     }
-    traceLog("iniSemLeave", .{ null });
+    traceLog("iniSemLeave", .{null});
 }
 
 ///
@@ -314,8 +375,8 @@ pub fn ref_sem(semid: ID, pk_rsem: *T_RSEM) ItronError!void {
     try checkContextTaskUnlock();
     const p_semcb = try checkAndGetSemCB(semid);
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         pk_rsem.wtskid = wait_tskid(&p_semcb.wait_queue);
         pk_rsem.semcnt = p_semcb.semcnt;
@@ -340,9 +401,11 @@ pub fn cre_sem(csem: T_CSEM) ItronError!SEMINIB {
     try checkParameter(0 <= csem.isemcnt and csem.isemcnt <= csem.maxsem);
 
     // セマフォ初期化ブロックを返す
-    return SEMINIB{ .wobjatr = csem.sematr,
-                    .isemcnt = csem.isemcnt,
-                    .maxsem = csem.maxsem, };
+    return SEMINIB{
+        .wobjatr = csem.sematr,
+        .isemcnt = csem.isemcnt,
+        .maxsem = csem.maxsem,
+    };
 }
 
 ///
@@ -355,8 +418,8 @@ pub fn ExportSemCfg(seminib_table: []SEMINIB) type {
 
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする
-        pub export var _kernel_semcb_table:
-            [if (option.BIND_CFG == null or tnum_sem > 0) tnum_sem
-                 else 1]SEMCB = undefined;
+        pub export var _kernel_semcb_table: [
+            if (option.BIND_CFG == null or tnum_sem > 0) tnum_sem else 1
+        ]SEMCB = undefined;
     };
 }

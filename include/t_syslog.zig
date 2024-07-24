@@ -38,7 +38,6 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  システムログ出力を行うための定義
 ///
@@ -53,7 +52,6 @@
 ///  ログバッファ領域がオーバフローした場合には，古いログ情報を消して
 ///  上書きする．
 ///
-
 ///
 ///  コンパイルオプションによるマクロ定義の取り込み
 ///
@@ -63,50 +61,55 @@ const TOPPERS_OMIT_SYSLOG = @hasDecl(opt, "TOPPERS_OMIT_SYSLOG");
 ///
 ///  TOPPERS共通定義ファイル
 ///
-usingnamespace @import("t_stddef.zig");
+const t_stddef = @import("t_stddef.zig");
+
+////
+const HRTCNT = t_stddef.HRTCNT;
+const ER = t_stddef.ER;
+////
 
 ///
 ///  ログ情報の種別の定義
 ///
-pub const LOG_TYPE_COMMENT = 0x01;          // コメント
-pub const LOG_TYPE_ASSERT  = 0x02;          // アサーションの失敗
+pub const LOG_TYPE_COMMENT = 0x01; // コメント
+pub const LOG_TYPE_ASSERT = 0x02; // アサーションの失敗
 
-pub const LOG_TYPE_INH     = 0x11;          // 割込みハンドラ
-pub const LOG_TYPE_ISR     = 0x12;          // 割込みサービスルーチン
-pub const LOG_TYPE_CYC     = 0x13;          // 周期通知
-pub const LOG_TYPE_ALM     = 0x14;          // アラーム通知
-pub const LOG_TYPE_OVR     = 0x15;          // オーバランハンドラ
-pub const LOG_TYPE_EXC     = 0x16;          // CPU例外ハンドラ
-pub const LOG_TYPE_TSKSTAT = 0x21;          // タスク状態変化
-pub const LOG_TYPE_DSP     = 0x31;          // ディスパッチャ
-pub const LOG_TYPE_SVC     = 0x41;          // サービスコール
+pub const LOG_TYPE_INH = 0x11; // 割込みハンドラ
+pub const LOG_TYPE_ISR = 0x12; // 割込みサービスルーチン
+pub const LOG_TYPE_CYC = 0x13; // 周期通知
+pub const LOG_TYPE_ALM = 0x14; // アラーム通知
+pub const LOG_TYPE_OVR = 0x15; // オーバランハンドラ
+pub const LOG_TYPE_EXC = 0x16; // CPU例外ハンドラ
+pub const LOG_TYPE_TSKSTAT = 0x21; // タスク状態変化
+pub const LOG_TYPE_DSP = 0x31; // ディスパッチャ
+pub const LOG_TYPE_SVC = 0x41; // サービスコール
 
-pub const LOG_ENTER        = 0x00;          // 入口／開始
-pub const LOG_LEAVE        = 0x80;          // 出口／終了
+pub const LOG_ENTER = 0x00; // 入口／開始
+pub const LOG_LEAVE = 0x80; // 出口／終了
 
 ///
 ///  ログ情報の重要度の定義
 ///
-pub const LOG_EMERG   = 0;          //  シャットダウンに値するエラー
-pub const LOG_ALERT   = 1;
-pub const LOG_CRIT    = 2;
-pub const LOG_ERROR   = 3;          // システムエラー
-pub const LOG_WARNING = 4;          // 警告メッセージ
-pub const LOG_NOTICE  = 5;
-pub const LOG_INFO    = 6;
-pub const LOG_DEBUG   = 7;          // デバッグ用メッセージ
+pub const LOG_EMERG = 0; //  シャットダウンに値するエラー
+pub const LOG_ALERT = 1;
+pub const LOG_CRIT = 2;
+pub const LOG_ERROR = 3; // システムエラー
+pub const LOG_WARNING = 4; // 警告メッセージ
+pub const LOG_NOTICE = 5;
+pub const LOG_INFO = 6;
+pub const LOG_DEBUG = 7; // デバッグ用メッセージ
 
 ///
 ///  ログ情報のデータ構造
 ///
-const LOGTIM = HRTCNT;              // ログ時刻のデータ型
-const TNUM_LOGPAR = 6;              // ログパラメータの数
-const LOGPAR = usize;               // ログパラメータのデータ型
+const LOGTIM = HRTCNT; // ログ時刻のデータ型
+const TNUM_LOGPAR = 6; // ログパラメータの数
+const LOGPAR = usize; // ログパラメータのデータ型
 
 const SYSLOG = extern struct {
-    logtype: c_uint,                // ログ情報の種別
-    logtim: LOGTIM,                 // ログ時刻
-    logpar: [TNUM_LOGPAR]LOGPAR,    // ログパラメータ
+    logtype: c_uint, // ログ情報の種別
+    logtim: LOGTIM, // ログ時刻
+    logpar: [TNUM_LOGPAR]LOGPAR, // ログパラメータ
 };
 
 ///
@@ -123,15 +126,10 @@ fn logPar(arg: anytype) usize {
     return switch (@typeInfo(@TypeOf(arg))) {
         .Null => 0,
         .Bool => @boolToInt(arg),
-        .Int => |int|
-            if (int.signedness == .signed) @bitCast(usize, @intCast(isize, arg))
-            else @intCast(usize, arg),
-        .ComptimeInt =>
-            if (arg < 0) @bitCast(usize, @intCast(isize, arg))
-            else @intCast(usize, arg),
+        .Int => |int| if (int.signedness == .signed) @bitCast(usize, @intCast(isize, arg)) else @intCast(usize, arg),
+        .ComptimeInt => if (arg < 0) @bitCast(usize, @intCast(isize, arg)) else @intCast(usize, arg),
         .Enum => @enumToInt(arg),
-        .Pointer => |pointer|
-            @ptrToInt(if (pointer.size == .Slice) arg.ptr else arg),
+        .Pointer => |pointer| @ptrToInt(if (pointer.size == .Slice) arg.ptr else arg),
         .Array => @ptrToInt(&arg),
         .Optional => if (arg) |_arg| logPar(_arg) else 0,
         else => @compileError("unsupported data type for syslog."),
@@ -146,12 +144,24 @@ pub fn t_syslog(prio: c_uint, logtype: c_uint, args: anytype) void {
         var logbuf: SYSLOG = undefined;
 
         logbuf.logtype = logtype;
-        if (args.len > 0) { logbuf.logpar[0] = logPar(args.@"0"); }
-        if (args.len > 1) { logbuf.logpar[1] = logPar(args.@"1"); }
-        if (args.len > 2) { logbuf.logpar[2] = logPar(args.@"2"); }
-        if (args.len > 3) { logbuf.logpar[3] = logPar(args.@"3"); }
-        if (args.len > 4) { logbuf.logpar[4] = logPar(args.@"4"); }
-        if (args.len > 5) { logbuf.logpar[5] = logPar(args.@"5"); }
+        if (args.len > 0) {
+            logbuf.logpar[0] = logPar(args.@"0");
+        }
+        if (args.len > 1) {
+            logbuf.logpar[1] = logPar(args.@"1");
+        }
+        if (args.len > 2) {
+            logbuf.logpar[2] = logPar(args.@"2");
+        }
+        if (args.len > 3) {
+            logbuf.logpar[3] = logPar(args.@"3");
+        }
+        if (args.len > 4) {
+            logbuf.logpar[4] = logPar(args.@"4");
+        }
+        if (args.len > 5) {
+            logbuf.logpar[5] = logPar(args.@"5");
+        }
         _ = syslog_wri_log(prio, &logbuf);
     }
 }
@@ -165,11 +175,21 @@ pub fn syslog(prio: c_uint, format: [:0]const u8, args: anytype) void {
 
         logbuf.logtype = LOG_TYPE_COMMENT;
         logbuf.logpar[0] = logPar(&format[0]);
-        if (args.len > 0) { logbuf.logpar[1] = logPar(args.@"0"); }
-        if (args.len > 1) { logbuf.logpar[2] = logPar(args.@"1"); }
-        if (args.len > 2) { logbuf.logpar[3] = logPar(args.@"2"); }
-        if (args.len > 3) { logbuf.logpar[4] = logPar(args.@"3"); }
-        if (args.len > 4) { logbuf.logpar[5] = logPar(args.@"4"); }
+        if (args.len > 0) {
+            logbuf.logpar[1] = logPar(args.@"0");
+        }
+        if (args.len > 1) {
+            logbuf.logpar[2] = logPar(args.@"1");
+        }
+        if (args.len > 2) {
+            logbuf.logpar[3] = logPar(args.@"2");
+        }
+        if (args.len > 3) {
+            logbuf.logpar[4] = logPar(args.@"3");
+        }
+        if (args.len > 4) {
+            logbuf.logpar[5] = logPar(args.@"4");
+        }
         _ = syslog_wri_log(prio, &logbuf);
     }
 }

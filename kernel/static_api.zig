@@ -37,13 +37,88 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  静的APIの処理
 ///
 const std = @import("std");
-usingnamespace @import("kernel_impl.zig");
+const kernel_impl = @import("kernel_impl.zig");
 
+////
+const zig = kernel_impl.zig;
+const t_stddef = zig.t_stddef;
+
+const task_manage = kernel_impl.task_manage;
+const task_refer = kernel_impl.task_refer;
+const task_sync = kernel_impl.task_sync;
+const task_term = kernel_impl.task_term;
+const semaphore = kernel_impl.semaphore;
+const eventflag = kernel_impl.eventflag;
+const dataqueue = kernel_impl.dataqueue;
+const pridataq = kernel_impl.pridataq;
+const mutex = kernel_impl.mutex;
+const mempfix = kernel_impl.mempfix;
+const time_manage = kernel_impl.time_manage;
+const cyclic = kernel_impl.cyclic;
+const alarm = kernel_impl.alarm;
+const overrun = kernel_impl.overrun;
+const sys_manage = kernel_impl.sys_manage;
+const interrupt = kernel_impl.interrupt;
+const exception = kernel_impl.exception;
+const startup = kernel_impl.startup;
+const task = kernel_impl.task;
+const wait = kernel_impl.wait;
+const time_event = kernel_impl.time_event;
+const notify = kernel_impl.notify;
+const check = kernel_impl.check;
+const static_api = kernel_impl.static_api;
+const T_CTSK = zig.T_CTSK;
+const T_RTSK = zig.T_RTSK;
+const T_CSEM = zig.T_CSEM;
+const T_RSEM = zig.T_RSEM;
+const T_CFLG = zig.T_CFLG;
+const T_RFLG = zig.T_RFLG;
+const T_CDTQ = zig.T_CDTQ;
+const T_RDTQ = zig.T_RDTQ;
+const T_CPDQ = zig.T_CPDQ;
+const T_RPDQ = zig.T_RPDQ;
+const T_CMTX = zig.T_CMTX;
+const T_RMTX = zig.T_RMTX;
+const T_CMPF = zig.T_CMPF;
+const T_RMPF = zig.T_RMPF;
+const T_CCYC = zig.T_CCYC;
+const T_RCYC = zig.T_RCYC;
+const T_CALM = zig.T_CALM;
+const T_RALM = zig.T_RALM;
+const T_DOVR = zig.T_DOVR;
+const T_ROVR = zig.T_ROVR;
+const T_CINT = zig.T_CINT;
+const T_CISR = zig.T_CISR;
+const T_DINH = zig.T_DINH;
+const T_DEXC = zig.T_DEXC;
+const T_DICS = zig.T_DICS;
+const T_AINI = zig.T_AINI;
+const T_ATER = zig.T_ATER;
+const INTNO = zig.INTNO;
+const INHNO = zig.INHNO;
+const EXCNO = zig.EXCNO;
+const TOPPERS_SUPPORT_OVRHDR = zig.TOPPERS_SUPPORT_OVRHDR;
+const exportCheck = kernel_impl.exportCheck;
+const decl = kernel_impl.decl;
+const target_impl = kernel_impl.target_impl;
+const isTrue = kernel_impl.isTrue;
+const ID = t_stddef.ID;
+const ATR = t_stddef.ATR;
+const STAT = t_stddef.STAT;
+const PRI = t_stddef.PRI;
+const TMO = t_stddef.TMO;
+const EXINF = t_stddef.EXINF;
+const RELTIM = t_stddef.RELTIM;
+const PRCTIM = t_stddef.PRCTIM;
+const castToExinf = t_stddef.castToExinf;
+const TA_NULL = t_stddef.TA_NULL;
+const NFYHDR = kernel_impl.NFYHDR;
+const TA_CHECK_USIZE = kernel_impl.TA_CHECK_USIZE;
+////
 ///
 ///  コンパイルオプションによるマクロ定義の取り込み
 ///
@@ -55,11 +130,39 @@ const USE_EXTERNAL_ID = @hasDecl(opt, "USE_EXTERNAL_ID");
 ///
 const strerror = @import("../library/strerror.zig");
 
+////
+const ItronError = strerror.ItronError;
+const SystemError = strerror.SystemError;
+const NotSupported = strerror.NotSupported;
+const ReservedFunction = strerror.ReservedFunction;
+const ReservedAttribute = strerror.ReservedAttribute;
+const ParameterError = strerror.ParameterError;
+const IdError = strerror.IdError;
+const ContextError = strerror.ContextError;
+const MemoryAccessViolation = strerror.MemoryAccessViolation;
+const ObjectAccessViolation = strerror.ObjectAccessViolation;
+const IllegalUse = strerror.IllegalUse;
+const NoMemory = strerror.NoMemory;
+const NoId = strerror.NoId;
+const NoResource = strerror.NoResource;
+const ObjectStateError = strerror.ObjectStateError;
+const NonExistent = strerror.NonExistent;
+const QueueingOverflow = strerror.QueueingOverflow;
+const ReleasedFromWaiting = strerror.ReleasedFromWaiting;
+const TimeoutError = strerror.TimeoutError;
+const ObjectDeleted = strerror.ObjectDeleted;
+const ConnectionClosed = strerror.ConnectionClosed;
+const TerminationRequestRaised = strerror.TerminationRequestRaised;
+const WouldBlock = strerror.WouldBlock;
+const BufferOverflow = strerror.BufferOverflow;
+const CommunicationError = strerror.CommunicationError;
+////
+
 ///
 ///  静的APIのエラーの報告
 ///
 fn reportError(comptime api: []const u8, comptime err: ItronError) noreturn {
-  @compileError(api ++ " returns " ++ strerror.itronErrorString(err) ++ ".");
+    @compileError(api ++ " returns " ++ strerror.itronErrorString(err) ++ ".");
 }
 
 ///
@@ -249,8 +352,7 @@ pub const CfgData = struct {
         item.p_next = null;
         if (p_list.tail) |tail| {
             tail.p_next = &item;
-        }
-        else {
+        } else {
             p_list.head = &item;
         }
         p_list.tail = &item;
@@ -284,12 +386,10 @@ pub const CfgData = struct {
     }
 
     // タスクの生成
-    pub fn CRE_TSK(comptime p_self: *CfgData, comptime tsk_name: []const u8,
-                   comptime ctsk: T_CTSK) void {
+    pub fn CRE_TSK(comptime p_self: *CfgData, comptime tsk_name: []const u8, comptime ctsk: T_CTSK) void {
         comptime var p_tsk = addItem(T_TSK, &p_self.tsk_list);
         p_tsk.name = tsk_name;
-        p_tsk.inib = comptime task.cre_tsk(ctsk)
-            catch |err| reportError("CRE_TSK", err);
+        p_tsk.inib = comptime task.cre_tsk(ctsk) catch |err| reportError("CRE_TSK", err);
     }
 
     // タスクIDの取得
@@ -315,12 +415,10 @@ pub const CfgData = struct {
     }
 
     // セマフォの生成
-    pub fn CRE_SEM(comptime p_self: *CfgData, comptime sem_name: []const u8,
-                   comptime csem: T_CSEM) void {
+    pub fn CRE_SEM(comptime p_self: *CfgData, comptime sem_name: []const u8, comptime csem: T_CSEM) void {
         comptime var p_sem = addItem(T_SEM, &p_self.sem_list);
         p_sem.name = sem_name;
-        p_sem.inib = comptime semaphore.cre_sem(csem)
-            catch |err| reportError("CRE_SEM", err);
+        p_sem.inib = comptime semaphore.cre_sem(csem) catch |err| reportError("CRE_SEM", err);
     }
 
     // セマフォIDの取得
@@ -334,12 +432,10 @@ pub const CfgData = struct {
     }
 
     // イベントフラグの生成
-    pub fn CRE_FLG(comptime p_self: *CfgData, comptime flg_name: []const u8,
-                   comptime cflg: T_CFLG) void {
+    pub fn CRE_FLG(comptime p_self: *CfgData, comptime flg_name: []const u8, comptime cflg: T_CFLG) void {
         comptime var p_flg = addItem(T_FLG, &p_self.flg_list);
         p_flg.name = flg_name;
-        p_flg.inib = comptime eventflag.cre_flg(cflg)
-            catch |err| reportError("CRE_FLG", err);
+        p_flg.inib = comptime eventflag.cre_flg(cflg) catch |err| reportError("CRE_FLG", err);
     }
 
     // イベントフラグIDの取得
@@ -353,12 +449,10 @@ pub const CfgData = struct {
     }
 
     // データキューの生成
-    pub fn CRE_DTQ(comptime p_self: *CfgData, comptime dtq_name: []const u8,
-                   comptime cdtq: T_CDTQ) void {
+    pub fn CRE_DTQ(comptime p_self: *CfgData, comptime dtq_name: []const u8, comptime cdtq: T_CDTQ) void {
         comptime var p_dtq = addItem(T_DTQ, &p_self.dtq_list);
         p_dtq.name = dtq_name;
-        p_dtq.inib = comptime dataqueue.cre_dtq(cdtq)
-            catch |err| reportError("CRE_DTQ", err);
+        p_dtq.inib = comptime dataqueue.cre_dtq(cdtq) catch |err| reportError("CRE_DTQ", err);
     }
 
     // データキューIDの取得
@@ -372,12 +466,10 @@ pub const CfgData = struct {
     }
 
     // 優先度データキューの生成
-    pub fn CRE_PDQ(comptime p_self: *CfgData, comptime pdq_name: []const u8,
-                   comptime cpdq: T_CPDQ) void {
+    pub fn CRE_PDQ(comptime p_self: *CfgData, comptime pdq_name: []const u8, comptime cpdq: T_CPDQ) void {
         comptime var p_pdq = addItem(T_PDQ, &p_self.pdq_list);
         p_pdq.name = pdq_name;
-        p_pdq.inib = comptime pridataq.cre_pdq(cpdq)
-            catch |err| reportError("CRE_PDQ", err);
+        p_pdq.inib = comptime pridataq.cre_pdq(cpdq) catch |err| reportError("CRE_PDQ", err);
     }
 
     // 優先度データキューIDの取得
@@ -391,12 +483,10 @@ pub const CfgData = struct {
     }
 
     // ミューテックスの生成
-    pub fn CRE_MTX(comptime p_self: *CfgData, comptime mtx_name: []const u8,
-                   comptime cmtx: T_CMTX) void {
+    pub fn CRE_MTX(comptime p_self: *CfgData, comptime mtx_name: []const u8, comptime cmtx: T_CMTX) void {
         comptime var p_mtx = addItem(T_MTX, &p_self.mtx_list);
         p_mtx.name = mtx_name;
-        p_mtx.inib = comptime mutex.cre_mtx(cmtx)
-            catch |err| reportError("CRE_MTX", err);
+        p_mtx.inib = comptime mutex.cre_mtx(cmtx) catch |err| reportError("CRE_MTX", err);
     }
 
     // ミューテックスIDの取得
@@ -410,12 +500,10 @@ pub const CfgData = struct {
     }
 
     // 固定長メモリプールの生成
-    pub fn CRE_MPF(comptime p_self: *CfgData, comptime mpf_name: []const u8,
-                   comptime cmpf: T_CMPF) void {
+    pub fn CRE_MPF(comptime p_self: *CfgData, comptime mpf_name: []const u8, comptime cmpf: T_CMPF) void {
         comptime var p_mpf = addItem(T_MPF, &p_self.mpf_list);
         p_mpf.name = mpf_name;
-        p_mpf.inib = comptime mempfix.cre_mpf(cmpf)
-            catch |err| reportError("CRE_MPF", err);
+        p_mpf.inib = comptime mempfix.cre_mpf(cmpf) catch |err| reportError("CRE_MPF", err);
     }
 
     // 固定長メモリプールIDの取得
@@ -429,12 +517,10 @@ pub const CfgData = struct {
     }
 
     // 周期通知の生成
-    pub fn CRE_CYC(comptime p_self: *CfgData, comptime cyc_name: []const u8,
-                   comptime ccyc: T_CCYC) void {
+    pub fn CRE_CYC(comptime p_self: *CfgData, comptime cyc_name: []const u8, comptime ccyc: T_CCYC) void {
         comptime var p_cyc = addItem(T_CYC, &p_self.cyc_list);
         p_cyc.name = cyc_name;
-        p_cyc.inib = comptime cyclic.cre_cyc(ccyc)
-            catch |err| reportError("CRE_CYC", err);
+        p_cyc.inib = comptime cyclic.cre_cyc(ccyc) catch |err| reportError("CRE_CYC", err);
     }
 
     // 周期通知初期化ブロックの生成
@@ -443,12 +529,10 @@ pub const CfgData = struct {
     }
 
     // アラーム通知の生成
-    pub fn CRE_ALM(comptime p_self: *CfgData, comptime alm_name: []const u8,
-                   comptime calm: T_CALM) void {
+    pub fn CRE_ALM(comptime p_self: *CfgData, comptime alm_name: []const u8, comptime calm: T_CALM) void {
         comptime var p_alm = addItem(T_ALM, &p_self.alm_list);
         p_alm.name = alm_name;
-        p_alm.inib = comptime alarm.cre_alm(calm)
-            catch |err| reportError("CRE_ALM", err);
+        p_alm.inib = comptime alarm.cre_alm(calm) catch |err| reportError("CRE_ALM", err);
     }
 
     // アラーム通知初期化ブロックの生成
@@ -460,25 +544,20 @@ pub const CfgData = struct {
     pub fn DEF_OVR(comptime p_self: *CfgData, comptime dovr: T_DOVR) void {
         if (!TOPPERS_SUPPORT_OVRHDR) {
             reportError("DEF_OVR", ItronError!NotSupported);
-        }
-        else if (p_self.p_ovr != null) {
+        } else if (p_self.p_ovr != null) {
             // 静的API「DEF_OVR」が複数ある場合（E_OBJ）［NGKI2619］
             reportError("DEF_OVR", ItronError!ObjectStateError);
-        }
-        else {
+        } else {
             comptime var ovr: T_OVR = undefined;
             p_self.p_ovr = &ovr;
-            ovr.inib = comptime overrun.defineOverrun(dovr)
-                catch |err| reportError("DEF_OVR", err);
+            ovr.inib = comptime overrun.defineOverrun(dovr) catch |err| reportError("DEF_OVR", err);
         }
     }
 
     // 割込み要求ラインの設定
-    pub fn CFG_INT(comptime p_self: *CfgData, comptime intno: INTNO,
-                   comptime cint: T_CINT) void {
+    pub fn CFG_INT(comptime p_self: *CfgData, comptime intno: INTNO, comptime cint: T_CINT) void {
         comptime var p_int = addItem(T_INT, &p_self.int_list);
-        p_int.inib = comptime interrupt.cfg_int(intno, cint)
-            catch |err| reportError("CFG_INT", err);
+        p_int.inib = comptime interrupt.cfg_int(intno, cint) catch |err| reportError("CFG_INT", err);
     }
 
     // 割込み要求ライン初期化ブロックの生成
@@ -487,8 +566,7 @@ pub const CfgData = struct {
     }
 
     // 割込み要求ラインの設定の取得
-    pub fn referIntIniB(comptime self: CfgData, comptime intno: INTNO)
-                                                        ?interrupt.INTINIB {
+    pub fn referIntIniB(comptime self: CfgData, comptime intno: INTNO) ?interrupt.INTINIB {
         comptime var p_int = self.int_list.head;
         inline while (p_int) |int| : (p_int = int.p_next) {
             if (int.inib.intno == intno) {
@@ -499,22 +577,19 @@ pub const CfgData = struct {
     }
 
     // 割込みハンドラの定義
-    pub fn DEF_INH(comptime p_self: *CfgData, comptime inhno: INHNO,
-                   comptime dinh: T_DINH) void {
+    pub fn DEF_INH(comptime p_self: *CfgData, comptime inhno: INHNO, comptime dinh: T_DINH) void {
         comptime var p_inh = addItem(T_INH, &p_self.inh_list);
         p_inh.inib =
-            comptime interrupt.def_inh(inhno, dinh, p_self)
-            catch |err| reportError("DEF_INH", err);
+            comptime interrupt.def_inh(inhno, dinh, p_self) catch |err| reportError("DEF_INH", err);
     }
-    
+
     // 割込みハンドラ初期化ブロックの生成
     fn genInhIniB(comptime self: CfgData) []interrupt.INHINIB {
         return genIniB(interrupt.INHINIB, self.inh_list);
     }
 
     // 割込みハンドラの定義の取得
-    pub fn referInhIniB(comptime self: CfgData, comptime inhno: INHNO)
-                                                        ?interrupt.INHINIB {
+    pub fn referInhIniB(comptime self: CfgData, comptime inhno: INHNO) ?interrupt.INHINIB {
         comptime var p_inh = self.inh_list.head;
         inline while (p_inh) |inh| : (p_inh = inh.p_next) {
             if (inh.inib.inhno == inhno) {
@@ -525,19 +600,16 @@ pub const CfgData = struct {
     }
 
     // 割込みサービスルーチンの生成
-    pub fn CRE_ISR(comptime p_self: *CfgData, comptime isr_name: []const u8,
-                   comptime cisr: T_CISR) void {
+    pub fn CRE_ISR(comptime p_self: *CfgData, comptime isr_name: []const u8, comptime cisr: T_CISR) void {
         comptime var p_isr = addItem(T_ISR, &p_self.isr_list);
         p_isr.name = isr_name;
-        p_isr.cfg.cisr = comptime interrupt.cre_isr(cisr, p_self)
-            catch |err| reportError("CRE_ISR", err);
+        p_isr.cfg.cisr = comptime interrupt.cre_isr(cisr, p_self) catch |err| reportError("CRE_ISR", err);
         p_isr.cfg.isrid = comptime @intCast(ID, p_self.isr_list.length);
         p_isr.cfg.genflag = false;
     }
 
     // 割込みサービスルーチンの生成情報の取得
-    pub fn referCreIsr(comptime self: CfgData, comptime intno: INTNO)
-                                                        ?interrupt.ISRCFG {
+    pub fn referCreIsr(comptime self: CfgData, comptime intno: INTNO) ?interrupt.ISRCFG {
         comptime var p_isr = self.isr_list.head;
         inline while (p_isr) |isr| : (p_isr = isr.p_next) {
             if (isr.cfg.cisr.intno == intno) {
@@ -548,18 +620,15 @@ pub const CfgData = struct {
     }
 
     // 割込みサービスルーチンを呼び出す割込みハンドラの登録
-    pub fn addInh(comptime p_self: *CfgData,
-                  comptime inhinib: interrupt.INHINIB) void {
+    pub fn addInh(comptime p_self: *CfgData, comptime inhinib: interrupt.INHINIB) void {
         comptime var p_inh = addItem(T_INH, &p_self.inh_list);
         p_inh.inib = inhinib;
     }
 
     // CPU例外ハンドラの定義
-    pub fn DEF_EXC(comptime p_self: *CfgData, comptime excno: EXCNO,
-                   comptime dexc: T_DEXC) void {
+    pub fn DEF_EXC(comptime p_self: *CfgData, comptime excno: EXCNO, comptime dexc: T_DEXC) void {
         comptime var p_exc = addItem(T_EXC, &p_self.exc_list);
-        p_exc.inib = comptime exception.def_exc(excno, dexc)
-            catch |err| reportError("DEF_EXC", err);
+        p_exc.inib = comptime exception.def_exc(excno, dexc) catch |err| reportError("DEF_EXC", err);
     }
 
     // CPU例外ハンドラ初期化ブロックの生成
@@ -573,20 +642,17 @@ pub const CfgData = struct {
             // 非タスクコンテキスト用スタック領域が設定済みの場合（E_OBJ）
             // ［NGKI3216］
             reportError("DEF_ICS", ItronError!ObjectStateError);
-        }
-        else {
+        } else {
             comptime var ics: T_ICS = undefined;
             p_self.p_ics = &ics;
-            ics.dics = comptime startup.defineInterruptStack(dics)
-                catch |err| reportError("DEF_ICS", err);
+            ics.dics = comptime startup.defineInterruptStack(dics) catch |err| reportError("DEF_ICS", err);
         }
     }
 
     // 初期化ルーチンの追加
     pub fn ATT_INI(comptime p_self: *CfgData, comptime aini: T_AINI) void {
         comptime var p_inirtn = addItem(T_INIRTN, &p_self.inirtn_list);
-        p_inirtn.inib = comptime startup.attachInitializeRoutine(aini)
-            catch |err| reportError("ATT_INI", err);
+        p_inirtn.inib = comptime startup.attachInitializeRoutine(aini) catch |err| reportError("ATT_INI", err);
     }
 
     // 初期化ルーチンブロックの生成
@@ -597,8 +663,7 @@ pub const CfgData = struct {
     // 終了処理ルーチンの追加
     pub fn ATT_TER(comptime p_self: *CfgData, comptime ater: T_ATER) void {
         comptime var p_terrtn = addItem(T_TERRTN, &p_self.terrtn_list);
-        p_terrtn.inib = comptime startup.attachTerminateRoutine(ater)
-            catch |err| reportError("ATT_TER", err);
+        p_terrtn.inib = comptime startup.attachTerminateRoutine(ater) catch |err| reportError("ATT_TER", err);
     }
 
     // 終了処理ルーチンブロックの生成
@@ -622,8 +687,7 @@ pub const CfgData = struct {
         }
 
         // 割込みサービスルーチンを呼び出す割込みハンドラの生成
-        comptime var isrcfg_table: [p_self.isr_list.length]interrupt.ISRCFG
-                                                                = undefined;
+        comptime var isrcfg_table: [p_self.isr_list.length]interrupt.ISRCFG = undefined;
         comptime var i: usize = 0;
         comptime var p_isr = p_self.isr_list.head;
         inline while (p_isr) |isr| : (p_isr = isr.p_next) {
@@ -652,16 +716,24 @@ extern fn _kernel_initialize_exception() void;
 fn exportConst(comptime target: anytype, comptime name: []const u8) void {
     _ = struct {
         var placeholder = target;
-        comptime { @export(placeholder, .{ .name = name,
-                                           .section = ".rodata", }); }
+        comptime {
+            @export(placeholder, .{
+                .name = name,
+                .section = ".rodata",
+            });
+        }
     }.placeholder;
 }
 
 fn exportIdSymbol(comptime target: anytype, comptime name: []const u8) void {
     _ = struct {
         var placeholder = target;
-        comptime { @export(placeholder, .{ .name = "id." ++ name,
-                                           .section = ".TOPPERS.id", }); }
+        comptime {
+            @export(placeholder, .{
+                .name = "id." ++ name,
+                .section = ".TOPPERS.id",
+            });
+        }
     }.placeholder;
 }
 
@@ -715,24 +787,15 @@ pub fn GenCfgData(comptime cfg_data: *CfgData) type {
     //  チェック処理用の定義の生成
     //
     exportCheck(0x12345678, "TOPPERS_magic_number");
-    exportCheck(decl(u32, target_impl, "CHECK_USIZE_ALIGN", 1),
-                "CHECK_USIZE_ALIGN");
-    exportCheck(decl(u32, target_impl, "CHECK_USIZE_ALIGN", 1),
-                "CHECK_USIZE_ALIGN");
-    exportCheck(@boolToInt(isTrue(target_impl, "CHECK_USIZE_NONNULL")),
-                "CHECK_USIZE_NONNULL");
-    exportCheck(decl(u32, target_impl, "CHECK_FUNC_ALIGN", 1),
-                "CHECK_FUNC_ALIGN");
-    exportCheck(@boolToInt(isTrue(target_impl, "CHECK_FUNC_NONNULL")),
-                "CHECK_FUNC_NONNULL");
-    exportCheck(decl(u32, target_impl, "CHECK_STACK_ALIGN", 1),
-                "CHECK_STACK_ALIGN");
-    exportCheck(@boolToInt(isTrue(target_impl, "CHECK_STACK_NONNULL")),
-                "CHECK_STACK_NONNULL");
-    exportCheck(decl(u32, target_impl, "CHECK_MPF_ALIGN", 1),
-                "CHECK_MPF_ALIGN");
-    exportCheck(@boolToInt(isTrue(target_impl, "CHECK_MPF_NONNULL")),
-                "CHECK_MPF_NONNULL");
+    exportCheck(decl(u32, target_impl, "CHECK_USIZE_ALIGN", 1), "CHECK_USIZE_ALIGN");
+    exportCheck(decl(u32, target_impl, "CHECK_USIZE_ALIGN", 1), "CHECK_USIZE_ALIGN");
+    exportCheck(@boolToInt(isTrue(target_impl, "CHECK_USIZE_NONNULL")), "CHECK_USIZE_NONNULL");
+    exportCheck(decl(u32, target_impl, "CHECK_FUNC_ALIGN", 1), "CHECK_FUNC_ALIGN");
+    exportCheck(@boolToInt(isTrue(target_impl, "CHECK_FUNC_NONNULL")), "CHECK_FUNC_NONNULL");
+    exportCheck(decl(u32, target_impl, "CHECK_STACK_ALIGN", 1), "CHECK_STACK_ALIGN");
+    exportCheck(@boolToInt(isTrue(target_impl, "CHECK_STACK_NONNULL")), "CHECK_STACK_NONNULL");
+    exportCheck(decl(u32, target_impl, "CHECK_MPF_ALIGN", 1), "CHECK_MPF_ALIGN");
+    exportCheck(@boolToInt(isTrue(target_impl, "CHECK_MPF_NONNULL")), "CHECK_MPF_NONNULL");
 
     exportCheck(@sizeOf(usize), "sizeof_usize");
     exportCheck(@sizeOf(c_uint), "sizeof_UINT");
@@ -748,8 +811,7 @@ pub fn GenCfgData(comptime cfg_data: *CfgData) type {
     //
     return struct {
         // タスクに関するコンフィギュレーションデータの生成
-        usingnamespace task.ExportTskCfg(cfg_data.genTIniB(),
-                                         cfg_data.genTorderTable());
+        usingnamespace task.ExportTskCfg(cfg_data.genTIniB(), cfg_data.genTorderTable());
 
         // セマフォに関するコンフィギュレーションデータの生成
         usingnamespace semaphore.ExportSemCfg(cfg_data.genSemIniB());
@@ -778,26 +840,32 @@ pub fn GenCfgData(comptime cfg_data: *CfgData) type {
         // オーバランハンドラに関するコンフィギュレーションデータの生成
         usingnamespace if (TOPPERS_SUPPORT_OVRHDR)
             overrun.ExportOvrIniB(if (cfg_data.p_ovr) |ovr| ovr.inib else null)
-        else struct {};
+        else
+            struct {};
 
         // 割込みに関するコンフィギュレーションデータの生成
-        usingnamespace if (comptime @hasDecl(target_impl, "ExportIntIniB"))
-                           target_impl.ExportIntIniB(cfg_data.genIntIniB())
-                       else interrupt.ExportIntIniB(cfg_data.genIntIniB());
+        usingnamespace if (@hasDecl(target_impl.mpcore_kernel_impl.core_kernel_impl, "ExportIntIniB"))
+            target_impl.mpcore_kernel_impl.core_kernel_impl.ExportIntIniB(cfg_data.genIntIniB())
+        else
+            interrupt.ExportIntIniB(cfg_data.genIntIniB());
 
-        usingnamespace if (comptime @hasDecl(target_impl, "ExportInhIniB"))
-                           target_impl.ExportInhIniB(cfg_data.genInhIniB())
-                       else interrupt.ExportInhIniB(cfg_data.genInhIniB());
+        usingnamespace if (@hasDecl(target_impl.mpcore_kernel_impl.core_kernel_impl, "ExportInhIniB"))
+            target_impl.mpcore_kernel_impl.core_kernel_impl.ExportInhIniB(cfg_data.genInhIniB())
+        else
+            interrupt.ExportInhIniB(cfg_data.genInhIniB());
 
         // CPU例外に関するコンフィギュレーションデータの生成
-        usingnamespace if (comptime @hasDecl(target_impl, "ExportExcIniB"))
-                           target_impl.ExportExcIniB(cfg_data.genExcIniB())
-                       else exception.ExportExcIniB(cfg_data.genExcIniB());
+        usingnamespace if (@hasDecl(target_impl.mpcore_kernel_impl.core_kernel_impl, "ExportExcIniB"))
+            target_impl.mpcore_kernel_impl.core_kernel_impl.ExportExcIniB(cfg_data.genExcIniB())
+        else
+            exception.ExportExcIniB(cfg_data.genExcIniB());
 
         // 非タスクコンテキスト用のスタック領域に関するコンフィギュレー
         // ションデータの生成
-        const dics = if (comptime cfg_data.p_ics) |ics| ics.dics
-            else T_DICS{ .istksz = target_impl.DEFAULT_ISTKSZ, .istk = null, };
+        const dics = if (cfg_data.p_ics) |ics| ics.dics else T_DICS{
+            .istksz = target_impl.DEFAULT_ISTKSZ,
+            .istk = null,
+        };
         usingnamespace startup.ExportIcs(dics);
 
         // 初期化ルーチンに関するコンフィギュレーションデータの生成
@@ -807,10 +875,8 @@ pub fn GenCfgData(comptime cfg_data: *CfgData) type {
         usingnamespace startup.ExportTerRtnB(cfg_data.genTerRtnB());
 
         // タイムイベントヒープの生成
-        const tnum_tmevt = cfg_data.tsk_list.length
-                         + cfg_data.cyc_list.length + cfg_data.alm_list.length;
-        pub export var _kernel_tmevt_heap: [tnum_tmevt]*time_event.TMEVTB
-                                                                = undefined;
+        const tnum_tmevt = cfg_data.tsk_list.length + cfg_data.cyc_list.length + cfg_data.alm_list.length;
+        pub export var _kernel_tmevt_heap: [tnum_tmevt]*time_event.TMEVTB = undefined;
 
         // オブジェクトの初期化関数の生成
         pub export fn _kernel_initialize_object() void {

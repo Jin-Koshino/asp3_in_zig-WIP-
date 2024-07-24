@@ -1,7 +1,6 @@
 ///
 ///  コンフィギュレーションオプションのターゲット依存部（GR-PEACH用）
 ///
-
 ///
 ///  コンパイルオプションによるマクロ定義の取り込み
 ///
@@ -13,7 +12,7 @@ pub const TOPPERS_OMIT_DATA_INIT = @hasDecl(opt, "TOPPERS_OMIT_DATA_INIT");
 ///
 ///  コア依存部（チップ依存部は飛ばす）
 ///
-usingnamespace @import("../../arch/arm_gcc/common/core_option.zig");
+const core_option = @import("../../arch/arm_gcc/common/core_option.zig");
 
 ///
 ///  ターゲットのハードウェア資源の定義
@@ -56,7 +55,7 @@ pub const RZA1_CLK_P1 = gr_peach.RZA1_CLK_P1;
 ///  サンプルプログラム／テストプログラムのための定義
 ///
 pub const _test = struct {
-    usingnamespace @import("../../include/kernel.zig");
+    const zig = @import("../../include/kernel.zig");
 
     // コアで共通な定義の取り込み
     usingnamespace core_test;
@@ -65,5 +64,7 @@ pub const _test = struct {
     pub const INTNO1 = rza1.INTNO_IRQ5;
     pub const INTNO1_INTATR = TA_ENAINT | TA_EDGE;
     pub const INTNO1_INTPRI = -15;
-    pub fn intno1_clear() void { rza1.clear_irq(rza1.INTNO_IRQ5); }
+    pub fn intno1_clear() void {
+        rza1.clear_irq(rza1.INTNO_IRQ5);
+    }
 };

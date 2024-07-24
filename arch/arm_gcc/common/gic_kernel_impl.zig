@@ -37,11 +37,29 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  カーネルの割込みコントローラ依存部（GIC用）
 ///
-usingnamespace @import("../../../kernel/kernel_impl.zig");
+const kernel_impl = @import("../../../kernel/kernel_impl.zig");
+
+////
+const zig = kernel_impl.zig;
+const t_stddef = zig.t_stddef;
+
+const option = kernel_impl.option;
+const isTrue = kernel_impl.isTrue;
+const target_impl = kernel_impl.target_impl;
+const TMAX_INTPRI = zig.TMAX_INTPRI;
+const TMIN_INTPRI = zig.TMIN_INTPRI;
+const PRI = t_stddef.PRI;
+const sil = kernel_impl.sil;
+const INTNO = zig.INTNO;
+const cfg = kernel_impl.cfg;
+const ATR = t_stddef.ATR;
+const assert = t_stddef.assert;
+const TA_EDGE = zig.TA_EDGE;
+const TA_ENAINT = zig.TA_ENAINT;
+////
 
 ///
 ///  コンフィギュレーションオプションの取り込み
@@ -49,8 +67,7 @@ usingnamespace @import("../../../kernel/kernel_impl.zig");
 const GIC_TNUM_INTNO = option.target.GIC_TNUM_INTNO;
 const GICC_BASE = option.target.GICC_BASE;
 const GICD_BASE = option.target.GICD_BASE;
-const GIC_SUPPORT_DISABLE_SGI = isTrue(option.target,
-                                       "GIC_SUPPORT_DISABLE_SGI");
+const GIC_SUPPORT_DISABLE_SGI = isTrue(option.target, "GIC_SUPPORT_DISABLE_SGI");
 const GIC_ARM11MPCORE = isTrue(option.target, "GIC_ARM11MPCORE");
 
 ///
@@ -67,7 +84,7 @@ const arm = @import("arm.zig");
 //  ARMバージョンのチェック
 //
 comptime {
-    if (comptime !arm.isEnabled(arm.Feature.has_v6)) {
+    if (!arm.isEnabled(arm.Feature.has_v6)) {
         @compileError("gic_kernel_impl.zig supports ARMv6 or later.");
     }
 }
@@ -189,7 +206,7 @@ fn GICD_SPENDSGIR(n: c_uint) *u32 {
 ///  ディストリビュータ制御レジスタ（GICD_CTLR）の設定値
 ///
 const GICD_CTLR_DISABLE = 0x00;
-const GICD_CTLR_ENABLE  = 0x01;
+const GICD_CTLR_ENABLE = 0x01;
 
 ///
 ///  割込みコンフィギュレーションレジスタ（GICD_ICFGRn）の設定値
@@ -198,24 +215,23 @@ const GICD_CTLR_ENABLE  = 0x01;
 ///  知先プロセッサを設定するために使用されている．
 ///
 pub const GICD_ICFGRn_LEVEL = 0x00;
-pub const GICD_ICFGRn_EDGE  = 0x02;
-pub const GICD_ICFGRn_N_N   = if (GIC_ARM11MPCORE) 0x00 else @compileError("");
-pub const GICD_ICFGRn_1_N   = if (GIC_ARM11MPCORE) 0x01 else @compileError("");
+pub const GICD_ICFGRn_EDGE = 0x02;
+pub const GICD_ICFGRn_N_N = if (GIC_ARM11MPCORE) 0x00 else @compileError("");
+pub const GICD_ICFGRn_1_N = if (GIC_ARM11MPCORE) 0x01 else @compileError("");
 
 ///
 ///  CPUインタフェースの操作
 ///
-
 ///
 ///  割込み優先度マスクを設定（priは内部表現）
-/// 
+///
 fn gicc_set_priority(pri: u32) void {
     sil.swrw_mem(GICC_PMR, pri);
 }
 
 ///
 ///  割込み優先度マスクを取得（内部表現で返す）
-/// 
+///
 fn gicc_get_priority() u32 {
     return sil.rew_mem(GICC_PMR);
 }
@@ -250,37 +266,32 @@ pub fn gicc_terminate() void {
 ///
 ///  ディストリビュータの操作
 ///
-
 ///
 ///  割込み禁止（割込みイネーブルのクリア）
 ///
 fn gicd_disable_int(intno: INTNO) void {
-    sil.swrw_mem(GICD_ICENABLER(intno / 32),
-                 @as(u32, 1) << @intCast(u5, intno % 32));
+    sil.swrw_mem(GICD_ICENABLER(intno / 32), @as(u32, 1) << @intCast(u5, intno % 32));
 }
 
 ///
 ///  割込み許可（割込みイネーブルのセット）
 ///
 fn gicd_enable_int(intno: INTNO) void {
-    sil.swrw_mem(GICD_ISENABLER(intno / 32),
-                 @as(u32, 1) << @intCast(u5, intno % 32));
+    sil.swrw_mem(GICD_ISENABLER(intno / 32), @as(u32, 1) << @intCast(u5, intno % 32));
 }
 
 ///
 ///  割込みペンディングのクリア
 ///
 fn gicd_clear_pending(intno: INTNO) void {
-    sil.swrw_mem(GICD_ICPENDR(intno / 32),
-                 @as(u32, 1) << @intCast(u5, intno % 32));
+    sil.swrw_mem(GICD_ICPENDR(intno / 32), @as(u32, 1) << @intCast(u5, intno % 32));
 }
 
 ///
 ///  割込みペンディングのセット
 ///
 fn gicd_set_pending(intno: INTNO) void {
-    sil.swrw_mem(GICD_ISPENDR(intno / 32),
-                 @as(u32, 1) << @intCast(u5, intno % 32));
+    sil.swrw_mem(GICD_ISPENDR(intno / 32), @as(u32, 1) << @intCast(u5, intno % 32));
 }
 
 ///
@@ -288,7 +299,7 @@ fn gicd_set_pending(intno: INTNO) void {
 ///
 fn gicd_probe_pending(intno: INTNO) bool {
     return (sil.rew_mem(GICD_ISPENDR(intno / 32)) &
-                @as(u32, 1) << @intCast(u5, intno % 32)) != 0;
+        @as(u32, 1) << @intCast(u5, intno % 32)) != 0;
 }
 
 ///
@@ -378,8 +389,7 @@ pub fn gicd_initialize() void {
     while (i < (GIC_TNUM_INTNO + 15) / 16) : (i += 1) {
         if (GIC_ARM11MPCORE) {
             sil.wrw_mem(GICD_ICFGR(i), 0x55555555);
-        }
-        else {
+        } else {
             sil.wrw_mem(GICD_ICFGR(i), 0x00000000);
         }
     }
@@ -420,7 +430,6 @@ pub const USE_INTCFG_TABLE = true;
 ///
 ///  ターゲット非依存部に提供する関数
 ///
-
 ///
 ///  割込み属性の設定のチェック
 ///
@@ -448,8 +457,7 @@ pub fn getIpm() PRI {
 pub fn validIntnoDisInt(intno: INTNO) bool {
     if (GIC_SUPPORT_DISABLE_SGI) {
         return validIntno(intno);
-    }
-    else {
+    } else {
         return GIC_INTNO_PPI0 <= intno and intno <= GIC_TMAX_INTNO;
     }
 }
@@ -461,7 +469,7 @@ pub fn disableInt(intno: INTNO) void {
     gicd_disable_int(intno);
 }
 
-/// 
+///
 ///  割込み要求禁止フラグのクリア
 ///
 pub fn enableInt(intno: INTNO) void {
@@ -479,6 +487,7 @@ pub fn validIntnoClrInt(intno: INTNO) bool {
 ///  割込み要求がクリアできる状態か？
 ///
 pub fn checkIntnoClear(intno: INTNO) bool {
+    _ = intno;
     return true;
 }
 
@@ -493,6 +502,7 @@ pub fn clearInt(intno: INTNO) void {
 ///  割込みが要求できる状態か？
 ///
 pub fn checkIntnoRaise(intno: INTNO) bool {
+    _ = intno;
     return true;
 }
 
@@ -502,8 +512,7 @@ pub fn checkIntnoRaise(intno: INTNO) bool {
 pub fn raiseInt(intno: INTNO) void {
     if (intno < GIC_INTNO_PPI0) {
         gicd_raise_sgi(intno);
-    }
-    else {
+    } else {
         gicd_set_pending(intno);
     }
 }
@@ -535,18 +544,15 @@ fn config_int(intno: INTNO, intatr: ATR, intpri: PRI) void {
     // 割込みをコンフィギュレーション
     if ((intatr & TA_EDGE) != 0) {
         if (GIC_ARM11MPCORE) {
-            gicd_config(intno, GICD_ICFGRn_EDGE|GICD_ICFGRn_1_N);
-        }
-        else {
+            gicd_config(intno, GICD_ICFGRn_EDGE | GICD_ICFGRn_1_N);
+        } else {
             gicd_config(intno, GICD_ICFGRn_EDGE);
         }
         clearInt(intno);
-    }
-    else {
+    } else {
         if (GIC_ARM11MPCORE) {
-            gicd_config(intno, GICD_ICFGRn_LEVEL|GICD_ICFGRn_1_N);
-        }
-        else {
+            gicd_config(intno, GICD_ICFGRn_LEVEL | GICD_ICFGRn_1_N);
+        } else {
             gicd_config(intno, GICD_ICFGRn_LEVEL);
         }
     }
@@ -569,71 +575,76 @@ fn config_int(intno: INTNO, intatr: ATR, intpri: PRI) void {
 //
 pub fn irc_begin_int() callconv(.Naked) void {
     // r1をGICC_BASEに設定する
-    asm volatile("" :: [gicc_base] "{r1}" (@as(u32, GICC_BASE)));
-    if (GIC_PL390_ERRATA) {         // GIC 390 Errata 801120への対策
+    asm volatile (""
+        :
+        : [gicc_base] "{r1}" (@as(u32, GICC_BASE)),
+    );
+    if (GIC_PL390_ERRATA) { // GIC 390 Errata 801120への対策
         // r2をGICD_BASEに設定する
-        asm volatile("" :: [gicd_base] "{r2}" (@as(u32, GICD_BASE)));
+        asm volatile (""
+            :
+            : [gicd_base] "{r2}" (@as(u32, GICD_BASE)),
+        );
     }
 
     // 割込み要因を取得する．
-    if (GIC_PL390_ERRATA) {         // GIC 390 Errata 801120への対策
-        asm volatile(
-         \\  ldr r0, [r1, %[offset_hppir]]
-         :
-         : [offset_hppir] "i" (@ptrToInt(GICC_HPPIR) - GICC_BASE),
+    if (GIC_PL390_ERRATA) { // GIC 390 Errata 801120への対策
+        asm volatile (
+            \\  ldr r0, [r1, %[offset_hppir]]
+            :
+            : [offset_hppir] "i" (@ptrToInt(GICC_HPPIR) - GICC_BASE),
         );
     }
-    asm volatile(
-     \\  ldr r3, [r1, %[offset_iar]]
-     \\  lsl r4, r3, #22            // 下位10ビットを取り出す
-     \\  lsr r4, r4, #22
-     :
-     : [offset_iar] "i" (@ptrToInt(GICC_IAR) - GICC_BASE),
+    asm volatile (
+        \\  ldr r3, [r1, %[offset_iar]]
+        \\  lsl r4, r3, #22            // 下位10ビットを取り出す
+        \\  lsr r4, r4, #22
+        :
+        : [offset_iar] "i" (@ptrToInt(GICC_IAR) - GICC_BASE),
     );
-    if (GIC_PL390_ERRATA) {         // GIC 390 Errata 801120への対策
-        asm volatile(
-         \\  movw r0, #1023
-         \\  cmp r4, r0
-         \\  beq .Lirc_begin_int_errata_1
-         \\  movw r0, #1022
-         \\  cmp r4, r0
-         \\  beq .Lirc_begin_int_errata_1
-         \\  cmp r3, #0
-         \\  bne .Lirc_begin_int_errata_2
-         \\  ldr r0, [r2, %[offset_isactiver0]]
-         \\  tst r0, #0x01          // 割込み要求があるかチェック
-         \\  movweq r4, #1024       // 無効な割込みとみなす
-         \\ .Lirc_begin_int_errata_1:
-         \\ // 割込み優先度レジスタ0に書き込み
-         \\  ldr r0, [r2, %[offset_ipriorityr0]]
-         \\  str r0, [r2, %[offset_ipriorityr0]]
+    if (GIC_PL390_ERRATA) { // GIC 390 Errata 801120への対策
+        asm volatile (
+            \\  movw r0, #1023
+            \\  cmp r4, r0
+            \\  beq .Lirc_begin_int_errata_1
+            \\  movw r0, #1022
+            \\  cmp r4, r0
+            \\  beq .Lirc_begin_int_errata_1
+            \\  cmp r3, #0
+            \\  bne .Lirc_begin_int_errata_2
+            \\  ldr r0, [r2, %[offset_isactiver0]]
+            \\  tst r0, #0x01          // 割込み要求があるかチェック
+            \\  movweq r4, #1024       // 無効な割込みとみなす
+            \\ .Lirc_begin_int_errata_1:
+            \\ // 割込み優先度レジスタ0に書き込み
+            \\  ldr r0, [r2, %[offset_ipriorityr0]]
+            \\  str r0, [r2, %[offset_ipriorityr0]]
             ++ "\n" ++
-            arm.asm_data_sync_barrier("r0")
-            ++ "\n" ++
-         \\ .Lirc_begin_int_errata_2:
-         :
-         : [offset_isactiver0] "i" (@ptrToInt(GICD_ISACTIVER(0)) - GICD_BASE),
-           [offset_ipriorityr0] "i" (@ptrToInt(GICD_IPRIORITYR(0)) - GICD_BASE),
+                arm.asm_data_sync_barrier("r0") ++ "\n" ++
+                \\ .Lirc_begin_int_errata_2:
+            :
+            : [offset_isactiver0] "i" (@ptrToInt(GICD_ISACTIVER(0)) - GICD_BASE),
+              [offset_ipriorityr0] "i" (@ptrToInt(GICD_IPRIORITYR(0)) - GICD_BASE),
         );
     }
-    asm volatile(
-     \\ // 割込み要因の割込み優先度を求め，割込み優先度マスクに設定する．
-     \\  ldr r0, [r1, %[offset_rpr]]    // 受け付けた割込みの割込み優先度を取得
-     \\  ldr r2, [r1, %[offset_pmr]]    // 割込み発生前の割込み優先度を取得
-     \\  str r0, [r1, %[offset_pmr]]    // 新しい割込み優先度マスクをセットする
+    asm volatile (
+        \\ // 割込み要因の割込み優先度を求め，割込み優先度マスクに設定する．
+        \\  ldr r0, [r1, %[offset_rpr]]    // 受け付けた割込みの割込み優先度を取得
+        \\  ldr r2, [r1, %[offset_pmr]]    // 割込み発生前の割込み優先度を取得
+        \\  str r0, [r1, %[offset_pmr]]    // 新しい割込み優先度マスクをセットする
         ++ "\n" ++
-        arm.asm_data_sync_barrier("r0") // 割込み優先度マスクが
-        ++ "\n" ++                      //     セットされるのを待つ
-     \\  str r2, [sp]               // irc_end_intで用いる情報を保存
-     \\ // EOIを発行する．
-     \\  str r3, [r1, %[offset_eoir]]
-     \\
-     \\ // r4に割込み番号を入れた状態でリターンする．
-     \\  bx lr
-     :
-     : [offset_pmr] "i" (@ptrToInt(GICC_PMR) - GICC_BASE),
-       [offset_eoir] "i" (@ptrToInt(GICC_EOIR) - GICC_BASE),
-       [offset_rpr] "i" (@ptrToInt(GICC_RPR) - GICC_BASE),
+            arm.asm_data_sync_barrier("r0") // 割込み優先度マスクが
+        ++ "\n" ++ //     セットされるのを待つ
+            \\  str r2, [sp]               // irc_end_intで用いる情報を保存
+            \\ // EOIを発行する．
+            \\  str r3, [r1, %[offset_eoir]]
+            \\
+            \\ // r4に割込み番号を入れた状態でリターンする．
+            \\  bx lr
+        :
+        : [offset_pmr] "i" (@ptrToInt(GICC_PMR) - GICC_BASE),
+          [offset_eoir] "i" (@ptrToInt(GICC_EOIR) - GICC_BASE),
+          [offset_rpr] "i" (@ptrToInt(GICC_RPR) - GICC_BASE),
     );
     unreachable;
 }
@@ -642,13 +653,13 @@ pub fn irc_begin_int() callconv(.Naked) void {
 //  割込みハンドラ呼出し後の割込みコントローラ操作
 //
 pub fn irc_end_int() callconv(.Naked) void {
-    asm volatile(
-     \\ // 割込み優先度マスクを元に戻す．
-     \\  ldr r2, [sp]           // irc_begin_intで保存した情報を復帰
-     \\  str r2, [r1]           // 割込み優先度マスク（GICC_PMR）を元に戻す
-     \\  bx lr
-     :
-     : [gicc_pmr] "{r1}" (@ptrToInt(GICC_PMR)),
+    asm volatile (
+        \\ // 割込み優先度マスクを元に戻す．
+        \\  ldr r2, [sp]           // irc_begin_intで保存した情報を復帰
+        \\  str r2, [r1]           // 割込み優先度マスク（GICC_PMR）を元に戻す
+        \\  bx lr
+        :
+        : [gicc_pmr] "{r1}" (@ptrToInt(GICC_PMR)),
     );
     unreachable;
 }
@@ -660,16 +671,16 @@ pub fn irc_end_int() callconv(.Naked) void {
 //  度を返す．
 //
 pub fn irc_get_intpri() callconv(.Naked) void {
-    asm volatile(
-     \\ // 割込み優先度マスクを外部表現に変換して返す．
-     \\  ldr r0, [r1]           // 現在の割込み優先度（GICC_PMR）を取得
-     \\  asr r0, r0, %[gic_pri_shift]
-     \\  sub r0, r0, %[gic_pri_mask]
-     \\  bx lr
-     :
-     : [gic_pri_shift] "n" (@as(u32, GIC_PRI_SHIFT)),
-       [gic_pri_mask] "n" (@as(u32, GIC_PRI_MASK)),
-       [gicc_pmr] "{r1}" (@ptrToInt(GICC_PMR)),
+    asm volatile (
+        \\ // 割込み優先度マスクを外部表現に変換して返す．
+        \\  ldr r0, [r1]           // 現在の割込み優先度（GICC_PMR）を取得
+        \\  asr r0, r0, %[gic_pri_shift]
+        \\  sub r0, r0, %[gic_pri_mask]
+        \\  bx lr
+        :
+        : [gic_pri_shift] "n" (@as(u32, GIC_PRI_SHIFT)),
+          [gic_pri_mask] "n" (@as(u32, GIC_PRI_MASK)),
+          [gicc_pmr] "{r1}" (@ptrToInt(GICC_PMR)),
     );
     unreachable;
 }
@@ -681,14 +692,14 @@ pub fn irc_get_intpri() callconv(.Naked) void {
 //  スタックの先頭に保存する．
 //
 pub fn irc_begin_exc() callconv(.Naked) void {
-    asm volatile(
-     \\ irc_begin_exc:
-     \\ // 割込み優先度マスクを保存する．
-     \\  ldr r2, [r1]           // 現在の割込み優先度（GICC_PMR）を取得
-     \\  str r2, [sp]           // irc_end_excで用いる情報を保存
-     \\  bx lr
-     :
-     : [gicc_pmr] "{r1}" (@ptrToInt(GICC_PMR)),
+    asm volatile (
+        \\ irc_begin_exc:
+        \\ // 割込み優先度マスクを保存する．
+        \\  ldr r2, [r1]           // 現在の割込み優先度（GICC_PMR）を取得
+        \\  str r2, [sp]           // irc_end_excで用いる情報を保存
+        \\  bx lr
+        :
+        : [gicc_pmr] "{r1}" (@ptrToInt(GICC_PMR)),
     );
     unreachable;
 }
@@ -697,13 +708,13 @@ pub fn irc_begin_exc() callconv(.Naked) void {
 //  CPU例外ハンドラ呼出し後の割込みコントローラ操作
 //
 pub fn irc_end_exc() callconv(.Naked) void {
-    asm volatile(
-     \\ // 割込み優先度マスクを元に戻す．
-     \\  ldr r2, [sp]           // irc_begin_excで保存した情報を復帰
-     \\  str r2, [r1]           // 割込み優先度マスク（GICC_PMR）を元に戻す
-     \\  bx lr
-     :
-     : [gicc_pmr] "{r1}" (@ptrToInt(GICC_PMR)),
+    asm volatile (
+        \\ // 割込み優先度マスクを元に戻す．
+        \\  ldr r2, [sp]           // irc_begin_excで保存した情報を復帰
+        \\  str r2, [r1]           // 割込み優先度マスク（GICC_PMR）を元に戻す
+        \\  bx lr
+        :
+        : [gicc_pmr] "{r1}" (@ptrToInt(GICC_PMR)),
     );
     unreachable;
 }

@@ -39,30 +39,65 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  アラーム通知機能
 ///
-usingnamespace @import("kernel_impl.zig");
-usingnamespace time_event;
-usingnamespace check;
+const kernel_impl = @import("kernel_impl.zig");
+///usingnamespace kernel_impl.time_event;
+const time_event = kernel_impl.time_event;
+///usingnamespace kernel_impl.check;
+const check = kernel_impl.check;
+
+////
+const zig = kernel_impl.zig;
+const t_stddef = zig.t_stddef;
+
+const ATR = t_stddef.ATR;
+const EXINF = t_stddef.EXINF;
+const NFYHDR = kernel_impl.NFYHDR;
+const TMEVTB = time_event.TMEVTB;
+const ID = t_stddef.ID;
+const TMIN_ALMID = kernel_impl.TMIN_ALMID;
+const cfg = kernel_impl.cfg;
+const ItronError = t_stddef.ItronError;
+const checkId = check.checkId;
+const RELTIM = t_stddef.RELTIM;
+const traceLog = kernel_impl.traceLog;
+const checkContextUnlock = check.checkContextUnlock;
+const checkParameter = check.checkParameter;
+const validRelativeTime = check.validRelativeTime;
+const target_impl = kernel_impl.target_impl;
+const tmevtb_dequeue = time_event.tmevtb_dequeue;
+const tmevtb_enqueue_reltim = time_event.tmevtb_enqueue_reltim;
+const T_RALM = zig.T_RALM;
+const checkContextTaskUnlock = check.checkContextTaskUnlock;
+const TALM_STA = zig.TALM_STA;
+const tmevt_lefttim = time_event.tmevt_lefttim;
+const TALM_STP = zig.TALM_STP;
+const T_CALM = zig.T_CALM;
+const checkValidAtr = check.checkValidAtr;
+const TA_NULL = t_stddef.TA_NULL;
+const notify = kernel_impl.notify;
+const exportCheck = kernel_impl.exportCheck;
+const option = kernel_impl.option;
+////
 
 ///
 ///  アラーム通知初期化ブロック
 ///
 pub const ALMINIB = struct {
-    almatr: ATR,                // アラーム通知属性
-    exinf: EXINF,               // 通知ハンドラの拡張情報
-    nfyhdr: NFYHDR,             // 通知ハンドラの起動番地
+    almatr: ATR, // アラーム通知属性
+    exinf: EXINF, // 通知ハンドラの拡張情報
+    nfyhdr: NFYHDR, // 通知ハンドラの起動番地
 };
 
 ///
 ///  アラーム通知管理ブロック
 ///
 pub const ALMCB = struct {
-    p_alminib: *const ALMINIB,  // 初期化ブロックへのポインタ
-    almsta: bool,               // アラーム通知の動作状態
-    tmevtb: TMEVTB,             // タイムイベントブロック
+    p_alminib: *const ALMINIB, // 初期化ブロックへのポインタ
+    almsta: bool, // アラーム通知の動作状態
+    tmevtb: TMEVTB, // タイムイベントブロック
 };
 
 ///
@@ -103,8 +138,7 @@ fn checkAndGetAlmCB(almid: ID) ItronError!*ALMCB {
 ///  アラーム通知機能の初期化
 ///
 pub fn initialize_alarm() void {
-    for (cfg._kernel_almcb_table[0 .. cfg._kernel_alminib_table.len])
-                                                        |*p_almcb, i| {
+    for (cfg._kernel_almcb_table[0..cfg._kernel_alminib_table.len]) |*p_almcb, i| {
         p_almcb.p_alminib = &cfg._kernel_alminib_table[i];
         p_almcb.almsta = false;
         p_almcb.tmevtb.callback = callAlarm;
@@ -117,43 +151,42 @@ pub fn initialize_alarm() void {
 ///
 pub fn sta_alm(almid: ID, almtim: RELTIM) ItronError!void {
     traceLog("staAlmEnter", .{ almid, almtim });
-    errdefer |err| traceLog("staAlmLeave", .{ err });
+    errdefer |err| traceLog("staAlmLeave", .{err});
     try checkContextUnlock();
     const p_almcb = try checkAndGetAlmCB(almid);
     try checkParameter(validRelativeTime(almtim));
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (p_almcb.almsta) {
             tmevtb_dequeue(&p_almcb.tmevtb);
-        }
-        else {
+        } else {
             p_almcb.almsta = true;
         }
         tmevtb_enqueue_reltim(&p_almcb.tmevtb, almtim);
     }
-    traceLog("staAlmLeave", .{ null });
+    traceLog("staAlmLeave", .{null});
 }
 
 ///
 ///  アラーム通知の動作停止
 ///
 pub fn stp_alm(almid: ID) ItronError!void {
-    traceLog("stpAlmEnter", .{ almid });
-    errdefer |err| traceLog("stpAlmLeave", .{ err });
+    traceLog("stpAlmEnter", .{almid});
+    errdefer |err| traceLog("stpAlmLeave", .{err});
     try checkContextUnlock();
     const p_almcb = try checkAndGetAlmCB(almid);
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (p_almcb.almsta) {
             p_almcb.almsta = false;
             tmevtb_dequeue(&p_almcb.tmevtb);
         }
     }
-    traceLog("stpAlmLeave", .{ null });
+    traceLog("stpAlmLeave", .{null});
 }
 
 ///
@@ -165,14 +198,13 @@ pub fn ref_alm(almid: ID, pk_ralm: *T_RALM) ItronError!void {
     try checkContextTaskUnlock();
     const p_almcb = try checkAndGetAlmCB(almid);
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (p_almcb.almsta) {
             pk_ralm.almstat = TALM_STA;
             pk_ralm.lefttim = tmevt_lefttim(&p_almcb.tmevtb);
-        }
-        else {
+        } else {
             pk_ralm.almstat = TALM_STP;
         }
     }
@@ -189,14 +221,14 @@ fn callAlarm(arg: usize) void {
     p_almcb.almsta = false;
 
     // 通知ハンドラを，CPUロック解除状態で呼び出す．
-    target_impl.unlockCpu();
+    target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
-    traceLog("alarmEnter", .{ p_almcb });
+    traceLog("alarmEnter", .{p_almcb});
     p_almcb.p_alminib.nfyhdr(p_almcb.p_alminib.exinf);
-    traceLog("alarmLeave", .{ p_almcb });
+    traceLog("alarmLeave", .{p_almcb});
 
-    if (!target_impl.senseLock()) {
-        target_impl.lockCpu();
+    if (!target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock()) {
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
     }
 }
 
@@ -209,9 +241,11 @@ pub fn cre_alm(comptime calm: T_CALM) ItronError!ALMINIB {
     try checkValidAtr(calm.almatr, TA_NULL);
 
     // アラーム通知初期化ブロックの生成
-    return ALMINIB{ .almatr = calm.almatr | notify.genFlag(calm.nfyinfo),
-                    .exinf = notify.genExinf(calm.nfyinfo),
-                    .nfyhdr = notify.genHandler(calm.nfyinfo), };
+    return ALMINIB{
+        .almatr = calm.almatr | notify.genFlag(calm.nfyinfo),
+        .exinf = notify.genExinf(calm.nfyinfo),
+        .nfyhdr = notify.genHandler(calm.nfyinfo),
+    };
 }
 
 ///
@@ -221,18 +255,19 @@ pub fn cre_alm(comptime calm: T_CALM) ItronError!ALMINIB {
 pub fn ExportAlmCfg(alminib_table: []ALMINIB) type {
     // チェック処理用の定義の生成
     exportCheck(@sizeOf(ALMINIB), "sizeof_ALMINIB");
-    exportCheck(@byteOffsetOf(ALMINIB, "almatr"), "offsetof_ALMINIB_almatr");
-    exportCheck(@byteOffsetOf(ALMINIB, "exinf"), "offsetof_ALMINIB_exinf");
-    exportCheck(@byteOffsetOf(ALMINIB, "nfyhdr"), "offsetof_ALMINIB_nfyhdr");
+    exportCheck(@offsetOf(ALMINIB, "almatr"), "offsetof_ALMINIB_almatr");
+    exportCheck(@offsetOf(ALMINIB, "exinf"), "offsetof_ALMINIB_exinf");
+    exportCheck(@offsetOf(ALMINIB, "nfyhdr"), "offsetof_ALMINIB_nfyhdr");
 
     const tnum_alm = alminib_table.len;
+    defer _ = tnum_alm;
     return struct {
         pub export const _kernel_alminib_table = alminib_table;
 
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする
-        pub export var _kernel_almcb_table:
-            [if (option.BIND_CFG == null or tnum_alm > 0) tnum_alm
-                 else 1]ALMCB = undefined;
+        pub export var _kernel_almcb_table: [
+            if (option.BIND_CFG == null or tnum_alm > 0) tnum_alm else 1
+        ]ALMCB = undefined;
     };
 }

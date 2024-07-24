@@ -4,9 +4,9 @@
 ///
 ///  $Id$
 ///
-usingnamespace @import("../kernel/kernel_cfg.zig");
+const kernel_cfg = @import("../kernel/kernel_cfg.zig");
 
-const tecs = @import("../" ++ TECSGENDIR ++ "/tecsgen_cfg.zig");
+const tecs = @import("../OBJ-ARM/gen/tecsgen_cfg.zig");
 
 usingnamespace @cImport({
     @cDefine("UINT_C(val)", "val");
@@ -15,8 +15,7 @@ usingnamespace @cImport({
 
 fn configuration(comptime cfg: *CfgData) void {
     tecs.configuration(cfg);
-    cfg.CRE_TSK("TASK1", CTSK(TA_ACT, 1, task1, MID_PRIORITY,
-                              STACK_SIZE, null));
+    cfg.CRE_TSK("TASK1", CTSK(TA_ACT, 1, task1, MID_PRIORITY, STACK_SIZE, null));
     cfg.CRE_ALM("ALM1", CALM(TA_NULL, NFY_TMEHDR(1, alarm1_handler)));
     cfg.CRE_ALM("ALM2", CALM(TA_NULL, NFY_TMEHDR(1, alarm2_handler)));
 }

@@ -39,11 +39,49 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  kernel_impl.zigのコア依存部（ARM用）
 ///
-usingnamespace @import("../../../kernel/kernel_impl.zig");
+const kernel_impl = @import("../../../kernel/kernel_impl.zig");
+
+////
+const zig = kernel_impl.zig;
+const t_stddef = zig.t_stddef;
+
+const option = kernel_impl.option;
+const task = kernel_impl.task;
+const traceLog = kernel_impl.traceLog;
+const INHNO = zig.INHNO;
+const EXCNO = zig.EXCNO;
+const TA_FPU = kernel_impl.zig.publish.TA_FPU;
+const TOPPERS_SUPPORT_OVRHDR = zig.TOPPERS_SUPPORT_OVRHDR;
+const overrun = kernel_impl.overrun;
+const target_impl = kernel_impl.target_impl;
+const task_term = kernel_impl.task_term;
+const startup = kernel_impl.startup;
+const cfg = kernel_impl.cfg;
+const interrupt = kernel_impl.interrupt;
+const exportCheck = kernel_impl.exportCheck;
+const INTHDR = zig.INTHDR;
+const isTrue = kernel_impl.isTrue;
+const TNUM_EXCNO = kernel_impl.zig.publish.TNUM_EXCNO;
+const EXCHDR = zig.EXCHDR;
+const T_EXCINF = kernel_impl.zig.publish.T_EXCINF;
+const exception = kernel_impl.exception;
+const EXCNO_IRQ = kernel_impl.zig.publish.EXCNO_IRQ;
+const PRI = t_stddef.PRI;
+const ptrAlignCast = kernel_impl.ptrAlignCast;
+const TIPM_ENAALL = zig.TIPM_ENAALL;
+const EXCNO_UNDEF = kernel_impl.zig.publish.EXCNO_UNDEF;
+const EXCNO_SVC = kernel_impl.zig.publish.EXCNO_SVC;
+const EXCNO_PABORT = kernel_impl.zig.publish.EXCNO_PABORT;
+const EXCNO_DABORT = kernel_impl.zig.publish.EXCNO_DABORT;
+const EXCNO_FATAL = kernel_impl.zig.publish.EXCNO_FATAL;
+const EXCNO_FIQ = kernel_impl.zig.publish.EXCNO_FIQ;
+const assert = t_stddef.assert;
+const syslog = kernel_impl.t_syslog.syslog;
+const LOG_EMERG = kernel_impl.t_syslog.LOG_EMERG;
+////
 
 ///
 ///  コンフィギュレーションオプションの取り込み
@@ -65,22 +103,22 @@ const TNUM_INTNO = option.target.TNUM_INTNO;
 ///  関数
 ///
 fn logDispatchEnter(p_tcb: *task.TCB) callconv(.C) void {
-    traceLog("dispatchEnter", .{ p_tcb });
+    traceLog("dispatchEnter", .{p_tcb});
 }
 fn logDispatchLeave(p_tcb: *task.TCB) callconv(.C) void {
-    traceLog("dispatchLeave", .{ p_tcb });
+    traceLog("dispatchLeave", .{p_tcb});
 }
 fn logInthdrEnter(inhno: INHNO) callconv(.C) void {
-    traceLog("inthdrEnter", .{ inhno });
+    traceLog("inthdrEnter", .{inhno});
 }
 fn logInthdrLeave(inhno: INHNO) callconv(.C) void {
-    traceLog("inthdrLeave", .{ inhno });
+    traceLog("inthdrLeave", .{inhno});
 }
 fn logExchdrEnter(excno: EXCNO) callconv(.C) void {
-    traceLog("exchdrEnter", .{ excno });
+    traceLog("exchdrEnter", .{excno});
 }
 fn logExchdrLeave(excno: EXCNO) callconv(.C) void {
-    traceLog("exchdrLeave", .{ excno });
+    traceLog("exchdrLeave", .{excno});
 }
 
 ///
@@ -96,17 +134,17 @@ pub const TARGET_TSKATR = if (USE_ARM_FPU) TA_FPU else 0;
 ///
 ///  エラーチェック方法の指定
 ///
-pub const CHECK_STKSZ_ALIGN = 8;        // スタックサイズのアライン単位
-pub const CHECK_USIZE_ALIGN = 4;        // usize型の変数のアライン単位
-pub const CHECK_USIZE_NONNULL = true;   // usize型の変数の非NULLチェック
-pub const CHECK_FUNC_ALIGN = 4;         // 関数のアライン単位
-pub const CHECK_FUNC_NONNULL = true;    // 関数の非NULLチェック
-pub const CHECK_STACK_ALIGN = 8;        // スタック領域のアライン単位
-pub const CHECK_STACK_NONNULL = true;   // スタック領域の非NULLチェック
-pub const CHECK_MPF_ALIGN = 4;          // 固定長メモリプール領域のアライン単位
-pub const CHECK_MPF_NONNULL = true;     // 固定長メモリプール領域の
-                                        //                   非NULLチェック
-pub const CHECK_MB_ALIGN = 4;           // 管理領域のアライン単位
+pub const CHECK_STKSZ_ALIGN = 8; // スタックサイズのアライン単位
+pub const CHECK_USIZE_ALIGN = 4; // usize型の変数のアライン単位
+pub const CHECK_USIZE_NONNULL = true; // usize型の変数の非NULLチェック
+pub const CHECK_FUNC_ALIGN = 4; // 関数のアライン単位
+pub const CHECK_FUNC_NONNULL = true; // 関数の非NULLチェック
+pub const CHECK_STACK_ALIGN = 8; // スタック領域のアライン単位
+pub const CHECK_STACK_NONNULL = true; // スタック領域の非NULLチェック
+pub const CHECK_MPF_ALIGN = 4; // 固定長メモリプール領域のアライン単位
+pub const CHECK_MPF_NONNULL = true; // 固定長メモリプール領域の
+//                   非NULLチェック
+pub const CHECK_MB_ALIGN = 4; // 管理領域のアライン単位
 
 ///
 ///  コンテキストの参照
@@ -118,11 +156,10 @@ pub const CHECK_MB_ALIGN = 4;           // 管理領域のアライン単位
 ///  が0の時にタスクコンテキスト，0より大きい場合に非タスクコンテキス
 ///  トであると判断する．
 ///
-
 ///
 ///  コンテキスト参照のための変数
 ///
-var excpt_nest_count: u32 = undefined;     // 例外ネストカウント
+var excpt_nest_count: u32 = undefined; // 例外ネストカウント
 
 ///
 ///  コンテキストの参照
@@ -164,10 +201,9 @@ const CPSR_INTLOCK = arm.CPSR_FIQ_IRQ_BIT;
 ///  CPUロック状態への遷移
 ///
 pub fn lockCpu() void {
-    if (comptime !arm.isEnabled(arm.Feature.has_v6)) {
+    if (!arm.isEnabled(arm.Feature.has_v6)) {
         arm.set_cpsr(arm.current_cpsr() | CPSR_CPULOCK);
-    }
-    else {
+    } else {
         arm.disable_irq();
     }
     // メモリ参照が，この関数を超えて最適化されることを抑止
@@ -185,11 +221,9 @@ pub const lockCpuDsp = lockCpu;
 pub fn unlockCpu() void {
     // メモリ参照が，この関数を超えて最適化されることを抑止
     arm.memory_changed();
-    if (comptime !arm.isEnabled(arm.Feature.has_v6)) {
-        arm.set_cpsr((arm.current_cpsr() & ~@as(u32, arm.CPSR_INT_MASK))
-                                                            | CPSR_UNLOCK);
-    }
-    else {
+    if (!arm.isEnabled(arm.Feature.has_v6)) {
+        arm.set_cpsr((arm.current_cpsr() & ~@as(u32, arm.CPSR_INT_MASK)) | CPSR_UNLOCK);
+    } else {
         arm.enable_irq();
     }
 }
@@ -220,8 +254,8 @@ pub const TOPPERS_ISTKPT = true;
 ///  タスクコンテキストブロック
 ///
 pub const TSKCTXB = struct {
-    sp: *u8,                            // スタックポインタ
-    pc: fn() callconv(.Naked) void,     // 実行再開番地
+    sp: *u8, // スタックポインタ
+    pc: fn () callconv(.Naked) void, // 実行再開番地
 };
 
 ///
@@ -242,7 +276,6 @@ fn stkpt(p_tinib: *const task.TINIB) *u8 {
 ///  6: _kernel_inh_table
 ///  7: _kernel_exc_table
 ///
-
 ///
 ///  最高優先順位タスクへのディスパッチ
 ///
@@ -252,52 +285,50 @@ fn stkpt(p_tinib: *const task.TINIB) *u8 {
 ///  出さなければならない．
 ///
 pub noinline fn dispatch() void {
-    if (comptime TOPPERS_SUPPORT_OVRHDR) {
+    if (TOPPERS_SUPPORT_OVRHDR) {
         overrun.overrun_stop();
     }
-    asm volatile(
-        (if (comptime USE_ARM_FPU)
-     \\  ldr r2, [r0,%[tcb_p_tinib]]    // p_runtsk.p_tinib → r2
-     \\  ldr r1, [r2,%[tinib_tskatr]]   // p_runtsk.p_tinib.tskatr → r1
-     \\  tst r1, %[ta_fpu]
-     \\  beq 1f
-     \\  vpush {d8-d15}                 // 非スクラッチFPUレジスタの保存
-     \\ 1:
-        else "") ++ "\n" ++
-     \\  str sp, [r0,%[tcb_sp]]         // スタックポインタを保存
-     \\  adr r1, dispatch_r
-     \\  str r1, [r0,%[tcb_pc]]         // 実行再開番地を保存
-     \\  b dispatcher                   // r0にはp_runtskが格納されている
-     \\
-     \\ dispatch_r:
+    asm volatile ((if (USE_ARM_FPU)
+            \\  ldr r2, [r0,%[tcb_p_tinib]]    // p_runtsk.p_tinib → r2
+            \\  ldr r1, [r2,%[tinib_tskatr]]   // p_runtsk.p_tinib.tskatr → r1
+            \\  tst r1, %[ta_fpu]
+            \\  beq 1f
+            \\  vpush {d8-d15}                 // 非スクラッチFPUレジスタの保存
+            \\ 1:
+        else
+            "") ++ "\n" ++
+            \\  str sp, [r0,%[tcb_sp]]         // スタックポインタを保存
+            \\  adr r1, dispatch_r
+            \\  str r1, [r0,%[tcb_pc]]         // 実行再開番地を保存
+            \\  b dispatcher                   // r0にはp_runtskが格納されている
+            \\
+            \\ dispatch_r:
         ++ "\n" ++
-        (if (comptime USE_ARM_FPU)
-     \\  ldr r2, [r4,%[tcb_p_tinib]]    // p_runtsk.p_tinib → r2
-     \\  ldr r1, [r2,%[tinib_tskatr]]   // p_runtsk.p_tinib.tskatr → r1
-     \\  tst r1, %[ta_fpu]
-     \\  vmrs r0, fpexc
-     \\  biceq r0, r0, %[fpexc_enable]
-     \\  orrne r0, r0, %[fpexc_enable]
-     \\  vmsr fpexc, r0                 // FPEXCを設定
-     \\  beq 1f
-     \\  vpop {d8-d15}                  // 非スクラッチFPUレジスタの復帰
-     \\ 1:
-        else "")
-     :
-     : [p_selftsk] "{r0}" (task.p_runtsk.?),
-       [tcb_p_tinib] "J" (@as(i16, @byteOffsetOf(task.TCB, "p_tinib"))),
-       [tinib_tskatr] "J" (@as(i16, @byteOffsetOf(task.TINIB, "tskatr"))),
-       [tcb_sp] "J" (@as(i16, @byteOffsetOf(task.TCB, "tskctxb")
-                             + @byteOffsetOf(TSKCTXB, "sp"))),
-       [tcb_pc] "J" (@as(i16, @byteOffsetOf(task.TCB, "tskctxb")
-                             + @byteOffsetOf(TSKCTXB, "pc"))),
-       [ta_fpu] "n" (@as(u32, TA_FPU)),
-       [fpexc_enable] "n" (@as(u32, arm.FPEXC_ENABLE)),
-       [dispatcher] "s" (dispatcher),
-     : "r0","r1","r2","r3","r4","r5","r6","r7",
-       "r8","r9","r10","r11","r12","lr","memory","cc"
+            (if (USE_ARM_FPU)
+            \\  ldr r2, [r4,%[tcb_p_tinib]]    // p_runtsk.p_tinib → r2
+            \\  ldr r1, [r2,%[tinib_tskatr]]   // p_runtsk.p_tinib.tskatr → r1
+            \\  tst r1, %[ta_fpu]
+            \\  vmrs r0, fpexc
+            \\  biceq r0, r0, %[fpexc_enable]
+            \\  orrne r0, r0, %[fpexc_enable]
+            \\  vmsr fpexc, r0                 // FPEXCを設定
+            \\  beq 1f
+            \\  vpop {d8-d15}                  // 非スクラッチFPUレジスタの復帰
+            \\ 1:
+        else
+            "")
+        :
+        : [p_selftsk] "{r0}" (task.p_runtsk.?),
+          [tcb_p_tinib] "J" (@as(i16, @offsetOf(task.TCB, "p_tinib"))),
+          [tinib_tskatr] "J" (@as(i16, @offsetOf(task.TINIB, "tskatr"))),
+          [tcb_sp] "J" (@as(i16, @offsetOf(task.TCB, "tskctxb") + @offsetOf(TSKCTXB, "sp"))),
+          [tcb_pc] "J" (@as(i16, @offsetOf(task.TCB, "tskctxb") + @offsetOf(TSKCTXB, "pc"))),
+          [ta_fpu] "n" (@as(u32, TA_FPU)),
+          [fpexc_enable] "n" (@as(u32, arm.FPEXC_ENABLE)),
+          [dispatcher] "s" (dispatcher),
+        : "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11", "r12", "lr", "memory", "cc"
     );
-    if (comptime TOPPERS_SUPPORT_OVRHDR) {
+    if (TOPPERS_SUPPORT_OVRHDR) {
         overrun.overrun_start();
     }
 }
@@ -330,11 +361,11 @@ pub fn startDispatch() noreturn {
     arm.set_cpsr(arm.CPSR_SVC_MODE | CPSR_CPULOCK);
 
     // IDが1のタスクのスタック領域に切り換え，ディスパッチャ本体へ．
-    asm volatile(
-     \\  b dispatcher_0
-     :
-     : [stkpt] "{sp}" (stkpt(task.getTIniB(1))),
-       [dispatcher] "s" (dispatcher),
+    asm volatile (
+        \\  b dispatcher_0
+        :
+        : [stkpt] "{sp}" (stkpt(task.getTIniB(1))),
+          [dispatcher] "s" (dispatcher),
     );
     unreachable;
 }
@@ -348,11 +379,11 @@ pub fn startDispatch() noreturn {
 ///
 pub fn exitAndDispatch() noreturn {
     // ディスパッチャ本体へ．
-    asm volatile(
-     \\  b dispatcher                   // r0にはp_runtskが格納されている
-     :
-     : [p_selftsk] "{r0}" (task.p_runtsk.?),
-       [dispatcher] "s" (dispatcher),
+    asm volatile (
+        \\  b dispatcher                   // r0にはp_runtskが格納されている
+        :
+        : [p_selftsk] "{r0}" (task.p_runtsk.?),
+          [dispatcher] "s" (dispatcher),
     );
     unreachable;
 }
@@ -361,65 +392,65 @@ pub fn exitAndDispatch() noreturn {
 //  ディスパッチャ本体
 //
 fn dispatcher() callconv(.Naked) void {
-    asm volatile(
-     \\ dispatcher:
+    asm volatile (
+        \\ dispatcher:
         ++ "\n" ++
-        (if (@hasDecl(option.log, "dispatchEnter"))
-     \\ // 【この時点のレジスタ状態】
-     \\ //  r0：p_runtsk（タスク切換え前）
-     \\  bl %[log_dsp_enter]
-        else "") ++ "\n" ++
-     \\
-     \\ dispatcher_0:
-     \\ // このルーチンは，タスクコンテキスト・CPUロック状態・割込
-     \\ // み優先度マスク全解除状態・ディスパッチ許可状態で呼び出さ
-     \\ // れる．実行再開番地へもこの状態のまま分岐する．
-     \\  ldr r0, 3f                     // p_schedtsk → r4 → p_runtsk
-     \\  ldr r4, [r0]
-     \\  ldr r1, 2f
-     \\  str r4, [r1]
-     \\  tst r4, r4                     // p_runtskがNULLならdispatcher_1へ
-     \\  beq dispatcher_1
-     \\  ldr sp, [r4,%[tcb_sp]]         // タスクスタックを復帰
-        ++ "\n" ++
-        (if (@hasDecl(option.log, "dispatchLeave"))
-     \\  mov r0, r4                     // p_runtskをパラメータに渡す
-     \\  bl %[log_dsp_leave]
-        else "") ++ "\n" ++
-     \\  ldr r0, [r4,%[tcb_pc]]         // 実行再開番地を復帰
-     \\  bx r0                          // p_runtskをr4に入れた状態で分岐する
-     \\
-     \\ // アイドル処理
-     \\ //
-     \\ // 割込みをすべて許可し，CPUロック解除状態にして割込みを待
-     \\ // つ．
-     \\ //
-     \\ // ターゲットによっては，省電力モード等に移行するため，標準
-     \\ // の方法と異なる手順が必要な場合がある．そのようなターゲッ
-     \\ // トでは，ターゲット依存部でCUSTOM_IDLEを定義すればよい．
-     \\ dispatcher_1:
-        ++ "\n" ++
-        (if (@hasDecl(target_impl, "CUSTOM_IDLE"))
-        target_impl.CUSTOM_IDLE
+            (if (@hasDecl(option.log, "dispatchEnter"))
+            \\ // 【この時点のレジスタ状態】
+            \\ //  r0：p_runtsk（タスク切換え前）
+            \\  bl %[log_dsp_enter]
         else
-     \\  msr cpsr_c, %[cpsr_svc_unlock] // 割込みを許可（スーパバイザモード）
+            "") ++ "\n" ++
+            \\
+            \\ dispatcher_0:
+            \\ // このルーチンは，タスクコンテキスト・CPUロック状態・割込
+            \\ // み優先度マスク全解除状態・ディスパッチ許可状態で呼び出さ
+            \\ // れる．実行再開番地へもこの状態のまま分岐する．
+            \\  ldr r0, 3f                     // p_schedtsk → r4 → p_runtsk
+            \\  ldr r4, [r0]
+            \\  ldr r1, 2f
+            \\  str r4, [r1]
+            \\  tst r4, r4                     // p_runtskがNULLならdispatcher_1へ
+            \\  beq dispatcher_1
+            \\  ldr sp, [r4,%[tcb_sp]]         // タスクスタックを復帰
+        ++ "\n" ++
+            (if (@hasDecl(option.log, "dispatchLeave"))
+            \\  mov r0, r4                     // p_runtskをパラメータに渡す
+            \\  bl %[log_dsp_leave]
+        else
+            "") ++ "\n" ++
+            \\  ldr r0, [r4,%[tcb_pc]]         // 実行再開番地を復帰
+            \\  bx r0                          // p_runtskをr4に入れた状態で分岐する
+            \\
+            \\ // アイドル処理
+            \\ //
+            \\ // 割込みをすべて許可し，CPUロック解除状態にして割込みを待
+            \\ // つ．
+            \\ //
+            \\ // ターゲットによっては，省電力モード等に移行するため，標準
+            \\ // の方法と異なる手順が必要な場合がある．そのようなターゲッ
+            \\ // トでは，ターゲット依存部でCUSTOM_IDLEを定義すればよい．
+            \\ dispatcher_1:
+        ++ "\n" ++
+            (if (@hasDecl(target_impl, "CUSTOM_IDLE"))
+            target_impl.CUSTOM_IDLE
+        else
+            \\  msr cpsr_c, %[cpsr_svc_unlock] // 割込みを許可（スーパバイザモード）
         ) ++ "\n" ++
-     \\  b dispatcher_1                 // 割込み待ち
-     \\
-     \\ 2:
-     \\  .long %[p_runtsk]
-     \\ 3:
-     \\  .long %[p_schedtsk]
-     :
-     : [tcb_sp] "J" (@as(i16, @byteOffsetOf(task.TCB, "tskctxb")
-                             + @byteOffsetOf(TSKCTXB, "sp"))),
-       [tcb_pc] "J" (@as(i16, @byteOffsetOf(task.TCB, "tskctxb")
-                             + @byteOffsetOf(TSKCTXB, "pc"))),
-       [cpsr_svc_unlock] "n" (@as(u32, arm.CPSR_SVC_MODE | CPSR_UNLOCK)),
-       [p_runtsk] "s" (&task.p_runtsk),
-       [p_schedtsk] "s" (&task.p_schedtsk),
-       [log_dsp_enter] "s" (logDispatchEnter),
-       [log_dsp_leave] "s" (logDispatchLeave),
+            \\  b dispatcher_1                 // 割込み待ち
+            \\
+            \\ 2:
+            \\  .long %[p_runtsk]
+            \\ 3:
+            \\  .long %[p_schedtsk]
+        :
+        : [tcb_sp] "J" (@as(i16, @offsetOf(task.TCB, "tskctxb") + @offsetOf(TSKCTXB, "sp"))),
+          [tcb_pc] "J" (@as(i16, @offsetOf(task.TCB, "tskctxb") + @offsetOf(TSKCTXB, "pc"))),
+          [cpsr_svc_unlock] "n" (@as(u32, arm.CPSR_SVC_MODE | CPSR_UNLOCK)),
+          [p_runtsk] "s" (&task.p_runtsk),
+          [p_schedtsk] "s" (&task.p_schedtsk),
+          [log_dsp_enter] "s" (logDispatchEnter),
+          [log_dsp_leave] "s" (logDispatchLeave),
     );
     unreachable;
 }
@@ -430,38 +461,39 @@ fn dispatcher() callconv(.Naked) void {
 fn start_r() callconv(.Naked) noreturn {
     // 【この時点のレジスタ状態】
     // r4：p_runtsk（タスク切換え後）
-    asm volatile(
-        (if (TOPPERS_SUPPORT_OVRHDR)
-     \\  bl %[overrun_start]
-        else "") ++ "\n" ++
-     \\  msr cpsr_c, %[cpsr_svc_unlock] // CPUロック解除状態に
-     \\  ldr lr, _ext_tsk               // タスク本体からの戻り番地を設定
-     \\  ldr r2, [r4,%[tcb_p_tinib]]    // p_runtsk.p_tinib → r2
+    asm volatile ((if (TOPPERS_SUPPORT_OVRHDR)
+            \\  bl %[overrun_start]
+        else
+            "") ++ "\n" ++
+            \\  msr cpsr_c, %[cpsr_svc_unlock] // CPUロック解除状態に
+            \\  ldr lr, _ext_tsk               // タスク本体からの戻り番地を設定
+            \\  ldr r2, [r4,%[tcb_p_tinib]]    // p_runtsk.p_tinib → r2
         ++ "\n" ++
-        (if (USE_ARM_FPU)
-     \\  ldr r1, [r2,%[tinib_tskatr]]   // p_runtsk.p_tinib.tskatr → r1
-     \\  tst r1, %[ta_fpu]
-     \\  vmrs r0, fpexc
-     \\  biceq r0, r0, %[fpexc_enable]
-     \\  orrne r0, r0, %[fpexc_enable]
-     \\  vmsr fpexc, r0                 // FPEXCを設定
-        else "") ++ "\n" ++
-     \\  ldr r0, [r2,%[tinib_exinf]]    // exinfをパラメータに
-     \\  ldr r1, [r2,%[tinib_task]]     // タスク起動番地にジャンプ
-     \\  bx r1
-     \\
-     \\ _ext_tsk:
-     \\  .long %[ext_tsk]
-     :
-     : [cpsr_svc_unlock] "n" (@as(u32, arm.CPSR_SVC_MODE | CPSR_UNLOCK)),
-       [ext_tsk] "s" (task_term.ext_tsk),
-       [overrun_start] "s" (overrun.overrun_start),
-       [tcb_p_tinib] "J" (@as(i16, @byteOffsetOf(task.TCB, "p_tinib"))),
-       [tinib_tskatr] "J" (@as(i16, @byteOffsetOf(task.TINIB, "tskatr"))),
-       [tinib_exinf] "J" (@as(i16, @byteOffsetOf(task.TINIB, "exinf"))),
-       [tinib_task] "J" (@as(i16, @byteOffsetOf(task.TINIB, "task"))),
-       [ta_fpu] "n" (@as(u32, TA_FPU)),
-       [fpexc_enable] "n" (@as(u32, arm.FPEXC_ENABLE)),
+            (if (USE_ARM_FPU)
+            \\  ldr r1, [r2,%[tinib_tskatr]]   // p_runtsk.p_tinib.tskatr → r1
+            \\  tst r1, %[ta_fpu]
+            \\  vmrs r0, fpexc
+            \\  biceq r0, r0, %[fpexc_enable]
+            \\  orrne r0, r0, %[fpexc_enable]
+            \\  vmsr fpexc, r0                 // FPEXCを設定
+        else
+            "") ++ "\n" ++
+            \\  ldr r0, [r2,%[tinib_exinf]]    // exinfをパラメータに
+            \\  ldr r1, [r2,%[tinib_task]]     // タスク起動番地にジャンプ
+            \\  bx r1
+            \\
+            \\ _ext_tsk:
+            \\  .long %[ext_tsk]
+        :
+        : [cpsr_svc_unlock] "n" (@as(u32, arm.CPSR_SVC_MODE | CPSR_UNLOCK)),
+          [ext_tsk] "s" (task_term.ext_tsk),
+          [overrun_start] "s" (overrun.overrun_start),
+          [tcb_p_tinib] "J" (@as(i16, @offsetOf(task.TCB, "p_tinib"))),
+          [tinib_tskatr] "J" (@as(i16, @offsetOf(task.TINIB, "tskatr"))),
+          [tinib_exinf] "J" (@as(i16, @offsetOf(task.TINIB, "exinf"))),
+          [tinib_task] "J" (@as(i16, @offsetOf(task.TINIB, "task"))),
+          [ta_fpu] "n" (@as(u32, TA_FPU)),
+          [fpexc_enable] "n" (@as(u32, arm.FPEXC_ENABLE)),
     );
     unreachable;
 }
@@ -478,16 +510,16 @@ pub fn callExitKernel() noreturn {
 
     // 非タスクコンテキスト用のスタック領域に切り換え，exit_kernelに分
     // 岐する．
-    asm volatile(
-     \\  ldr sp, 5f
-     \\  ldr sp, [sp]
-     \\  b %[exit_kernel]
-     \\
-     \\ 5:
-     \\  .long %[istkpt]
-     :
-     : [exit_kernel] "s" (startup.exitKernel),
-       [istkpt] "s" (&cfg._kernel_istkpt),
+    asm volatile (
+        \\  ldr sp, 5f
+        \\  ldr sp, [sp]
+        \\  b %[exit_kernel]
+        \\
+        \\ 5:
+        \\  .long %[istkpt]
+        :
+        : [exit_kernel] "s" (startup.exitKernel),
+          [istkpt] "s" (&cfg._kernel_istkpt),
     );
     unreachable;
 }
@@ -538,8 +570,7 @@ pub fn ExportInhIniB(inhinib_list: []interrupt.INHINIB) type {
     exportCheck(TNUM_INHNO, "TNUM_INHNO");
     exportCheck(@sizeOf(INTHDR), "sizeof_INTHDR");
 
-    comptime var inh_table = [1]INTHDR{ _kernel_default_int_handler }
-                                                        ** TNUM_INHNO;
+    comptime var inh_table = [1]INTHDR{_kernel_default_int_handler} ** TNUM_INHNO;
     for (inhinib_list) |inhinib| {
         inh_table[inhinib.inhno] = inhinib.inthdr;
     }
@@ -561,7 +592,7 @@ fn ExportIniB(intinib_list: []interrupt.INTINIB) type {
 
 // 割込み要求ライン設定テーブル
 fn ExportCfg(intinib_list: []interrupt.INTINIB) type {
-    comptime var intcfg_table = [1]bool{ false } ** TNUM_INTNO;
+    comptime var intcfg_table = [1]bool{false} ** TNUM_INTNO;
     for (intinib_list) |intinib| {
         intcfg_table[intinib.intno] = true;
     }
@@ -571,11 +602,16 @@ fn ExportCfg(intinib_list: []interrupt.INTINIB) type {
 }
 
 pub fn ExportIntIniB(intinib_list: []interrupt.INTINIB) type {
+    _ = intinib_list;
     return struct {
-        pub usingnamespace if (isTrue(target_impl, "USE_INTINIB_TABLE"))
-            ExportIniB(intinib_list) else struct {};
-        pub usingnamespace if (isTrue(target_impl, "USE_INTCFG_TABLE"))
-            ExportCfg(intinib_list) else struct {};
+        pub usingnamespace if (isTrue(target_impl.mpcore_kernel_impl.gic_kernel_impl, "USE_INTINIB_TABLE"))
+            ExportIniB(intinib_list)
+        else
+            struct {};
+        pub usingnamespace if (isTrue(target_impl.mpcore_kernel_impl.gic_kernel_impl, "USE_INTCFG_TABLE"))
+            ExportCfg(intinib_list)
+        else
+            struct {};
     };
 }
 
@@ -587,276 +623,283 @@ pub fn ExportIntIniB(intinib_list: []interrupt.INTINIB) type {
 //  割込みハンドラの出入口処理
 //
 fn irq_handler() callconv(.Naked) void {
-    asm volatile(
-     \\ irq_handler:
-     \\ // ここには，IRQモードで分岐してくる．
+    asm volatile (
+        \\ irq_handler:
+        \\ // ここには，IRQモードで分岐してくる．
         ++ "\n" ++
-        (if (comptime !arm.isEnabled(arm.Feature.has_v6))
-     \\ // スーパバイザモードに切り換え，スクラッチレジスタ＋αを保存する．
-     \\  msr cpsr_c, %[cpsr_svc_cpulock]
-     \\  push {r0-r5,r12,lr,pc}         // pcはスペース確保のため
-     \\
-     \\ // IRQモードに戻して，戻り番地（lr−4）と戻り先のcpsr（spsr）
-     \\ // を取得する．
-     \\  msr cpsr_c, %[cpsr_irq_cpulock]
-     \\  sub r2, lr, #4
-     \\  mrs r1, spsr
-     \\
-     \\ // スーパバイザモードに切り換え，戻り番地と戻り先のcpsrを保
-     \\ // 存する．
-     \\  msr cpsr_c, %[cpsr_svc_cpulock]
-     \\  str r2, [sp,#0x20]             // 戻り番地をスタックに保存（pcの場所）
-     \\  push {r1}                      // 戻り先のcpsrをスタックに保存
+            (if (!arm.isEnabled(arm.Feature.has_v6))
+            \\ // スーパバイザモードに切り換え，スクラッチレジスタ＋αを保存する．
+            \\  msr cpsr_c, %[cpsr_svc_cpulock]
+            \\  push {r0-r5,r12,lr,pc}         // pcはスペース確保のため
+            \\
+            \\ // IRQモードに戻して，戻り番地（lr−4）と戻り先のcpsr（spsr）
+            \\ // を取得する．
+            \\  msr cpsr_c, %[cpsr_irq_cpulock]
+            \\  sub r2, lr, #4
+            \\  mrs r1, spsr
+            \\
+            \\ // スーパバイザモードに切り換え，戻り番地と戻り先のcpsrを保
+            \\ // 存する．
+            \\  msr cpsr_c, %[cpsr_svc_cpulock]
+            \\  str r2, [sp,#0x20]             // 戻り番地をスタックに保存（pcの場所）
+            \\  push {r1}                      // 戻り先のcpsrをスタックに保存
         else
-     \\ // 戻り番地（lr）と戻り先のcpsr（spsr）をスーパバイザモード
-     \\ // のスタックに保存する．
-     \\  sub lr, lr, #4                 // 戻り番地の算出
-     \\  srsfd %[cpsr_svc]!
-     \\
-     \\ // スーパバイザモードに切り換え，スクラッチレジスタ＋αを保
-     \\ // 存する．
-     \\  cps %[cpsr_svc]
-     \\  push {r0-r5,r12,lr}
+            \\ // 戻り番地（lr）と戻り先のcpsr（spsr）をスーパバイザモード
+            \\ // のスタックに保存する．
+            \\  sub lr, lr, #4                 // 戻り番地の算出
+            \\  srsfd %[cpsr_svc]!
+            \\
+            \\ // スーパバイザモードに切り換え，スクラッチレジスタ＋αを保
+            \\ // 存する．
+            \\  cps %[cpsr_svc]
+            \\  push {r0-r5,r12,lr}
         ) ++ "\n" ++
-     \\
-     \\ // スタックポインタの調整
-     \\  and r1, sp, #4
-     \\  sub sp, sp, r1
-     \\  push {r0,r1}                   // スタックポインタの調整値を保存
-     \\                                 // r0はスペース確保のため
-     \\ // 例外ネストカウントをインクリメントする．割込みが非タスク
-     \\ // コンテキストで発生した場合には，irq_handler_1へ分岐する．
-     \\  ldr r2, 4f
-     \\  ldr r3, [r2]
-     \\  add r3, r3, #1
-     \\  str r3, [r2]
-     \\  teq r3, #1                     // 割込みが非タスクコンテキストで発生
-     \\  bne irq_handler_1              //            ならirq_handler_1に分岐
-     \\
+            \\
+            \\ // スタックポインタの調整
+            \\  and r1, sp, #4
+            \\  sub sp, sp, r1
+            \\  push {r0,r1}                   // スタックポインタの調整値を保存
+            \\                                 // r0はスペース確保のため
+            \\ // 例外ネストカウントをインクリメントする．割込みが非タスク
+            \\ // コンテキストで発生した場合には，irq_handler_1へ分岐する．
+            \\  ldr r2, 4f
+            \\  ldr r3, [r2]
+            \\  add r3, r3, #1
+            \\  str r3, [r2]
+            \\  teq r3, #1                     // 割込みが非タスクコンテキストで発生
+            \\  bne irq_handler_1              //            ならirq_handler_1に分岐
+            \\
         ++ "\n" ++
-        (if (TOPPERS_SUPPORT_OVRHDR)
-     \\  bl %[overrun_stop]
-        else "") ++ "\n" ++
-        (if (USE_ARM_FPU)
-     \\ // FPUをディスエーブルする．
-     \\  vmrs r0, fpexc
-     \\  str r0, [sp]                   // FPEXCを保存（r0の場所）*/
-     \\  bic r0, r0, %[fpexc_enable]
-     \\  vmsr fpexc, r0                 // FPEXCを設定
-        else "") ++ "\n" ++
-     \\
-     \\ // 非タスクコンテキスト用のスタックに切り換える．
-     \\  mov r3, sp                     // この時点のスタックポインタをr3に
-     \\  ldr r2, 5f                     // 非タスクコンテキスト用のスタックに
-     \\  ldr sp, [r2]
-     \\  push {r0,r3}                   // 切換え前のスタックポインタを保存
-     \\                                 // r0はスペース確保のため
-     \\ irq_handler_1:
-     \\ // 割込みコントローラを操作し，割込み番号を取得する．
-     \\ //
-     \\ // irc_begin_intは，スタックトップ（r0の場所）に，irc_end_int
-     \\ // で用いる情報を保存する．
-     \\  bl %[irc_begin_int]
-        ++ "\n" ++
-        (if (comptime TNUM_INHNO <= 256 or !arm.isEnabled(arm.Feature.has_v7))
-     \\  cmp r4, %[tnum_inhno]          // TNUM_INHNOの値によってはエラーになる
+            (if (TOPPERS_SUPPORT_OVRHDR)
+            \\  bl %[overrun_stop]
         else
-     \\  movw r3, %[tnum_inhno]
-     \\  cmp r4, r3
+            "") ++ "\n" ++
+            (if (USE_ARM_FPU)
+            \\ // FPUをディスエーブルする．
+            \\  vmrs r0, fpexc
+            \\  str r0, [sp]                   // FPEXCを保存（r0の場所）*/
+            \\  bic r0, r0, %[fpexc_enable]
+            \\  vmsr fpexc, r0                 // FPEXCを設定
+        else
+            "") ++ "\n" ++
+            \\
+            \\ // 非タスクコンテキスト用のスタックに切り換える．
+            \\  mov r3, sp                     // この時点のスタックポインタをr3に
+            \\  ldr r2, 5f                     // 非タスクコンテキスト用のスタックに
+            \\  ldr sp, [r2]
+            \\  push {r0,r3}                   // 切換え前のスタックポインタを保存
+            \\                                 // r0はスペース確保のため
+            \\ irq_handler_1:
+            \\ // 割込みコントローラを操作し，割込み番号を取得する．
+            \\ //
+            \\ // irc_begin_intは，スタックトップ（r0の場所）に，irc_end_int
+            \\ // で用いる情報を保存する．
+            \\  bl %[irc_begin_int]
+        ++ "\n" ++
+            (if (TNUM_INHNO <= 256 or !arm.isEnabled(arm.Feature.has_v7))
+            \\  cmp r4, %[tnum_inhno]          // TNUM_INHNOの値によってはエラーになる
+        else
+            \\  movw r3, %[tnum_inhno]
+            \\  cmp r4, r3
         ) ++ "\n" ++
-     \\  bhs irq_handler_2              // スプリアス割込みなら
-     \\                                 //  irq_handler_2に分岐
-     \\ // CPUロック解除状態にする．
+            \\  bhs irq_handler_2              // スプリアス割込みなら
+            \\                                 //  irq_handler_2に分岐
+            \\ // CPUロック解除状態にする．
         ++ "\n" ++
-        (if (comptime !arm.isEnabled(arm.Feature.has_v6))
-     \\  msr cpsr_c, %[cpsr_svc_unlock]
+            (if (!arm.isEnabled(arm.Feature.has_v6))
+            \\  msr cpsr_c, %[cpsr_svc_unlock]
         else
-     \\  cpsie if
+            \\  cpsie if
         ) ++ "\n" ++
-     \\
+            \\
         ++ "\n" ++
-        (if (@hasDecl(option.log, "inthdrEnter"))
-     \\ // ログ出力の呼出し
-     \\  mov r0, r4                     // 割込み番号をパラメータに渡す
-     \\  bl %[log_inh_enter]
-        else "") ++ "\n" ++
-     \\
-     \\ // 割込みハンドラの呼出し
-     \\  ldr r2, 6f                     // 割込みハンドラテーブルの読込み
-     \\  ldr r1, [r2,r4,lsl #2]         // 割込みハンドラの番地 → r1
-     \\  mov lr, pc                     // 割込みハンドラの呼出し
-     \\  bx r1
-     \\
-        ++ "\n" ++
-        (if (@hasDecl(option.log, "inthdrLeave"))
-     \\ // ログ出力の呼出し
-     \\  mov r0, r4                     // 割込み番号をパラメータに渡す
-     \\  bl %[log_inh_leave]
-        else "") ++ "\n" ++
-     \\
-     \\ // カーネル管理の割込みを禁止する．
-        ++ "\n" ++
-        (if (comptime !arm.isEnabled(arm.Feature.has_v6))
-     \\  msr cpsr_c, %[cpsr_svc_cpulock]
+            (if (@hasDecl(option.log, "inthdrEnter"))
+            \\ // ログ出力の呼出し
+            \\  mov r0, r4                     // 割込み番号をパラメータに渡す
+            \\  bl %[log_inh_enter]
         else
-     \\  cpsid i
+            "") ++ "\n" ++
+            \\
+            \\ // 割込みハンドラの呼出し
+            \\  ldr r2, 6f                     // 割込みハンドラテーブルの読込み
+            \\  ldr r1, [r2,r4,lsl #2]         // 割込みハンドラの番地 → r1
+            \\  mov lr, pc                     // 割込みハンドラの呼出し
+            \\  bx r1
+            \\
+        ++ "\n" ++
+            (if (@hasDecl(option.log, "inthdrLeave"))
+            \\ // ログ出力の呼出し
+            \\  mov r0, r4                     // 割込み番号をパラメータに渡す
+            \\  bl %[log_inh_leave]
+        else
+            "") ++ "\n" ++
+            \\
+            \\ // カーネル管理の割込みを禁止する．
+        ++ "\n" ++
+            (if (!arm.isEnabled(arm.Feature.has_v6))
+            \\  msr cpsr_c, %[cpsr_svc_cpulock]
+        else
+            \\  cpsid i
         ) ++ "\n" ++
-     \\
-     \\ // 割込みコントローラを操作する．
-     \\ irq_handler_2:
-     \\  bl %[irc_end_int]
-     \\
-     \\ // 例外ネストカウントをデクリメントする．
-     \\  ldr r2, 4f
-     \\  ldr r3, [r2]
-     \\  subs r3, r3, #1
-     \\  str r3, [r2]                   // 戻り先が非タスクコンテキストなら
-     \\  bne irq_handler_5              // irq_handler_5に分岐
-     \\
-     \\ // タスク用のスタックに戻す．
-     \\  pop {r0,r3}
-     \\  mov sp, r3
-     \\
+            \\
+            \\ // 割込みコントローラを操作する．
+            \\ irq_handler_2:
+            \\  bl %[irc_end_int]
+            \\
+            \\ // 例外ネストカウントをデクリメントする．
+            \\  ldr r2, 4f
+            \\  ldr r3, [r2]
+            \\  subs r3, r3, #1
+            \\  str r3, [r2]                   // 戻り先が非タスクコンテキストなら
+            \\  bne irq_handler_5              // irq_handler_5に分岐
+            \\
+            \\ // タスク用のスタックに戻す．
+            \\  pop {r0,r3}
+            \\  mov sp, r3
+            \\
         ++ "\n" ++
-        (if (USE_ARM_FPU)
-     \\ // FPUを元に戻す．
-     \\  ldr r0, [sp]                   // FPEXCを復帰
-     \\  vmsr fpexc, r0
-        else "") ++ "\n" ++
-     \\
-     \\ // p_runtskがNULLか判定する．
-     \\  ldr r0, 2f                     // p_runtsk → r0
-     \\  ldr r0, [r0]
-     \\  tst r0, r0                     // p_runtskがNULLでなければ
-     \\  bne irq_handler_3              // irq_handler_3に分岐
-     \\
-     \\ // タスクのスタックに保存したスクラッチレジスタ等を捨てる．
-     \\  pop {r0,r1}                    // スタックポインタの調整を元に戻す
-     \\  add sp, sp, r1
-     \\  add sp, sp, #40                // スクラッチレジスタ等を捨てる
-     \\  b dispatcher_0
-     \\
-     \\ // ディスパッチが必要か判定する．
-     \\ irq_handler_3:
-     \\ // 【この時点のレジスタ状態】
-     \\ //  r0：p_runtsk
-     \\  ldr r1, 3f                     // p_schedtsk → r1
-     \\  ldr r1, [r1]
-     \\  teq r0, r1                     // p_runtskとp_schedtskが同じなら
-     \\  beq irq_handler_4              //                irq_handler_4へ
-     \\
-     \\ // コンテキストを保存する．
-     \\  push {r6-r11}                  // 残りのレジスタの保存
-        ++ "\n" ++
-        (if (USE_ARM_FPU)
-     \\  ldr r2, [r0,%[tcb_p_tinib]]    // p_runtsk.p_tinib → r2
-     \\  ldr r1, [r2,%[tinib_tskatr]]   // p_runtsk.p_tinib.tskatr → r1
-     \\  tst r1, %[ta_fpu]
-     \\  beq 1f                         // TA_FPU属性でない場合は分岐
-        ++ "\n" ++
-        (if (USE_ARM_FPU_D32)
-     \\  vpush {d16-d31}
-        else "") ++ "\n" ++
-     \\  vpush {d0-d15}                 // 全FPUレジスタの保存
-     \\  vmrs r1, fpscr
-     \\  push {r1,r2}                   // FPSCRの保存
-     \\ 1:                              // r2はアラインメントのため
-        else "") ++ "\n" ++
-     \\  str sp, [r0,%[tcb_sp]]         // スタックポインタを保存
-     \\  adr r1, ret_int_r              // 実行再開番地を保存
-     \\  str r1, [r0,%[tcb_pc]]
-     \\  b dispatcher                   // r0にはp_runtskが格納されている
-     \\
-     \\ ret_int_r:
-     \\ // コンテキストを復帰する．
-     \\ //
-     \\ // 【この時点のレジスタ状態】
-     \\ //   r4：p_runtsk（タスク切換え後）
-        ++ "\n" ++
-        (if (USE_ARM_FPU)
-     \\  ldr r2, [r4,%[tcb_p_tinib]]    // p_runtsk.p_tinib → r2
-     \\  ldr r1, [r2,%[tinib_tskatr]]   // p_runtsk.p_tinib.tskatr → r1
-     \\  tst r1, %[ta_fpu]
-     \\  vmrs r0, fpexc
-     \\  biceq r0, r0, %[fpexc_enable]
-     \\  orrne r0, r0, %[fpexc_enable]
-     \\  vmsr fpexc, r0                 // FPEXCを設定
-     \\  beq 1f                         // TA_FPU属性でない場合は分岐
-     \\  pop {r1,r2}                    // FPSCRの復帰
-     \\  vmsr fpscr, r1
-     \\  vpop {d0-d15}                  // 全FPUレジスタの復帰
-        ++ "\n" ++
-        (if (USE_ARM_FPU_D32)
-     \\  vpop {d16-d31}
-        else "") ++ "\n" ++
-     \\ 1:
-        else "") ++ "\n" ++
-     \\  pop {r6-r11}                   // 残りのレジスタの復帰
-     \\
-     \\ irq_handler_4:
-        ++ "\n" ++
-        (if (TOPPERS_SUPPORT_OVRHDR)
-     \\  bl %[overrun_start]
-        else "") ++ "\n" ++
-     \\
-     \\ // 割込み処理からのリターン
-     \\ //
-     \\ // 割込み処理からのリターンにより，CPUロック解除状態に遷移
-     \\ // するようにする必要があるが，ARMはCPSRのビットによってCPU
-     \\ // ロック状態を表しているため，CPSRを元に戻してリターンすれ
-     \\ // ばよい．
-     \\ irq_handler_5:
-     \\  pop {r0,r1}                    // スタックポインタの調整を元に戻す
-     \\  add sp, sp, r1
-     \\
-        ++ "\n" ++
-        (if (comptime !arm.isEnabled(arm.Feature.has_v6))
-     \\  pop {r0}                       // 戻り先のcpsrをspsrに設定
-     \\  msr spsr_cxsf, r0
-     \\  ldmfd sp!, {r0-r5,r12,lr,pc}^  // コンテキストの復帰
-     \\                                 // ^付きなので，spsr → cpsr
+            (if (USE_ARM_FPU)
+            \\ // FPUを元に戻す．
+            \\  ldr r0, [sp]                   // FPEXCを復帰
+            \\  vmsr fpexc, r0
         else
-     \\  pop {r0-r5,r12,lr}             // スクラッチレジスタ＋αの復帰
-     \\  rfefd sp!
-        )
+            "") ++ "\n" ++
+            \\
+            \\ // p_runtskがNULLか判定する．
+            \\  ldr r0, 2f                     // p_runtsk → r0
+            \\  ldr r0, [r0]
+            \\  tst r0, r0                     // p_runtskがNULLでなければ
+            \\  bne irq_handler_3              // irq_handler_3に分岐
+            \\
+            \\ // タスクのスタックに保存したスクラッチレジスタ等を捨てる．
+            \\  pop {r0,r1}                    // スタックポインタの調整を元に戻す
+            \\  add sp, sp, r1
+            \\  add sp, sp, #40                // スクラッチレジスタ等を捨てる
+            \\  b dispatcher_0
+            \\
+            \\ // ディスパッチが必要か判定する．
+            \\ irq_handler_3:
+            \\ // 【この時点のレジスタ状態】
+            \\ //  r0：p_runtsk
+            \\  ldr r1, 3f                     // p_schedtsk → r1
+            \\  ldr r1, [r1]
+            \\  teq r0, r1                     // p_runtskとp_schedtskが同じなら
+            \\  beq irq_handler_4              //                irq_handler_4へ
+            \\
+            \\ // コンテキストを保存する．
+            \\  push {r6-r11}                  // 残りのレジスタの保存
         ++ "\n" ++
-     \\ 2:
-     \\  .long %[p_runtsk]
-     \\ 3:
-     \\  .long %[p_schedtsk]
-     \\ 4:
-     \\  .long %[excpt_nest_count]
-     \\ 5:
-     \\  .long %[istkpt]
-     \\ 6:
-     \\  .long %[inh_table]
-     :
-     : [cpsr_svc_cpulock] "n" (@as(u32, arm.CPSR_SVC_MODE | CPSR_CPULOCK)),
-       [cpsr_irq_cpulock] "n" (@as(u32, arm.CPSR_IRQ_MODE | CPSR_CPULOCK)),
-       [cpsr_svc_unlock] "n" (@as(u32, arm.CPSR_SVC_MODE | CPSR_UNLOCK)),
-       [cpsr_svc] "n" (@as(u32, arm.CPSR_SVC_MODE)),
-       [fpexc_enable] "n" (@as(u32, arm.FPEXC_ENABLE)),
-       [tnum_inhno] "n" (@as(u32, TNUM_INHNO)),
-       [tcb_p_tinib] "J" (@as(i16, @byteOffsetOf(task.TCB, "p_tinib"))),
-       [tinib_tskatr] "J" (@as(i16, @byteOffsetOf(task.TINIB, "tskatr"))),
-       [tcb_sp] "J" (@as(i16, @byteOffsetOf(task.TCB, "tskctxb")
-                             + @byteOffsetOf(TSKCTXB, "sp"))),
-       [tcb_pc] "J" (@as(i16, @byteOffsetOf(task.TCB, "tskctxb")
-                             + @byteOffsetOf(TSKCTXB, "pc"))),
-       [ta_fpu] "n" (@as(u32, TA_FPU)),
-       [fpexc_enable] "n" (@as(u32, arm.FPEXC_ENABLE)),
-       [excpt_nest_count] "s" (&excpt_nest_count),
-       [p_runtsk] "s" (&task.p_runtsk),
-       [p_schedtsk] "s" (&task.p_schedtsk),
-       [istkpt] "s" (&cfg._kernel_istkpt),
-       [inh_table] "s" (&cfg._kernel_inh_table),
-       [log_inh_enter] "s" (logInthdrEnter),
-       [log_inh_leave] "s" (logInthdrLeave),
-       [overrun_start] "s" (overrun.overrun_start),
-       [overrun_stop] "s" (overrun.overrun_stop),
-       [irc_begin_int] "s" (target_impl.irc_begin_int),
-       [irc_end_int] "s" (target_impl.irc_end_int),
-       [dispatcher] "s" (dispatcher),
+            (if (USE_ARM_FPU)
+            \\  ldr r2, [r0,%[tcb_p_tinib]]    // p_runtsk.p_tinib → r2
+            \\  ldr r1, [r2,%[tinib_tskatr]]   // p_runtsk.p_tinib.tskatr → r1
+            \\  tst r1, %[ta_fpu]
+            \\  beq 1f                         // TA_FPU属性でない場合は分岐
+            ++ "\n" ++
+                (if (USE_ARM_FPU_D32)
+                \\  vpush {d16-d31}
+            else
+                "") ++ "\n" ++
+                \\  vpush {d0-d15}                 // 全FPUレジスタの保存
+                \\  vmrs r1, fpscr
+                \\  push {r1,r2}                   // FPSCRの保存
+                \\ 1:                              // r2はアラインメントのため
+        else
+            "") ++ "\n" ++
+            \\  str sp, [r0,%[tcb_sp]]         // スタックポインタを保存
+            \\  adr r1, ret_int_r              // 実行再開番地を保存
+            \\  str r1, [r0,%[tcb_pc]]
+            \\  b dispatcher                   // r0にはp_runtskが格納されている
+            \\
+            \\ ret_int_r:
+            \\ // コンテキストを復帰する．
+            \\ //
+            \\ // 【この時点のレジスタ状態】
+            \\ //   r4：p_runtsk（タスク切換え後）
+        ++ "\n" ++
+            (if (USE_ARM_FPU)
+            \\  ldr r2, [r4,%[tcb_p_tinib]]    // p_runtsk.p_tinib → r2
+            \\  ldr r1, [r2,%[tinib_tskatr]]   // p_runtsk.p_tinib.tskatr → r1
+            \\  tst r1, %[ta_fpu]
+            \\  vmrs r0, fpexc
+            \\  biceq r0, r0, %[fpexc_enable]
+            \\  orrne r0, r0, %[fpexc_enable]
+            \\  vmsr fpexc, r0                 // FPEXCを設定
+            \\  beq 1f                         // TA_FPU属性でない場合は分岐
+            \\  pop {r1,r2}                    // FPSCRの復帰
+            \\  vmsr fpscr, r1
+            \\  vpop {d0-d15}                  // 全FPUレジスタの復帰
+            ++ "\n" ++
+                (if (USE_ARM_FPU_D32)
+                \\  vpop {d16-d31}
+            else
+                "") ++ "\n" ++
+                \\ 1:
+        else
+            "") ++ "\n" ++
+            \\  pop {r6-r11}                   // 残りのレジスタの復帰
+            \\
+            \\ irq_handler_4:
+        ++ "\n" ++
+            (if (TOPPERS_SUPPORT_OVRHDR)
+            \\  bl %[overrun_start]
+        else
+            "") ++ "\n" ++
+            \\
+            \\ // 割込み処理からのリターン
+            \\ //
+            \\ // 割込み処理からのリターンにより，CPUロック解除状態に遷移
+            \\ // するようにする必要があるが，ARMはCPSRのビットによってCPU
+            \\ // ロック状態を表しているため，CPSRを元に戻してリターンすれ
+            \\ // ばよい．
+            \\ irq_handler_5:
+            \\  pop {r0,r1}                    // スタックポインタの調整を元に戻す
+            \\  add sp, sp, r1
+            \\
+        ++ "\n" ++
+            (if (!arm.isEnabled(arm.Feature.has_v6))
+            \\  pop {r0}                       // 戻り先のcpsrをspsrに設定
+            \\  msr spsr_cxsf, r0
+            \\  ldmfd sp!, {r0-r5,r12,lr,pc}^  // コンテキストの復帰
+            \\                                 // ^付きなので，spsr → cpsr
+        else
+            \\  pop {r0-r5,r12,lr}             // スクラッチレジスタ＋αの復帰
+            \\  rfefd sp!
+        ) ++ "\n" ++
+            \\ 2:
+            \\  .long %[p_runtsk]
+            \\ 3:
+            \\  .long %[p_schedtsk]
+            \\ 4:
+            \\  .long %[excpt_nest_count]
+            \\ 5:
+            \\  .long %[istkpt]
+            \\ 6:
+            \\  .long %[inh_table]
+        :
+        : [cpsr_svc_cpulock] "n" (@as(u32, arm.CPSR_SVC_MODE | CPSR_CPULOCK)),
+          [cpsr_irq_cpulock] "n" (@as(u32, arm.CPSR_IRQ_MODE | CPSR_CPULOCK)),
+          [cpsr_svc_unlock] "n" (@as(u32, arm.CPSR_SVC_MODE | CPSR_UNLOCK)),
+          [cpsr_svc] "n" (@as(u32, arm.CPSR_SVC_MODE)),
+          [fpexc_enable] "n" (@as(u32, arm.FPEXC_ENABLE)),
+          [tnum_inhno] "n" (@as(u32, TNUM_INHNO)),
+          [tcb_p_tinib] "J" (@as(i16, @offsetOf(task.TCB, "p_tinib"))),
+          [tinib_tskatr] "J" (@as(i16, @offsetOf(task.TINIB, "tskatr"))),
+          [tcb_sp] "J" (@as(i16, @offsetOf(task.TCB, "tskctxb") + @offsetOf(TSKCTXB, "sp"))),
+          [tcb_pc] "J" (@as(i16, @offsetOf(task.TCB, "tskctxb") + @offsetOf(TSKCTXB, "pc"))),
+          [ta_fpu] "n" (@as(u32, TA_FPU)),
+          [fpexc_enable] "n" (@as(u32, arm.FPEXC_ENABLE)),
+          [excpt_nest_count] "s" (&excpt_nest_count),
+          [p_runtsk] "s" (&task.p_runtsk),
+          [p_schedtsk] "s" (&task.p_schedtsk),
+          [istkpt] "s" (&cfg._kernel_istkpt),
+          [inh_table] "s" (&cfg._kernel_inh_table),
+          [log_inh_enter] "s" (logInthdrEnter),
+          [log_inh_leave] "s" (logInthdrLeave),
+          [overrun_start] "s" (overrun.overrun_start),
+          [overrun_stop] "s" (overrun.overrun_stop),
+          [irc_begin_int] "s" (target_impl.mpcore_kernel_impl.gic_kernel_impl.irc_begin_int),
+          [irc_end_int] "s" (target_impl.mpcore_kernel_impl.gic_kernel_impl.irc_end_int),
+          [dispatcher] "s" (dispatcher),
     );
     unreachable;
 }
@@ -879,8 +922,7 @@ pub fn ExportExcIniB(excinib_list: []exception.EXCINIB) type {
     exportCheck(@sizeOf(EXCHDR), "sizeof_EXCHDR");
 
     comptime var exc_table =
-        [1]EXCHDR{ @ptrCast(EXCHDR, _kernel_default_exc_handler) }
-                                                        ** TNUM_EXCNO;
+        [1]EXCHDR{@ptrCast(EXCHDR, _kernel_default_exc_handler)} ** TNUM_EXCNO;
     for (excinib_list) |excinib| {
         exc_table[excinib.excno] = excinib.exchdr;
     }
@@ -892,8 +934,7 @@ pub fn ExportExcIniB(excinib_list: []exception.EXCINIB) type {
 ///
 ///  CPU例外ハンドラの初期化
 ///
-pub fn initialize_exception() void {
-}
+pub fn initialize_exception() void {}
 
 ///
 ///  CPU例外ハンドラ番号の範囲の判定
@@ -938,654 +979,662 @@ pub fn exc_sense_lock(p_excinf: *T_EXCINF) bool {
 ///  返す（CPU例外がカーネル管理外の割込み処理中で発生した場合にも
 ///  falseを返す）．
 ///
-pub fn exc_sense_intmask(p_excinf: *c_void) bool {
+pub fn exc_sense_intmask(p_excinf: *anyopaque) bool {
     const p_arm_excinf = ptrAlignCast(*T_EXCINF, p_excinf);
-    return(!exc_sense_context(p_arm_excinf)
-               and exc_get_intpri(p_arm_excinf) == TIPM_ENAALL
-               and !exc_sense_lock(p_arm_excinf));
+    return (!exc_sense_context(p_arm_excinf) and exc_get_intpri(p_arm_excinf) == TIPM_ENAALL and !exc_sense_lock(p_arm_excinf));
 }
 
 //
 //  CPU例外ハンドラ出入口処理
 //
 fn exc_entry() callconv(.Naked) void {
-    asm volatile(" start_exc_entry:");
+    asm volatile (" start_exc_entry:");
 
     //
     //  未定義命令
     //
-    asm volatile(
-     \\ undef_handler:
-     \\ // ここには，未定義モードで分岐してくる．
+    asm volatile (
+        \\ undef_handler:
+        \\ // ここには，未定義モードで分岐してくる．
         ++ "\n" ++
-        (if (comptime !arm.isEnabled(arm.Feature.has_v6))
-     \\ // IビットとFビットをセットし，スーパバイザモードに切り換え，
-     \\ // スクラッチレジスタ＋αを保存する．
-     \\  msr cpsr_c, %[cpsr_svc_intlock]
-     \\  push {r0-r5,r12,lr,pc}         // pcはスペース確保のため
-     \\
-     \\ // 未定義モードに戻して，戻り番地（lr）と戻り先のcpsr（spsr）
-     \\ // を取得する．
-     \\  msr cpsr_c, %[cpsr_und_intlock]
-     \\  mov r2, lr
-     \\  mrs r1, spsr
-     \\
-     \\ // スーパバイザモードに切り換え，戻り番地と戻り先のcpsrを保
-     \\ // 存する．
-     \\  msr cpsr_c, %[cpsr_svc_intlock]
-     \\  str r2, [sp,#0x20]             // 戻り番地をスタックに保存（pcの場所）
-     \\  push {r1}                      // 戻り先のcpsrをスタックに保存
+            (if (!arm.isEnabled(arm.Feature.has_v6))
+            \\ // IビットとFビットをセットし，スーパバイザモードに切り換え，
+            \\ // スクラッチレジスタ＋αを保存する．
+            \\  msr cpsr_c, %[cpsr_svc_intlock]
+            \\  push {r0-r5,r12,lr,pc}         // pcはスペース確保のため
+            \\
+            \\ // 未定義モードに戻して，戻り番地（lr）と戻り先のcpsr（spsr）
+            \\ // を取得する．
+            \\  msr cpsr_c, %[cpsr_und_intlock]
+            \\  mov r2, lr
+            \\  mrs r1, spsr
+            \\
+            \\ // スーパバイザモードに切り換え，戻り番地と戻り先のcpsrを保
+            \\ // 存する．
+            \\  msr cpsr_c, %[cpsr_svc_intlock]
+            \\  str r2, [sp,#0x20]             // 戻り番地をスタックに保存（pcの場所）
+            \\  push {r1}                      // 戻り先のcpsrをスタックに保存
         else
-     \\ // 戻り番地（lr）と戻り先のcpsr（spsr）をスーパバイザモード
-     \\ // のスタックに保存する．
-     \\  srsfd %[cpsr_svc]!
-     \\
-     \\ // スーパバイザモードに切り換え，スクラッチレジスタ＋αを保
-     \\ // 存する．
-     \\  cps %[cpsr_svc]
-     \\  push {r0-r5,r12,lr}
+            \\ // 戻り番地（lr）と戻り先のcpsr（spsr）をスーパバイザモード
+            \\ // のスタックに保存する．
+            \\  srsfd %[cpsr_svc]!
+            \\
+            \\ // スーパバイザモードに切り換え，スクラッチレジスタ＋αを保
+            \\ // 存する．
+            \\  cps %[cpsr_svc]
+            \\  push {r0-r5,r12,lr}
         ) ++ "\n" ++
-     \\  mov r4, %[excno_undef]
-     \\  b exc_handler_1
-     :
-     : [cpsr_svc_intlock] "n" (@as(u32, arm.CPSR_SVC_MODE | CPSR_INTLOCK)),
-       [cpsr_und_intlock] "n" (@as(u32, arm.CPSR_UND_MODE | CPSR_INTLOCK)),
-       [cpsr_svc] "n" (@as(u32, arm.CPSR_SVC_MODE)),
-       [excno_undef] "n" (@as(u32, EXCNO_UNDEF)),
+            \\  mov r4, %[excno_undef]
+            \\  b exc_handler_1
+        :
+        : [cpsr_svc_intlock] "n" (@as(u32, arm.CPSR_SVC_MODE | CPSR_INTLOCK)),
+          [cpsr_und_intlock] "n" (@as(u32, arm.CPSR_UND_MODE | CPSR_INTLOCK)),
+          [cpsr_svc] "n" (@as(u32, arm.CPSR_SVC_MODE)),
+          [excno_undef] "n" (@as(u32, EXCNO_UNDEF)),
     );
 
     //
     //  スーパバイザコール
     //
-    asm volatile(
-     \\ svc_handler:
-     \\ // ここには，スーパバイザモードで分岐してくる．
+    asm volatile (
+        \\ svc_handler:
+        \\ // ここには，スーパバイザモードで分岐してくる．
         ++ "\n" ++
-        (if (comptime !arm.isEnabled(arm.Feature.has_v6))
-     \\ // IビットとFビットをセットし，戻り番地（lr），スクラッチレジ
-     \\ // スタ＋α，戻り先のcpsr（spsr）を保存する（lrは二重に保存さ
-     \\ // れる）．
-     \\  msr cpsr_c, %[cpsr_svc_intlock]
-     \\  push {lr}
-     \\  push {r0-r5,r12,lr}
-     \\  mrs r1, spsr
-     \\  push {r1}
+            (if (!arm.isEnabled(arm.Feature.has_v6))
+            \\ // IビットとFビットをセットし，戻り番地（lr），スクラッチレジ
+            \\ // スタ＋α，戻り先のcpsr（spsr）を保存する（lrは二重に保存さ
+            \\ // れる）．
+            \\  msr cpsr_c, %[cpsr_svc_intlock]
+            \\  push {lr}
+            \\  push {r0-r5,r12,lr}
+            \\  mrs r1, spsr
+            \\  push {r1}
         else
-     \\ // 戻り番地（lr）と戻り先のcpsr（spsr）をスーパバイザモードの
-     \\ // スタックに保存する．
-     \\  srsfd %[cpsr_svc]!
-     \\
-     \\ // スーパバイザモードで，スクラッチレジスタ＋αを保存する．
-     \\  push {r0-r5,r12,lr}
+            \\ // 戻り番地（lr）と戻り先のcpsr（spsr）をスーパバイザモードの
+            \\ // スタックに保存する．
+            \\  srsfd %[cpsr_svc]!
+            \\
+            \\ // スーパバイザモードで，スクラッチレジスタ＋αを保存する．
+            \\  push {r0-r5,r12,lr}
         ) ++ "\n" ++
-     \\  mov r4, %[excno_svc]
-     \\  b exc_handler_1
-     :
-     : [cpsr_svc_intlock] "n" (@as(u32, arm.CPSR_SVC_MODE | CPSR_INTLOCK)),
-       [cpsr_und_intlock] "n" (@as(u32, arm.CPSR_UND_MODE | CPSR_INTLOCK)),
-       [cpsr_svc] "n" (@as(u32, arm.CPSR_SVC_MODE)),
-       [excno_svc] "n" (@as(u32, EXCNO_SVC)),
+            \\  mov r4, %[excno_svc]
+            \\  b exc_handler_1
+        :
+        : [cpsr_svc_intlock] "n" (@as(u32, arm.CPSR_SVC_MODE | CPSR_INTLOCK)),
+          [cpsr_und_intlock] "n" (@as(u32, arm.CPSR_UND_MODE | CPSR_INTLOCK)),
+          [cpsr_svc] "n" (@as(u32, arm.CPSR_SVC_MODE)),
+          [excno_svc] "n" (@as(u32, EXCNO_SVC)),
     );
 
     //
     //  プリフェッチアボート
     //
-    asm volatile(
-     \\ pabort_handler:
-     \\ // ここには，アボートモードで分岐してくる．
+    asm volatile (
+        \\ pabort_handler:
+        \\ // ここには，アボートモードで分岐してくる．
         ++ "\n" ++
-        (if (comptime !arm.isEnabled(arm.Feature.has_v6))
-     \\ // IビットとFビットをセットし，スーパバイザモードに切り換え，
-     \\ // スクラッチレジスタ＋αを保存する．
-     \\  msr cpsr_c, %[cpsr_svc_intlock]
-     \\  push {r0-r5,r12,lr,pc}         // pcはスペース確保のため
-     \\
-     \\ // アボートモードに戻して，戻り番地（lr）と戻り先の
-     \\ // cpsr（spsr）を取得する．
-     \\  msr cpsr_c, %[cpsr_abt_intlock]
-     \\  mov r2, lr
-     \\  mrs r1, spsr
-     \\
-     \\ // スーパバイザモードに切り換え，戻り番地と戻り先のcpsrを保
-     \\ // 存する．
-     \\  msr cpsr_c, %[cpsr_svc_intlock]
-     \\  str r2, [sp,#0x20]             // 戻り番地をスタックに保存（pcの場所）
-     \\  push {r1}                      // 戻り先のcpsrをスタックに保存
+            (if (!arm.isEnabled(arm.Feature.has_v6))
+            \\ // IビットとFビットをセットし，スーパバイザモードに切り換え，
+            \\ // スクラッチレジスタ＋αを保存する．
+            \\  msr cpsr_c, %[cpsr_svc_intlock]
+            \\  push {r0-r5,r12,lr,pc}         // pcはスペース確保のため
+            \\
+            \\ // アボートモードに戻して，戻り番地（lr）と戻り先の
+            \\ // cpsr（spsr）を取得する．
+            \\  msr cpsr_c, %[cpsr_abt_intlock]
+            \\  mov r2, lr
+            \\  mrs r1, spsr
+            \\
+            \\ // スーパバイザモードに切り換え，戻り番地と戻り先のcpsrを保
+            \\ // 存する．
+            \\  msr cpsr_c, %[cpsr_svc_intlock]
+            \\  str r2, [sp,#0x20]             // 戻り番地をスタックに保存（pcの場所）
+            \\  push {r1}                      // 戻り先のcpsrをスタックに保存
         else
-     \\ // 戻り番地（lr）と戻り先のcpsr（spsr）をスーパバイザモード
-     \\ // のスタックに保存する．
-     \\  srsfd %[cpsr_svc]!
-     \\
-     \\ // スーパバイザモードに切り換え，スクラッチレジスタ＋αを保
-     \\ // 存する．
-     \\  cps %[cpsr_svc]
-     \\  push {r0-r5,r12,lr}
+            \\ // 戻り番地（lr）と戻り先のcpsr（spsr）をスーパバイザモード
+            \\ // のスタックに保存する．
+            \\  srsfd %[cpsr_svc]!
+            \\
+            \\ // スーパバイザモードに切り換え，スクラッチレジスタ＋αを保
+            \\ // 存する．
+            \\  cps %[cpsr_svc]
+            \\  push {r0-r5,r12,lr}
         ) ++ "\n" ++
-     \\  mov r4, %[excno_pabort]
-     \\  b exc_handler_1
-     :
-     : [cpsr_svc_intlock] "n" (@as(u32, arm.CPSR_SVC_MODE | CPSR_INTLOCK)),
-       [cpsr_abt_intlock] "n" (@as(u32, arm.CPSR_ABT_MODE | CPSR_INTLOCK)),
-       [cpsr_svc] "n" (@as(u32, arm.CPSR_SVC_MODE)),
-       [excno_pabort] "n" (@as(u32, EXCNO_PABORT)),
+            \\  mov r4, %[excno_pabort]
+            \\  b exc_handler_1
+        :
+        : [cpsr_svc_intlock] "n" (@as(u32, arm.CPSR_SVC_MODE | CPSR_INTLOCK)),
+          [cpsr_abt_intlock] "n" (@as(u32, arm.CPSR_ABT_MODE | CPSR_INTLOCK)),
+          [cpsr_svc] "n" (@as(u32, arm.CPSR_SVC_MODE)),
+          [excno_pabort] "n" (@as(u32, EXCNO_PABORT)),
     );
 
     //
     //  データアボート
     //
-    asm volatile(
-     \\ dabort_handler:
-     \\ // ここには，アボートモードで分岐してくる．
-     \\ //
-     \\ // データアボートが，CPU例外の入口（start_exc_entryと
-     \\ // end_exc_entryの間）で発生した場合には，
-     \\ // fatal_dabort_handlerに分岐する．アボートモードのspを汎用
-     \\ // レジスタの代わりに使用する（r13と記述している）．
-     \\  adr r13, start_exc_entry+8
-     \\  cmp lr, r13
-     \\  bcc dabort_handler_1
-     \\  adr r13, end_exc_entry+8
-     \\  cmp lr, r13
-     \\  bcc fatal_dabort_handler
-     \\ dabort_handler_1:
+    asm volatile (
+        \\ dabort_handler:
+        \\ // ここには，アボートモードで分岐してくる．
+        \\ //
+        \\ // データアボートが，CPU例外の入口（start_exc_entryと
+        \\ // end_exc_entryの間）で発生した場合には，
+        \\ // fatal_dabort_handlerに分岐する．アボートモードのspを汎用
+        \\ // レジスタの代わりに使用する（r13と記述している）．
+        \\  adr r13, start_exc_entry+8
+        \\  cmp lr, r13
+        \\  bcc dabort_handler_1
+        \\  adr r13, end_exc_entry+8
+        \\  cmp lr, r13
+        \\  bcc fatal_dabort_handler
+        \\ dabort_handler_1:
         ++ "\n" ++
-        (if (comptime !arm.isEnabled(arm.Feature.has_v6))
-     \\ // IビットとFビットをセットし，スーパバイザモードに切り換え，
-     \\ // スクラッチレジスタ＋αを保存する．
-     \\  msr cpsr_c, %[cpsr_svc_intlock]
-     \\  push {r0-r5,r12,lr,pc}         // pcはスペース確保のため
-     \\
-     \\ // アボートモードに戻して，戻り番地（lr）と戻り先の
-     \\ // cpsr（spsr）を取得する．
-     \\  msr cpsr_c, %[cpsr_abt_intlock]
-     \\  mov r2, lr
-     \\  mrs r1, spsr
-     \\
-     \\ // スーパバイザモードに切り換え，戻り番地と戻り先のcpsrを保
-     \\ // 存する．
-     \\  msr cpsr_c, %[cpsr_svc_intlock]
-     \\  str r2, [sp,#0x20]             // 戻り番地をスタックに保存（pcの場所）
-     \\  push {r1}                      // 戻り先のcpsrをスタックに保存
+            (if (!arm.isEnabled(arm.Feature.has_v6))
+            \\ // IビットとFビットをセットし，スーパバイザモードに切り換え，
+            \\ // スクラッチレジスタ＋αを保存する．
+            \\  msr cpsr_c, %[cpsr_svc_intlock]
+            \\  push {r0-r5,r12,lr,pc}         // pcはスペース確保のため
+            \\
+            \\ // アボートモードに戻して，戻り番地（lr）と戻り先の
+            \\ // cpsr（spsr）を取得する．
+            \\  msr cpsr_c, %[cpsr_abt_intlock]
+            \\  mov r2, lr
+            \\  mrs r1, spsr
+            \\
+            \\ // スーパバイザモードに切り換え，戻り番地と戻り先のcpsrを保
+            \\ // 存する．
+            \\  msr cpsr_c, %[cpsr_svc_intlock]
+            \\  str r2, [sp,#0x20]             // 戻り番地をスタックに保存（pcの場所）
+            \\  push {r1}                      // 戻り先のcpsrをスタックに保存
         else
-     \\ // 戻り番地（lr）と戻り先のcpsr（spsr）をスーパバイザモード
-     \\ // のスタックに保存する．
-     \\  srsfd %[cpsr_svc]!
-     \\
-     \\ // スーパバイザモードに切り換え，スクラッチレジスタ＋αを保
-     \\ // 存する．
-     \\  cps %[cpsr_svc]
-     \\  push {r0-r5,r12,lr}
+            \\ // 戻り番地（lr）と戻り先のcpsr（spsr）をスーパバイザモード
+            \\ // のスタックに保存する．
+            \\  srsfd %[cpsr_svc]!
+            \\
+            \\ // スーパバイザモードに切り換え，スクラッチレジスタ＋αを保
+            \\ // 存する．
+            \\  cps %[cpsr_svc]
+            \\  push {r0-r5,r12,lr}
         ) ++ "\n" ++
-     \\  mov r4, %[excno_dabort]
-     \\  b exc_handler_1
-     :
-     : [cpsr_svc_intlock] "n" (@as(u32, arm.CPSR_SVC_MODE | CPSR_INTLOCK)),
-       [cpsr_abt_intlock] "n" (@as(u32, arm.CPSR_ABT_MODE | CPSR_INTLOCK)),
-       [cpsr_svc] "n" (@as(u32, arm.CPSR_SVC_MODE)),
-       [excno_dabort] "n" (@as(u32, EXCNO_DABORT)),
+            \\  mov r4, %[excno_dabort]
+            \\  b exc_handler_1
+        :
+        : [cpsr_svc_intlock] "n" (@as(u32, arm.CPSR_SVC_MODE | CPSR_INTLOCK)),
+          [cpsr_abt_intlock] "n" (@as(u32, arm.CPSR_ABT_MODE | CPSR_INTLOCK)),
+          [cpsr_svc] "n" (@as(u32, arm.CPSR_SVC_MODE)),
+          [excno_dabort] "n" (@as(u32, EXCNO_DABORT)),
     );
 
     //
     //  CPU例外の入口で発生したデータアボート
     //
-    asm volatile(
-     \\ fatal_dabort_handler:
+    asm volatile (
+        \\ fatal_dabort_handler:
         ++ "\n" ++
-        (if (comptime !arm.isEnabled(arm.Feature.has_v6))
-     \\ // IビットとFビットをセットし，スーパバイザモードに切り換え，
-     \\ // スタックポインタを初期化し，スクラッチレジスタ＋αを保存
-     \\ // する．
-     \\  msr cpsr_c, %[cpsr_svc_intlock]
-     \\  ldr sp, 5f
-     \\  ldr sp, [sp]
-     \\  push {r0-r5,r12,lr,pc}         // pcはスペース確保のため
-     \\
-     \\ // アボートモードに戻して，戻り番地（lr）と戻り先の
-     \\ // cpsr（spsr）を取得する．
-     \\  msr cpsr_c, %[cpsr_abt_intlock]
-     \\  mov r2, lr
-     \\  mrs r1, spsr
-     \\
-     \\ // スーパバイザモードに切り換え，戻り番地と戻り先のcpsrを保
-     \\ // 存する．
-     \\  msr cpsr_c, %[cpsr_svc_intlock]
-     \\  str r2, [sp,#0x20]             // 戻り番地をスタックに保存（pcの場所）
-     \\  push {r1}                      // 戻り先のcpsrをスタックに保存
+            (if (!arm.isEnabled(arm.Feature.has_v6))
+            \\ // IビットとFビットをセットし，スーパバイザモードに切り換え，
+            \\ // スタックポインタを初期化し，スクラッチレジスタ＋αを保存
+            \\ // する．
+            \\  msr cpsr_c, %[cpsr_svc_intlock]
+            \\  ldr sp, 5f
+            \\  ldr sp, [sp]
+            \\  push {r0-r5,r12,lr,pc}         // pcはスペース確保のため
+            \\
+            \\ // アボートモードに戻して，戻り番地（lr）と戻り先の
+            \\ // cpsr（spsr）を取得する．
+            \\  msr cpsr_c, %[cpsr_abt_intlock]
+            \\  mov r2, lr
+            \\  mrs r1, spsr
+            \\
+            \\ // スーパバイザモードに切り換え，戻り番地と戻り先のcpsrを保
+            \\ // 存する．
+            \\  msr cpsr_c, %[cpsr_svc_intlock]
+            \\  str r2, [sp,#0x20]             // 戻り番地をスタックに保存（pcの場所）
+            \\  push {r1}                      // 戻り先のcpsrをスタックに保存
         else
-     \\ // IビットとFビットをセットし，スーパバイザモードに切り換え，
-     \\ // スタックポインタを初期化する．
-     \\  cpsid if, %[cpsr_svc]
-     \\  ldr sp, 5f
-     \\  ldr sp, [sp]
-     \\
-     \\ // アボートモードに戻して，戻り番地（lr）と戻り先の
-     \\ // cpsr（spsr）をスーパバイザモードのスタックに保存する．
-     \\  cps %[cpsr_abt]
-     \\  srsfd %[cpsr_svc]!
-     \\
-     \\ // スーパバイザモードに切り換え，スクラッチレジスタ＋αを保
-     \\ // 存する．
-     \\  cps %[cpsr_svc]
-     \\  push {r0-r5,r12,lr}
+            \\ // IビットとFビットをセットし，スーパバイザモードに切り換え，
+            \\ // スタックポインタを初期化する．
+            \\  cpsid if, %[cpsr_svc]
+            \\  ldr sp, 5f
+            \\  ldr sp, [sp]
+            \\
+            \\ // アボートモードに戻して，戻り番地（lr）と戻り先の
+            \\ // cpsr（spsr）をスーパバイザモードのスタックに保存する．
+            \\  cps %[cpsr_abt]
+            \\  srsfd %[cpsr_svc]!
+            \\
+            \\ // スーパバイザモードに切り換え，スクラッチレジスタ＋αを保
+            \\ // 存する．
+            \\  cps %[cpsr_svc]
+            \\  push {r0-r5,r12,lr}
         ) ++ "\n" ++
-     \\
-     \\ // 例外ネストカウントをインクリメントする．
-     \\  ldr r2, 4f
-     \\  ldr r3, [r2]
-     \\  add r3, r3, #1
-     \\  str r3, [r2]
-     \\
-     \\  mov r4, %[excno_fatal]
-     \\  b exc_handler_1
-     \\
-     \\ 4:
-     \\  .long %[excpt_nest_count]
-     \\ 5:
-     \\  .long %[istkpt]
-     :
-     : [cpsr_svc_intlock] "n" (@as(u32, arm.CPSR_SVC_MODE | CPSR_INTLOCK)),
-       [cpsr_abt_intlock] "n" (@as(u32, arm.CPSR_ABT_MODE | CPSR_INTLOCK)),
-       [cpsr_svc] "n" (@as(u32, arm.CPSR_SVC_MODE)),
-       [cpsr_abt] "n" (@as(u32, arm.CPSR_ABT_MODE)),
-       [excno_fatal] "n" (@as(u32, EXCNO_FATAL)),
-       [excpt_nest_count] "s" (&excpt_nest_count),
-       [istkpt] "s" (&cfg._kernel_istkpt),
+            \\
+            \\ // 例外ネストカウントをインクリメントする．
+            \\  ldr r2, 4f
+            \\  ldr r3, [r2]
+            \\  add r3, r3, #1
+            \\  str r3, [r2]
+            \\
+            \\  mov r4, %[excno_fatal]
+            \\  b exc_handler_1
+            \\
+            \\ 4:
+            \\  .long %[excpt_nest_count]
+            \\ 5:
+            \\  .long %[istkpt]
+        :
+        : [cpsr_svc_intlock] "n" (@as(u32, arm.CPSR_SVC_MODE | CPSR_INTLOCK)),
+          [cpsr_abt_intlock] "n" (@as(u32, arm.CPSR_ABT_MODE | CPSR_INTLOCK)),
+          [cpsr_svc] "n" (@as(u32, arm.CPSR_SVC_MODE)),
+          [cpsr_abt] "n" (@as(u32, arm.CPSR_ABT_MODE)),
+          [excno_fatal] "n" (@as(u32, EXCNO_FATAL)),
+          [excpt_nest_count] "s" (&excpt_nest_count),
+          [istkpt] "s" (&cfg._kernel_istkpt),
     );
 
     //
     //  FIQ
     //
-    asm volatile(
-     \\ fiq_handler:
-     \\ // ここには，FIQモードで分岐してくる．
+    asm volatile (
+        \\ fiq_handler:
+        \\ // ここには，FIQモードで分岐してくる．
         ++ "\n" ++
-        (if (comptime !arm.isEnabled(arm.Feature.has_v6))
-     \\ // IビットとFビットをセットし，スーパバイザモードに切り換え，
-     \\ // スクラッチレジスタ＋αを保存する．
-     \\  msr cpsr_c, %[cpsr_svc_intlock]
-     \\  push {r0-r5,r12,lr,pc}         // pcはスペース確保のため
-     \\
-     \\ // FIQモードに戻して，戻り番地（lr）と戻り先のcpsr（spsr）
-     \\ // を取得する．
-     \\  msr cpsr_c, %[cpsr_fiq_intlock]
-     \\  mov r2, lr
-     \\  mrs r1, spsr
-     \\
-     \\ // スーパバイザモードに切り換え，戻り番地と戻り先のcpsrを保
-     \\ // 存する．
-     \\  msr cpsr_c, %[cpsr_svc_intlock]
-     \\  str r2, [sp,#0x20]             // 戻り番地をスタックに保存（pcの場所）
-     \\  push {r1}                      // 戻り先のcpsrをスタックに保存
+            (if (!arm.isEnabled(arm.Feature.has_v6))
+            \\ // IビットとFビットをセットし，スーパバイザモードに切り換え，
+            \\ // スクラッチレジスタ＋αを保存する．
+            \\  msr cpsr_c, %[cpsr_svc_intlock]
+            \\  push {r0-r5,r12,lr,pc}         // pcはスペース確保のため
+            \\
+            \\ // FIQモードに戻して，戻り番地（lr）と戻り先のcpsr（spsr）
+            \\ // を取得する．
+            \\  msr cpsr_c, %[cpsr_fiq_intlock]
+            \\  mov r2, lr
+            \\  mrs r1, spsr
+            \\
+            \\ // スーパバイザモードに切り換え，戻り番地と戻り先のcpsrを保
+            \\ // 存する．
+            \\  msr cpsr_c, %[cpsr_svc_intlock]
+            \\  str r2, [sp,#0x20]             // 戻り番地をスタックに保存（pcの場所）
+            \\  push {r1}                      // 戻り先のcpsrをスタックに保存
         else
-     \\ // 戻り番地（lr）と戻り先のcpsr（spsr）をスーパバイザモード
-     \\ // のスタックに保存する．
-     \\  srsfd %[cpsr_svc]!
-     \\
-     \\ // スーパバイザモードに切り換え，スクラッチレジスタ＋αを保
-     \\ // 存する．
-     \\  cps %[cpsr_svc]
-     \\  push {r0-r5,r12,lr}
+            \\ // 戻り番地（lr）と戻り先のcpsr（spsr）をスーパバイザモード
+            \\ // のスタックに保存する．
+            \\  srsfd %[cpsr_svc]!
+            \\
+            \\ // スーパバイザモードに切り換え，スクラッチレジスタ＋αを保
+            \\ // 存する．
+            \\  cps %[cpsr_svc]
+            \\  push {r0-r5,r12,lr}
         ) ++ "\n" ++
-     \\  mov r4, %[excno_fiq]
-     \\  b exc_handler_1
-     :
-     : [cpsr_svc_intlock] "n" (@as(u32, arm.CPSR_SVC_MODE | CPSR_INTLOCK)),
-       [cpsr_fiq_intlock] "n" (@as(u32, arm.CPSR_FIQ_MODE | CPSR_INTLOCK)),
-       [cpsr_svc] "n" (@as(u32, arm.CPSR_SVC_MODE)),
-       [excno_fiq] "n" (@as(u32, EXCNO_FIQ)),
+            \\  mov r4, %[excno_fiq]
+            \\  b exc_handler_1
+        :
+        : [cpsr_svc_intlock] "n" (@as(u32, arm.CPSR_SVC_MODE | CPSR_INTLOCK)),
+          [cpsr_fiq_intlock] "n" (@as(u32, arm.CPSR_FIQ_MODE | CPSR_INTLOCK)),
+          [cpsr_svc] "n" (@as(u32, arm.CPSR_SVC_MODE)),
+          [excno_fiq] "n" (@as(u32, EXCNO_FIQ)),
     );
 
-    asm volatile(" end_exc_entry:");
+    asm volatile (" end_exc_entry:");
 
     //
     //  CPU例外ハンドラ出入口処理の共通部分
     //
-    asm volatile(
-     \\ exc_handler_1:
-     \\ // 【この時点のレジスタ状態】
-     \\ //  r4：CPU例外ハンドラ番号
-     \\ //
-     \\ // CPU例外が発生した状況の判断に用いるために，CPU例外発生前
-     \\ // の割込み優先度マスクと例外ネストカウントをスタックに保存
-     \\ // する．
-     \\  bl %[irc_get_intpri]
-     \\  push {r0}                      // 割込み優先度マスクを保存
-     \\  ldr r2, 4f
-     \\  ldr r3, [r2]
-     \\  push {r3}                      // 例外ネストカウントを保存
-     \\  mov r5, sp                     // CPU例外の情報を記憶している領域の
-     \\                                 //                先頭番地をr5に保存
-     \\ // スタックポインタの調整
-     \\  and r1, sp, #4
-     \\  sub sp, sp, r1
-     \\  push {r0,r1}                   // スタックポインタの調整値を保存
-     \\                                 // r0はスペース確保のため
-     \\ // カーネル管理外のCPU例外か判定する
-     \\ //
-     \\ // カーネル管理外のCPU例外は，カーネル実行中，全割込みロッ
-     \\ // ク状態，CPUロック状態，カーネル管理外の割込みハンドラ実
-     \\ // 行中に発生したCPU例外である．ARMコアの場合は，戻り先の
-     \\ // CPSRのIビットかFビットのいずれかがセットされているなら，
-     \\ // これに該当する．
-     \\  ldr r1, [r5,%[t_excinf_cpsr]]  // 例外フレームからcpsrを取得
-     \\  ands r1, r1, %[cpsr_fiq_irq]
-     \\  bne nk_exc_handler_1           // カーネル管理外のCPU例外の処理へ
-     \\
-     \\ // 【この時点のレジスタ状態】
-     \\ //  r2：excpt_nest_countの番地
-     \\ //  r3：excpt_nest_countの値
-     \\ //  r4：CPU例外ハンドラ番号
-     \\ //  r5：CPU例外の情報を記憶している領域の先頭番地
-     \\
-     \\ // 例外ネストカウントをインクリメントする．
-     \\  add r3, r3, #1
-     \\  str r3, [r2]
-     \\  teq r3, #1                     // CPU例外発生前が非タスクコンテキスト
-     \\  bne exc_handler_2              //             ならexc_handler_2に分岐
-     \\
+    asm volatile (
+        \\ exc_handler_1:
+        \\ // 【この時点のレジスタ状態】
+        \\ //  r4：CPU例外ハンドラ番号
+        \\ //
+        \\ // CPU例外が発生した状況の判断に用いるために，CPU例外発生前
+        \\ // の割込み優先度マスクと例外ネストカウントをスタックに保存
+        \\ // する．
+        \\  bl %[irc_get_intpri]
+        \\  push {r0}                      // 割込み優先度マスクを保存
+        \\  ldr r2, 4f
+        \\  ldr r3, [r2]
+        \\  push {r3}                      // 例外ネストカウントを保存
+        \\  mov r5, sp                     // CPU例外の情報を記憶している領域の
+        \\                                 //                先頭番地をr5に保存
+        \\ // スタックポインタの調整
+        \\  and r1, sp, #4
+        \\  sub sp, sp, r1
+        \\  push {r0,r1}                   // スタックポインタの調整値を保存
+        \\                                 // r0はスペース確保のため
+        \\ // カーネル管理外のCPU例外か判定する
+        \\ //
+        \\ // カーネル管理外のCPU例外は，カーネル実行中，全割込みロッ
+        \\ // ク状態，CPUロック状態，カーネル管理外の割込みハンドラ実
+        \\ // 行中に発生したCPU例外である．ARMコアの場合は，戻り先の
+        \\ // CPSRのIビットかFビットのいずれかがセットされているなら，
+        \\ // これに該当する．
+        \\  ldr r1, [r5,%[t_excinf_cpsr]]  // 例外フレームからcpsrを取得
+        \\  ands r1, r1, %[cpsr_fiq_irq]
+        \\  bne nk_exc_handler_1           // カーネル管理外のCPU例外の処理へ
+        \\
+        \\ // 【この時点のレジスタ状態】
+        \\ //  r2：excpt_nest_countの番地
+        \\ //  r3：excpt_nest_countの値
+        \\ //  r4：CPU例外ハンドラ番号
+        \\ //  r5：CPU例外の情報を記憶している領域の先頭番地
+        \\
+        \\ // 例外ネストカウントをインクリメントする．
+        \\  add r3, r3, #1
+        \\  str r3, [r2]
+        \\  teq r3, #1                     // CPU例外発生前が非タスクコンテキスト
+        \\  bne exc_handler_2              //             ならexc_handler_2に分岐
+        \\
         ++ "\n" ++
-        (if (TOPPERS_SUPPORT_OVRHDR)
-     \\  bl %[overrun_stop]
-        else "") ++ "\n" ++
-        (if (USE_ARM_FPU)
-     \\ // FPUをディスエーブルする．
-     \\  vmrs r0, fpexc
-     \\  str r0, [sp]                   // FPEXCを保存（r0の場所）*/
-     \\  bic r0, r0, %[fpexc_enable]
-     \\  vmsr fpexc, r0                 // FPEXCを設定
-        else "") ++ "\n" ++
-     \\
-     \\ // 非タスクコンテキスト用のスタックに切り換える．
-     \\  mov r3, sp                     // この時点のスタックポインタをr3に
-     \\  ldr r2, 5f                     // 非タスクコンテキスト用のスタックに
-     \\  ldr sp, [r2]
-     \\  push {r0,r3}                   // 切換え前のスタックポインタを保存
-     \\                                 // r0はスペース確保のため
-     \\ exc_handler_2:
-     \\ // 【この時点のレジスタ状態】
-     \\ //  r4：CPU例外ハンドラ番号
-     \\ //  r5：CPU例外の情報を記憶している領域の先頭番地
-     \\
-     \\ // （必要なら）割込みコントローラを操作する．
-     \\ //
-     \\ // irc_begin_excは，スタックトップ（r0の場所）に，
-     \\ // irc_end_excで用いる情報を保存する．
-     \\  bl irc_begin_exc
-     \\
-     \\ // CPUロック解除状態にする．
-     \\ //
-     \\ // カーネル管理外のCPU例外ハンドラは別ルーチンで呼び出すた
-     \\ // め，単純に割込みを許可するだけでよい．
-        ++ "\n" ++
-        (if (comptime !arm.isEnabled(arm.Feature.has_v6))
-     \\  msr cpsr_c, %[cpsr_svc_unlock]
+            (if (TOPPERS_SUPPORT_OVRHDR)
+            \\  bl %[overrun_stop]
         else
-     \\  cpsie if
+            "") ++ "\n" ++
+            (if (USE_ARM_FPU)
+            \\ // FPUをディスエーブルする．
+            \\  vmrs r0, fpexc
+            \\  str r0, [sp]                   // FPEXCを保存（r0の場所）*/
+            \\  bic r0, r0, %[fpexc_enable]
+            \\  vmsr fpexc, r0                 // FPEXCを設定
+        else
+            "") ++ "\n" ++
+            \\
+            \\ // 非タスクコンテキスト用のスタックに切り換える．
+            \\  mov r3, sp                     // この時点のスタックポインタをr3に
+            \\  ldr r2, 5f                     // 非タスクコンテキスト用のスタックに
+            \\  ldr sp, [r2]
+            \\  push {r0,r3}                   // 切換え前のスタックポインタを保存
+            \\                                 // r0はスペース確保のため
+            \\ exc_handler_2:
+            \\ // 【この時点のレジスタ状態】
+            \\ //  r4：CPU例外ハンドラ番号
+            \\ //  r5：CPU例外の情報を記憶している領域の先頭番地
+            \\
+            \\ // （必要なら）割込みコントローラを操作する．
+            \\ //
+            \\ // irc_begin_excは，スタックトップ（r0の場所）に，
+            \\ // irc_end_excで用いる情報を保存する．
+            \\  bl irc_begin_exc
+            \\
+            \\ // CPUロック解除状態にする．
+            \\ //
+            \\ // カーネル管理外のCPU例外ハンドラは別ルーチンで呼び出すた
+            \\ // め，単純に割込みを許可するだけでよい．
+        ++ "\n" ++
+            (if (!arm.isEnabled(arm.Feature.has_v6))
+            \\  msr cpsr_c, %[cpsr_svc_unlock]
+        else
+            \\  cpsie if
         ) ++ "\n" ++
-     \\
+            \\
         ++ "\n" ++
-        (if (@hasDecl(option.log, "exchdrEnter"))
-     \\ // ログ出力の呼出し
-     \\  mov r0, r4                     // CPU例外番号をパラメータに渡す
-     \\  bl %[log_exc_enter]
-        else "") ++ "\n" ++
-     \\
-     \\ // CPU例外ハンドラの呼出し
-     \\  ldr r2, 7f                     // CPU例外ハンドラテーブルの読込み
-     \\  ldr r3, [r2,r4,lsl #2]         // CPU例外ハンドラの番地 → r3
-     \\  mov r0, r5                     // CPU例外の情報を記憶している領域の
-     \\                                 //     先頭番地を第1パラメータに渡す
-     \\  mov r1, r4                     // CPU例外番号を第2パラメータに渡す
-     \\  mov lr, pc                     // CPU例外ハンドラの呼出し
-     \\  bx r3
-     \\
-        ++ "\n" ++
-        (if (@hasDecl(option.log, "exchdrLeave"))
-     \\ // ログ出力の呼出し
-     \\  mov r0, r4                     // CPU例外番号をパラメータに渡す
-     \\  bl %[log_exc_leave]
-        else "") ++ "\n" ++
-     \\
-     \\ // カーネル管理の割込みを禁止する．
-        ++ "\n" ++
-        (if (comptime !arm.isEnabled(arm.Feature.has_v6))
-     \\  msr cpsr_c, %[cpsr_svc_cpulock]
+            (if (@hasDecl(option.log, "exchdrEnter"))
+            \\ // ログ出力の呼出し
+            \\  mov r0, r4                     // CPU例外番号をパラメータに渡す
+            \\  bl %[log_exc_enter]
         else
-     \\  cpsid i
+            "") ++ "\n" ++
+            \\
+            \\ // CPU例外ハンドラの呼出し
+            \\  ldr r2, 7f                     // CPU例外ハンドラテーブルの読込み
+            \\  ldr r3, [r2,r4,lsl #2]         // CPU例外ハンドラの番地 → r3
+            \\  mov r0, r5                     // CPU例外の情報を記憶している領域の
+            \\                                 //     先頭番地を第1パラメータに渡す
+            \\  mov r1, r4                     // CPU例外番号を第2パラメータに渡す
+            \\  mov lr, pc                     // CPU例外ハンドラの呼出し
+            \\  bx r3
+            \\
+        ++ "\n" ++
+            (if (@hasDecl(option.log, "exchdrLeave"))
+            \\ // ログ出力の呼出し
+            \\  mov r0, r4                     // CPU例外番号をパラメータに渡す
+            \\  bl %[log_exc_leave]
+        else
+            "") ++ "\n" ++
+            \\
+            \\ // カーネル管理の割込みを禁止する．
+        ++ "\n" ++
+            (if (!arm.isEnabled(arm.Feature.has_v6))
+            \\  msr cpsr_c, %[cpsr_svc_cpulock]
+        else
+            \\  cpsid i
         ) ++ "\n" ++
-     \\
-     \\ // 割込みコントローラを操作して，割込み優先度マスクを，CPU
-     \\ // 例外発生時の値に設定する．
-     \\  bl %[irc_end_exc]
-     \\
-     \\ // 例外ネストカウントをデクリメントする．
-     \\  ldr r2, 4f
-     \\  ldr r3, [r2]
-     \\  subs r3, r3, #1
-     \\  str r3, [r2]                   // 戻り先が非タスクコンテキストなら
-     \\  bne exc_handler_5              // exc_handler_5に分岐
-     \\
-     \\ // タスク用のスタックに戻す．
-     \\  pop {r0,r3}
-     \\  mov sp, r3
-     \\
+            \\
+            \\ // 割込みコントローラを操作して，割込み優先度マスクを，CPU
+            \\ // 例外発生時の値に設定する．
+            \\  bl %[irc_end_exc]
+            \\
+            \\ // 例外ネストカウントをデクリメントする．
+            \\  ldr r2, 4f
+            \\  ldr r3, [r2]
+            \\  subs r3, r3, #1
+            \\  str r3, [r2]                   // 戻り先が非タスクコンテキストなら
+            \\  bne exc_handler_5              // exc_handler_5に分岐
+            \\
+            \\ // タスク用のスタックに戻す．
+            \\  pop {r0,r3}
+            \\  mov sp, r3
+            \\
         ++ "\n" ++
-        (if (USE_ARM_FPU)
-     \\ // FPUを元に戻す．
-     \\  ldr r0, [sp]                   // FPEXCを復帰
-     \\  vmsr fpexc, r0
-        else "") ++ "\n" ++
-     \\
-     \\ // p_runtskがNULLか判定する．
-     \\  ldr r0, 2f                     // p_runtsk → r0
-     \\  ldr r0, [r0]
-     \\  tst r0, r0                     // p_runtskがNULLでなければ
-     \\  bne exc_handler_3              // exc_handler_3に分岐
-     \\
-     \\ // タスクのスタックに保存したスクラッチレジスタ等を捨てる．
-     \\  pop {r0,r1}                    // スタックポインタの調整を元に戻す
-     \\  add sp, sp, r1
-     \\  add sp, sp, #48                // スクラッチレジスタとCPU例外が発生した
-     \\  b dispatcher_0                 // 状況を判断するための追加情報を捨てる
-     \\
-     \\ // ディスパッチが必要か判定する．
-     \\ exc_handler_3:
-     \\ // 【この時点のレジスタ状態】
-     \\ //  r0：p_runtsk
-     \\  ldr r1, 3f                     // p_schedtsk → r1
-     \\  ldr r1, [r1]
-     \\  teq r0, r1                     // p_runtskとp_schedtskが同じなら
-     \\  beq exc_handler_4              //                exc_handler_4へ
-     \\
-     \\ // コンテキストを保存する．
-     \\  push {r6-r11}                  // 残りのレジスタの保存
-        ++ "\n" ++
-        (if (USE_ARM_FPU)
-     \\  ldr r2, [r0,%[tcb_p_tinib]]    // p_runtsk.p_tinib → r2
-     \\  ldr r1, [r2,%[tinib_tskatr]]   // p_runtsk.p_tinib.tskatr → r1
-     \\  tst r1, %[ta_fpu]
-     \\  beq 1f                         // TA_FPU属性でない場合は分岐
-        ++ "\n" ++
-        (if (USE_ARM_FPU_D32)
-     \\  vpush {d16-d31}
-        else "") ++ "\n" ++
-     \\  vpush {d0-d15}                 // 全FPUレジスタの保存
-     \\  vmrs r1, fpscr
-     \\  push {r1,r2}                   // FPSCRの保存
-     \\ 1:                              // r2はアラインメントのため
-        else "") ++ "\n" ++
-     \\  str sp, [r0,%[tcb_sp]]         // スタックポインタを保存
-     \\  adr r1, ret_exc_r              // 実行再開番地を保存
-     \\  str r1, [r0,%[tcb_pc]]
-     \\  b dispatcher                   // r0にはp_runtskが格納されている
-     \\
-     \\ ret_exc_r:
-     \\ // コンテキストを復帰する．
-     \\ //
-     \\ // 【この時点のレジスタ状態】
-     \\ //  r4：p_runtsk（タスク切換え後）
-        ++ "\n" ++
-        (if (USE_ARM_FPU)
-     \\  ldr r2, [r4,%[tcb_p_tinib]]    // p_runtsk.p_tinib → r2
-     \\  ldr r1, [r2,%[tinib_tskatr]]   // p_runtsk.p_tinib.tskatr → r1
-     \\  tst r1, %[ta_fpu]
-     \\  vmrs r0, fpexc
-     \\  biceq r0, r0, %[fpexc_enable]
-     \\  orrne r0, r0, %[fpexc_enable]
-     \\  vmsr fpexc, r0                 // FPEXCを設定
-     \\  beq 1f                         // TA_FPU属性でない場合は分岐
-     \\  pop {r1,r2}                    // FPSCRの復帰
-     \\  vmsr fpscr, r1
-     \\  vpop {d0-d15}                  // 全FPUレジスタの復帰
-        ++ "\n" ++
-        (if (USE_ARM_FPU_D32)
-     \\  vpop {d16-d31}
-        else "") ++ "\n" ++
-     \\ 1:
-        else "") ++ "\n" ++
-     \\  pop {r6-r11}                   // 残りのレジスタの復帰
-     \\
-     \\ exc_handler_4:
-        ++ "\n" ++
-        (if (TOPPERS_SUPPORT_OVRHDR)
-     \\  bl %[overrun_start]
-        else "") ++ "\n" ++
-     \\
-     \\ // CPU例外処理からのリターン
-     \\ //
-     \\ // CPU例外処理からのリターンにより，CPUロック解除状態に遷移
-     \\ // するようにする必要があるが，ARMはCPSRのビットによってCPU
-     \\ // ロック状態を表しているため，CPSRを元に戻してリターンすれ
-     \\ // ばよい．
-     \\ exc_handler_5:
-     \\  pop {r0,r1}                    // スタックポインタの調整を元に戻す
-     \\  add sp, sp, r1
-     \\  add sp, sp, #8                 // スタック上の情報を捨てる
-        ++ "\n" ++
-        (if (comptime !arm.isEnabled(arm.Feature.has_v6))
-     \\  pop {r0}                       // 戻り先のcpsrをspsrに設定
-     \\  msr spsr_cxsf, r0
-     \\  ldmfd sp!, {r0-r5,r12,lr,pc}^  // コンテキストの復帰
-     \\                                 // ^付きなので，spsr → cpsr
+            (if (USE_ARM_FPU)
+            \\ // FPUを元に戻す．
+            \\  ldr r0, [sp]                   // FPEXCを復帰
+            \\  vmsr fpexc, r0
         else
-     \\  pop {r0-r5,r12,lr}             // スクラッチレジスタ＋αの復帰
-     \\  rfefd sp!
-     \\
-     \\ 2:
-     \\  .long %[p_runtsk]
-     \\ 3:
-     \\  .long %[p_schedtsk]
-     \\ 4:
-     \\  .long %[excpt_nest_count]
-     \\ 5:
-     \\  .long %[istkpt]
-     \\ 7:
-     \\  .long %[exc_table]
+            "") ++ "\n" ++
+            \\
+            \\ // p_runtskがNULLか判定する．
+            \\  ldr r0, 2f                     // p_runtsk → r0
+            \\  ldr r0, [r0]
+            \\  tst r0, r0                     // p_runtskがNULLでなければ
+            \\  bne exc_handler_3              // exc_handler_3に分岐
+            \\
+            \\ // タスクのスタックに保存したスクラッチレジスタ等を捨てる．
+            \\  pop {r0,r1}                    // スタックポインタの調整を元に戻す
+            \\  add sp, sp, r1
+            \\  add sp, sp, #48                // スクラッチレジスタとCPU例外が発生した
+            \\  b dispatcher_0                 // 状況を判断するための追加情報を捨てる
+            \\
+            \\ // ディスパッチが必要か判定する．
+            \\ exc_handler_3:
+            \\ // 【この時点のレジスタ状態】
+            \\ //  r0：p_runtsk
+            \\  ldr r1, 3f                     // p_schedtsk → r1
+            \\  ldr r1, [r1]
+            \\  teq r0, r1                     // p_runtskとp_schedtskが同じなら
+            \\  beq exc_handler_4              //                exc_handler_4へ
+            \\
+            \\ // コンテキストを保存する．
+            \\  push {r6-r11}                  // 残りのレジスタの保存
+        ++ "\n" ++
+            (if (USE_ARM_FPU)
+            \\  ldr r2, [r0,%[tcb_p_tinib]]    // p_runtsk.p_tinib → r2
+            \\  ldr r1, [r2,%[tinib_tskatr]]   // p_runtsk.p_tinib.tskatr → r1
+            \\  tst r1, %[ta_fpu]
+            \\  beq 1f                         // TA_FPU属性でない場合は分岐
+            ++ "\n" ++
+                (if (USE_ARM_FPU_D32)
+                \\  vpush {d16-d31}
+            else
+                "") ++ "\n" ++
+                \\  vpush {d0-d15}                 // 全FPUレジスタの保存
+                \\  vmrs r1, fpscr
+                \\  push {r1,r2}                   // FPSCRの保存
+                \\ 1:                              // r2はアラインメントのため
+        else
+            "") ++ "\n" ++
+            \\  str sp, [r0,%[tcb_sp]]         // スタックポインタを保存
+            \\  adr r1, ret_exc_r              // 実行再開番地を保存
+            \\  str r1, [r0,%[tcb_pc]]
+            \\  b dispatcher                   // r0にはp_runtskが格納されている
+            \\
+            \\ ret_exc_r:
+            \\ // コンテキストを復帰する．
+            \\ //
+            \\ // 【この時点のレジスタ状態】
+            \\ //  r4：p_runtsk（タスク切換え後）
+        ++ "\n" ++
+            (if (USE_ARM_FPU)
+            \\  ldr r2, [r4,%[tcb_p_tinib]]    // p_runtsk.p_tinib → r2
+            \\  ldr r1, [r2,%[tinib_tskatr]]   // p_runtsk.p_tinib.tskatr → r1
+            \\  tst r1, %[ta_fpu]
+            \\  vmrs r0, fpexc
+            \\  biceq r0, r0, %[fpexc_enable]
+            \\  orrne r0, r0, %[fpexc_enable]
+            \\  vmsr fpexc, r0                 // FPEXCを設定
+            \\  beq 1f                         // TA_FPU属性でない場合は分岐
+            \\  pop {r1,r2}                    // FPSCRの復帰
+            \\  vmsr fpscr, r1
+            \\  vpop {d0-d15}                  // 全FPUレジスタの復帰
+            ++ "\n" ++
+                (if (USE_ARM_FPU_D32)
+                \\  vpop {d16-d31}
+            else
+                "") ++ "\n" ++
+                \\ 1:
+        else
+            "") ++ "\n" ++
+            \\  pop {r6-r11}                   // 残りのレジスタの復帰
+            \\
+            \\ exc_handler_4:
+        ++ "\n" ++
+            (if (TOPPERS_SUPPORT_OVRHDR)
+            \\  bl %[overrun_start]
+        else
+            "") ++ "\n" ++
+            \\
+            \\ // CPU例外処理からのリターン
+            \\ //
+            \\ // CPU例外処理からのリターンにより，CPUロック解除状態に遷移
+            \\ // するようにする必要があるが，ARMはCPSRのビットによってCPU
+            \\ // ロック状態を表しているため，CPSRを元に戻してリターンすれ
+            \\ // ばよい．
+            \\ exc_handler_5:
+            \\  pop {r0,r1}                    // スタックポインタの調整を元に戻す
+            \\  add sp, sp, r1
+            \\  add sp, sp, #8                 // スタック上の情報を捨てる
+        ++ "\n" ++
+            (if (!arm.isEnabled(arm.Feature.has_v6))
+            \\  pop {r0}                       // 戻り先のcpsrをspsrに設定
+            \\  msr spsr_cxsf, r0
+            \\  ldmfd sp!, {r0-r5,r12,lr,pc}^  // コンテキストの復帰
+            \\                                 // ^付きなので，spsr → cpsr
+        else
+            \\  pop {r0-r5,r12,lr}             // スクラッチレジスタ＋αの復帰
+            \\  rfefd sp!
+            \\
+            \\ 2:
+            \\  .long %[p_runtsk]
+            \\ 3:
+            \\  .long %[p_schedtsk]
+            \\ 4:
+            \\  .long %[excpt_nest_count]
+            \\ 5:
+            \\  .long %[istkpt]
+            \\ 7:
+            \\  .long %[exc_table]
         )
-     :
-     : [cpsr_svc_cpulock] "n" (@as(u32, arm.CPSR_SVC_MODE | CPSR_CPULOCK)),
-       [cpsr_svc_unlock] "n" (@as(u32, arm.CPSR_SVC_MODE | CPSR_UNLOCK)),
-       [cpsr_fiq_irq] "n" (@as(u32, arm.CPSR_FIQ_IRQ_BIT)),
-       [tcb_p_tinib] "J" (@as(i16, @byteOffsetOf(task.TCB, "p_tinib"))),
-       [tinib_tskatr] "J" (@as(i16, @byteOffsetOf(task.TINIB, "tskatr"))),
-       [t_excinf_cpsr] "J" (@as(i16, @byteOffsetOf(T_EXCINF, "cpsr"))),
-       [tcb_sp] "J" (@as(i16, @byteOffsetOf(task.TCB, "tskctxb")
-                             + @byteOffsetOf(TSKCTXB, "sp"))),
-       [tcb_pc] "J" (@as(i16, @byteOffsetOf(task.TCB, "tskctxb")
-                             + @byteOffsetOf(TSKCTXB, "pc"))),
-       [ta_fpu] "n" (@as(u32, TA_FPU)),
-       [fpexc_enable] "n" (@as(u32, arm.FPEXC_ENABLE)),
-       [excpt_nest_count] "s" (&excpt_nest_count),
-       [p_runtsk] "s" (&task.p_runtsk),
-       [p_schedtsk] "s" (&task.p_schedtsk),
-       [istkpt] "s" (&cfg._kernel_istkpt),
-       [exc_table] "s" (&cfg._kernel_exc_table),
-       [log_exc_enter] "s" (logExchdrEnter),
-       [log_exc_leave] "s" (logExchdrLeave),
-       [overrun_start] "s" (overrun.overrun_start),
-       [overrun_stop] "s" (overrun.overrun_stop),
-       [irc_get_intpri] "s" (target_impl.irc_get_intpri),
-       [irc_begin_exc] "s" (target_impl.irc_begin_exc),
-       [irc_end_exc] "s" (target_impl.irc_end_exc),
+        :
+        : [cpsr_svc_cpulock] "n" (@as(u32, arm.CPSR_SVC_MODE | CPSR_CPULOCK)),
+          [cpsr_svc_unlock] "n" (@as(u32, arm.CPSR_SVC_MODE | CPSR_UNLOCK)),
+          [cpsr_fiq_irq] "n" (@as(u32, arm.CPSR_FIQ_IRQ_BIT)),
+          [tcb_p_tinib] "J" (@as(i16, @offsetOf(task.TCB, "p_tinib"))),
+          [tinib_tskatr] "J" (@as(i16, @offsetOf(task.TINIB, "tskatr"))),
+          [t_excinf_cpsr] "J" (@as(i16, @offsetOf(T_EXCINF, "cpsr"))),
+          [tcb_sp] "J" (@as(i16, @offsetOf(task.TCB, "tskctxb") + @offsetOf(TSKCTXB, "sp"))),
+          [tcb_pc] "J" (@as(i16, @offsetOf(task.TCB, "tskctxb") + @offsetOf(TSKCTXB, "pc"))),
+          [ta_fpu] "n" (@as(u32, TA_FPU)),
+          [fpexc_enable] "n" (@as(u32, arm.FPEXC_ENABLE)),
+          [excpt_nest_count] "s" (&excpt_nest_count),
+          [p_runtsk] "s" (&task.p_runtsk),
+          [p_schedtsk] "s" (&task.p_schedtsk),
+          [istkpt] "s" (&cfg._kernel_istkpt),
+          [exc_table] "s" (&cfg._kernel_exc_table),
+          [log_exc_enter] "s" (logExchdrEnter),
+          [log_exc_leave] "s" (logExchdrLeave),
+          [overrun_start] "s" (overrun.overrun_start),
+          [overrun_stop] "s" (overrun.overrun_stop),
+          [irc_get_intpri] "s" (target_impl.mpcore_kernel_impl.gic_kernel_impl.irc_get_intpri),
+          [irc_begin_exc] "s" (target_impl.mpcore_kernel_impl.gic_kernel_impl.irc_begin_exc),
+          [irc_end_exc] "s" (target_impl.mpcore_kernel_impl.gic_kernel_impl.irc_end_exc),
     );
 
     //
     //  カーネル管理外のCPU例外の出入口処理
     //
-    asm volatile(
-     \\ nk_exc_handler_1:
-     \\ // 【この時点のレジスタ状態】
-     \\ //  r1：CPU例外発生前のCPSRのFビットとIビットの値
-     \\ //  r2：excpt_nest_countの番地
-     \\ //  r3：excpt_nest_countの値
-     \\ //  r4：CPU例外ハンドラ番号
-     \\ //  r5：CPU例外の情報を記憶している領域の先頭番地
-     \\
-     \\ // 例外ネストカウントをインクリメントする．
-     \\  add r3, r3, #1
-     \\  str r3, [r2]
-     \\  teq r3, #1                     // CPU例外発生前が非タスクコンテキスト
-     \\  bne nk_exc_handler_2           //          ならnk_exc_handler_2に分岐
+    asm volatile (
+        \\ nk_exc_handler_1:
+        \\ // 【この時点のレジスタ状態】
+        \\ //  r1：CPU例外発生前のCPSRのFビットとIビットの値
+        \\ //  r2：excpt_nest_countの番地
+        \\ //  r3：excpt_nest_countの値
+        \\ //  r4：CPU例外ハンドラ番号
+        \\ //  r5：CPU例外の情報を記憶している領域の先頭番地
+        \\
+        \\ // 例外ネストカウントをインクリメントする．
+        \\  add r3, r3, #1
+        \\  str r3, [r2]
+        \\  teq r3, #1                     // CPU例外発生前が非タスクコンテキスト
+        \\  bne nk_exc_handler_2           //          ならnk_exc_handler_2に分岐
         ++ "\n" ++
-        (if (USE_ARM_FPU)
-     \\ // FPUをディスエーブルする．
-     \\  vmrs r0, fpexc
-     \\  str r0, [sp]                   // FPEXCを保存（r0の場所）
-     \\  bic r0, r0, %[fpexc_enable]
-     \\  vmsr fpexc, r0                 // FPEXCを設定
-        else "") ++ "\n" ++
-     \\
-     \\ // 非タスクコンテキスト用のスタックに切り換える．
-     \\  mov r3, sp                     // この時点のスタックポインタをr3に
-     \\  ldr r2, 5f                     // 非タスクコンテキスト用のスタックに
-     \\  ldr sp, [r2]
-     \\  push {r0,r3}                   // 切換え前のスタックポインタを保存
-     \\                                 // r0はアラインメントのため
-     \\ nk_exc_handler_2:
-     \\ // システム状態（コンテキストは除く）を，CPU例外発生時の状態へ
-     \\  orr r1, r1, %[cpsr_svc]
-     \\  msr cpsr_c, r1
-     \\
-     \\ // CPU例外ハンドラの呼出し
-     \\  ldr r2, 7f                     // CPU例外ハンドラテーブルの読込み
-     \\  ldr r3, [r2,r4,lsl #2]         // CPU例外ハンドラの番地 → r3
-     \\  mov r0, r5                     // CPU例外の情報を記憶している領域の
-     \\                                 //     先頭番地を第1パラメータに渡す
-     \\  mov r1, r4                     // CPU例外番号を第2パラメータに渡す
-     \\  mov lr, pc                     // CPU例外ハンドラの呼出し
-     \\  bx r3
-     \\
-     \\ // 例外ネストカウントをデクリメントする．
-     \\  ldr r2, 4f
-     \\  ldr r3, [r2]
-     \\  subs r3, r3, #1
-     \\  str r3, [r2]                   // 戻り先が非タスクコンテキストなら
-     \\  bne exc_handler_5              // exc_handler_5に分岐
-     \\
-     \\ // タスク用のスタックに戻す．
-     \\  pop {r0,r3}
-     \\  mov sp, r3
-     \\
+            (if (USE_ARM_FPU)
+            \\ // FPUをディスエーブルする．
+            \\  vmrs r0, fpexc
+            \\  str r0, [sp]                   // FPEXCを保存（r0の場所）
+            \\  bic r0, r0, %[fpexc_enable]
+            \\  vmsr fpexc, r0                 // FPEXCを設定
+        else
+            "") ++ "\n" ++
+            \\
+            \\ // 非タスクコンテキスト用のスタックに切り換える．
+            \\  mov r3, sp                     // この時点のスタックポインタをr3に
+            \\  ldr r2, 5f                     // 非タスクコンテキスト用のスタックに
+            \\  ldr sp, [r2]
+            \\  push {r0,r3}                   // 切換え前のスタックポインタを保存
+            \\                                 // r0はアラインメントのため
+            \\ nk_exc_handler_2:
+            \\ // システム状態（コンテキストは除く）を，CPU例外発生時の状態へ
+            \\  orr r1, r1, %[cpsr_svc]
+            \\  msr cpsr_c, r1
+            \\
+            \\ // CPU例外ハンドラの呼出し
+            \\  ldr r2, 7f                     // CPU例外ハンドラテーブルの読込み
+            \\  ldr r3, [r2,r4,lsl #2]         // CPU例外ハンドラの番地 → r3
+            \\  mov r0, r5                     // CPU例外の情報を記憶している領域の
+            \\                                 //     先頭番地を第1パラメータに渡す
+            \\  mov r1, r4                     // CPU例外番号を第2パラメータに渡す
+            \\  mov lr, pc                     // CPU例外ハンドラの呼出し
+            \\  bx r3
+            \\
+            \\ // 例外ネストカウントをデクリメントする．
+            \\  ldr r2, 4f
+            \\  ldr r3, [r2]
+            \\  subs r3, r3, #1
+            \\  str r3, [r2]                   // 戻り先が非タスクコンテキストなら
+            \\  bne exc_handler_5              // exc_handler_5に分岐
+            \\
+            \\ // タスク用のスタックに戻す．
+            \\  pop {r0,r3}
+            \\  mov sp, r3
+            \\
         ++ "\n" ++
-        (if (USE_ARM_FPU)
-     \\ // FPUを元に戻す．
-     \\  ldr r0, [sp]                   // FPEXCを復帰
-     \\  vmsr fpexc, r0
-        else "") ++ "\n" ++
-     \\  b exc_handler_5
-     \\
-     \\ 4:
-     \\  .long %[excpt_nest_count]
-     \\ 5:
-     \\  .long %[istkpt]
-     \\ 7:
-     \\  .long %[exc_table]
-     :
-     : [fpexc_enable] "n" (@as(u32, arm.FPEXC_ENABLE)),
-       [cpsr_svc] "n" (@as(u32, arm.CPSR_SVC_MODE)),
-       [excpt_nest_count] "s" (&excpt_nest_count),
-       [istkpt] "s" (&cfg._kernel_istkpt),
-       [exc_table] "s" (&cfg._kernel_exc_table),
+            (if (USE_ARM_FPU)
+            \\ // FPUを元に戻す．
+            \\  ldr r0, [sp]                   // FPEXCを復帰
+            \\  vmsr fpexc, r0
+        else
+            "") ++ "\n" ++
+            \\  b exc_handler_5
+            \\
+            \\ 4:
+            \\  .long %[excpt_nest_count]
+            \\ 5:
+            \\  .long %[istkpt]
+            \\ 7:
+            \\  .long %[exc_table]
+        :
+        : [fpexc_enable] "n" (@as(u32, arm.FPEXC_ENABLE)),
+          [cpsr_svc] "n" (@as(u32, arm.CPSR_SVC_MODE)),
+          [excpt_nest_count] "s" (&excpt_nest_count),
+          [istkpt] "s" (&cfg._kernel_istkpt),
+          [exc_table] "s" (&cfg._kernel_exc_table),
     );
     unreachable;
 }
@@ -1594,38 +1643,33 @@ fn exc_entry() callconv(.Naked) void {
 ///  変換テーブルベースレジスタ（TTBR）の設定値
 ///
 const TTBR_CONFIG =
-    if (comptime arm.isEnabled(arm.Feature.has_v7))
-        (arm.CP15_TTBR_RGN_SHAREABLE
-             | arm.CP15_TTBR_RGN_WBWA
-             | arm.CP15_TTBR_IRGN_WBWA)
-    else if (comptime arm.isEnabled(arm.Feature.has_v6))
-        (arm.CP15_TTBR_RGN_CACHEABLE
-             | arm.CP15_TTBR_RGN_SHAREABLE
-             | arm.CP15_TTBR_RGN_WBACK)
-    else @compileError("not supported.");
+    if (arm.isEnabled(arm.Feature.has_v7))
+    (arm.CP15_TTBR_RGN_SHAREABLE | arm.CP15_TTBR_RGN_WBWA | arm.CP15_TTBR_IRGN_WBWA)
+else if (arm.isEnabled(arm.Feature.has_v6))
+    (arm.CP15_TTBR_RGN_CACHEABLE | arm.CP15_TTBR_RGN_SHAREABLE | arm.CP15_TTBR_RGN_WBACK)
+else
+    @compileError("not supported.");
 
 ///
 ///  MMUの設定情報のデータ型
 ///
 pub const ARM_MMU_CONFIG = struct {
-    vaddr: u32,     // 仮想アドレス
-    paddr: u32,     // 物理アドレス
-    size: u32,      // サイズ
-    attr: u32,      // セクション属性
+    vaddr: u32, // 仮想アドレス
+    paddr: u32, // 物理アドレス
+    size: u32, // サイズ
+    attr: u32, // セクション属性
 };
 
 ///
 ///  MMU関連の定義
 ///
-const CP15_DACR_D0_CLIENT = 0x01;      // 変換テーブルに従いドメイン0にアクセス
-const DEFAULT_ASID = 1;                // 使用するASID
+const CP15_DACR_D0_CLIENT = 0x01; // 変換テーブルに従いドメイン0にアクセス
+const DEFAULT_ASID = 1; // 使用するASID
 
 ///
 ///  セクションテーブル
 ///
-var section_table: [arm.SECTION_TABLE_ENTRY]u32
-    align(arm.SECTION_TABLE_ALIGN)
-    linksection(".bss.section_table") = undefined;
+var section_table: [arm.SECTION_TABLE_ENTRY]u32 align(arm.SECTION_TABLE_ALIGN) linksection(".bss.section_table") = undefined;
 
 ///
 ///  MMUのセクションテーブルエントリの設定
@@ -1639,21 +1683,16 @@ fn config_section_entry(ammuc: ARM_MMU_CONFIG) void {
     assert(paddr % arm.SECTION_SIZE == 0);
     assert(size % arm.SECTION_SIZE == 0);
     while (size > 0) {
-        if (USE_ARM_SSECTION
-                and size >= arm.SSECTION_SIZE
-                and (vaddr % arm.SSECTION_SIZE) == 0) {
+        if (USE_ARM_SSECTION and size >= arm.SSECTION_SIZE and (vaddr % arm.SSECTION_SIZE) == 0) {
             var i: usize = 0;
             while (i < 16) : (i += 1) {
-                section_table[vaddr / arm.SECTION_SIZE]
-                    = paddr | arm.MMU_DSCR1_SSECTION | ammuc.attr;
+                section_table[vaddr / arm.SECTION_SIZE] = paddr | arm.MMU_DSCR1_SSECTION | ammuc.attr;
                 vaddr +%= arm.SECTION_SIZE;
             }
             paddr +%= arm.SSECTION_SIZE;
             size -= arm.SSECTION_SIZE;
-        }
-        else {
-            section_table[vaddr / arm.SECTION_SIZE]
-                = paddr | arm.MMU_DSCR1_SECTION | ammuc.attr;
+        } else {
+            section_table[vaddr / arm.SECTION_SIZE] = paddr | arm.MMU_DSCR1_SECTION | ammuc.attr;
             vaddr +%= arm.SECTION_SIZE;
             paddr +%= arm.SECTION_SIZE;
             size -= arm.SECTION_SIZE;
@@ -1676,7 +1715,7 @@ fn arm_mmu_initialize() void {
     }
 
     // TTBR0を用いるように指定（ARMv6以降）
-    if (comptime arm.isEnabled(arm.Feature.has_v6)) {
+    if (arm.isEnabled(arm.Feature.has_v6)) {
         arm.CP15_WRITE_TTBCR(0);
     }
 
@@ -1688,7 +1727,7 @@ fn arm_mmu_initialize() void {
     arm.CP15_WRITE_DACR(CP15_DACR_D0_CLIENT);
 
     // ASIDの設定
-    if (comptime arm.isEnabled(arm.Feature.has_v6)) {
+    if (arm.isEnabled(arm.Feature.has_v6)) {
         arm.CP15_WRITE_CONTEXTIDR(DEFAULT_ASID);
     }
 
@@ -1698,11 +1737,9 @@ fn arm_mmu_initialize() void {
     // MMUを有効にする．ARMv6では，拡張ページテーブル設定を使う（サブ
     // ページは使わない）ように設定する．
     reg = arm.CP15_READ_SCTLR();
-    if (comptime arm.isEnabled(arm.Feature.has_v6)
-            and !arm.isEnabled(arm.Feature.has_v7)) {
+    if (arm.isEnabled(arm.Feature.has_v6) and !arm.isEnabled(arm.Feature.has_v7)) {
         reg |= (arm.CP15_SCTLR_MMU | arm.CP15_SCTLR_EXTPAGE);
-    }
-    else {
+    } else {
         reg |= arm.CP15_SCTLR_MMU;
     }
     arm.CP15_WRITE_SCTLR(reg);
@@ -1737,8 +1774,7 @@ fn arm_pmcnt_initialize() void {
     reg |= arm.CP15_PMCR_ALLCNTR_ENABLE;
     if (USE_ARM_PMCNT_DIV64) {
         reg |= arm.CP15_PMCR_PMCCNTR_DIVIDER;
-    }
-    else {
+    } else {
         reg &= ~@as(u32, arm.CP15_PMCR_PMCCNTR_DIVIDER);
     }
     arm.CP15_WRITE_PMCR(reg);
@@ -1771,24 +1807,19 @@ pub fn core_initialize() void {
 ///
 ///  コア依存の終了処理
 ///
-pub fn core_terminate() void {
-}
+pub fn core_terminate() void {}
 
 ///
 ///  CPU例外の発生状況のログ出力
 ///
-
 ///
 ///  CPU例外ハンドラの中から，CPU例外情報ポインタ（p_excinf）を引数と
 ///  して呼び出すことで，CPU例外の発生状況をシステムログに出力する．
 ///
 fn xlog_sys(p_excinf: *T_EXCINF) void {
-    syslog(LOG_EMERG, "pc = %08x, cpsr = %08x, lr = %08x, r12 = %08x",
-           .{ p_excinf.pc, p_excinf.cpsr, p_excinf.lr, p_excinf.r12 });
-    syslog(LOG_EMERG, "r0 = %08x, r1 = %08x, r2 = %08x, r3 = %08x",
-           .{ p_excinf.r0, p_excinf.r1, p_excinf.r2, p_excinf.r3 });
-    syslog(LOG_EMERG, "nest_count = %d, intpri = %d",
-           .{ p_excinf.nest_count, p_excinf.intpri });
+    syslog(LOG_EMERG, "pc = %08x, cpsr = %08x, lr = %08x, r12 = %08x", .{ p_excinf.pc, p_excinf.cpsr, p_excinf.lr, p_excinf.r12 });
+    syslog(LOG_EMERG, "r0 = %08x, r1 = %08x, r2 = %08x, r3 = %08x", .{ p_excinf.r0, p_excinf.r1, p_excinf.r2, p_excinf.r3 });
+    syslog(LOG_EMERG, "nest_count = %d, intpri = %d", .{ p_excinf.nest_count, p_excinf.intpri });
 }
 
 ///
@@ -1819,7 +1850,7 @@ fn xlog_fsr(fsr: u32, far: u32) void {
         },
     }
     syslog(LOG_EMERG, "Fault status: 0x%04x (%s)", .{ fsr, status });
-    syslog(LOG_EMERG, "Fault address: 0x%08x", .{ far });
+    syslog(LOG_EMERG, "Fault address: 0x%08x", .{far});
 }
 
 ///
@@ -1835,13 +1866,11 @@ fn default_int_handler() callconv(.C) void {
 ///
 fn default_exc_handler(p_excinf: *T_EXCINF, excno: EXCNO) void {
     if (OMIT_XLOG_SYS) {
-        syslog(LOG_EMERG, "Unregistered exception %d occurs.", .{ excno });
-    }
-    else {
+        syslog(LOG_EMERG, "Unregistered exception %d occurs.", .{excno});
+    } else {
         switch (excno) {
             EXCNO_UNDEF => {
-                syslog(LOG_EMERG,
-                       "Undefined Instruction exception occurs.", .{});
+                syslog(LOG_EMERG, "Undefined Instruction exception occurs.", .{});
             },
             EXCNO_SVC => {
                 syslog(LOG_EMERG, "Supervisor Call exception occurs.", .{});
@@ -1865,8 +1894,7 @@ fn default_exc_handler(p_excinf: *T_EXCINF, excno: EXCNO) void {
         }
         xlog_sys(p_excinf);
 
-        if (excno == EXCNO_PABORT or excno == EXCNO_DABORT
-                                  or excno == EXCNO_FATAL) {
+        if (excno == EXCNO_PABORT or excno == EXCNO_DABORT or excno == EXCNO_FATAL) {
             var fsr: u32 = undefined;
             var far: u32 = undefined;
 
@@ -1874,13 +1902,11 @@ fn default_exc_handler(p_excinf: *T_EXCINF, excno: EXCNO) void {
                 if (excno == EXCNO_PABORT) {
                     fsr = arm.CP15_READ_IFSR();
                     far = arm.CP15_READ_IFAR();
-                }
-                else {
+                } else {
                     fsr = arm.CP15_READ_DFSR();
                     far = arm.CP15_READ_DFAR();
                 }
-            }
-            else {
+            } else {
                 fsr = arm.CP15_READ_FSR();
                 far = arm.CP15_READ_FAR();
             }
@@ -1894,106 +1920,108 @@ fn default_exc_handler(p_excinf: *T_EXCINF, excno: EXCNO) void {
 ///  スタートアップモジュール
 ///
 fn start() callconv(.Naked) noreturn {
-    asm volatile(
-     \\  .global start
-     \\ start:
-     \\ // プロセッサモードの初期化
-     \\ //
-     \\ // スーパバイザモード，全割込みロック状態に初期化する．
-     \\  msr spsr_cxsf, %[cpsr_svc_intlock]
-     \\
-     \\ // スタックポインタとフレームポインタの初期化
-     \\  ldr r0, __kernel_istk
-     \\  ldr r0, [r0]
-     \\  ldr r1, __kernel_istksz
-     \\  ldr r1, [r1]
-     \\  add sp, r0, r1         // スタックポインタ（sp）
-     \\  mov fp, #0             // ARMモード用フレームポインタ（r11）
-     \\  mov r7, #0             // Thumbモード用フレームポインタ（r7）
-     \\
-     \\ // hardware_init_hookの呼出し（0でない場合）
-     \\ //
-     \\ // ターゲットハードウェアに依存して必要な初期化処理がある場合は，
-     \\ // hardware_init_hookという関数を用意する．
-     \\  ldr r0, _hardware_init_hook
-     \\  cmp r0, #0
-     \\  movne lr, pc
-     \\  bxne r0
+    asm volatile (
+        \\  .global start
+        \\ start:
+        \\ // プロセッサモードの初期化
+        \\ //
+        \\ // スーパバイザモード，全割込みロック状態に初期化する．
+        \\  msr spsr_cxsf, %[cpsr_svc_intlock]
+        \\
+        \\ // スタックポインタとフレームポインタの初期化
+        \\  ldr r0, __kernel_istk
+        \\  ldr r0, [r0]
+        \\  ldr r1, __kernel_istksz
+        \\  ldr r1, [r1]
+        \\  add sp, r0, r1         // スタックポインタ（sp）
+        \\  mov fp, #0             // ARMモード用フレームポインタ（r11）
+        \\  mov r7, #0             // Thumbモード用フレームポインタ（r7）
+        \\
+        \\ // hardware_init_hookの呼出し（0でない場合）
+        \\ //
+        \\ // ターゲットハードウェアに依存して必要な初期化処理がある場合は，
+        \\ // hardware_init_hookという関数を用意する．
+        \\  ldr r0, _hardware_init_hook
+        \\  cmp r0, #0
+        \\  movne lr, pc
+        \\  bxne r0
         ++ "\n" ++
-        (if (!TOPPERS_OMIT_BSS_INIT)
-     \\ // bssセクションのクリア
-     \\ //
-     \\ // __start_bssから__end_bssまでをゼロクリアする．
-     \\  ldr r0, ___start_bss
-     \\  ldr r2, ___end_bss
-     \\  cmp r0, r2
-     \\  bhs start_3
-     \\  mov r1, #0
-     \\ start_2:
-     \\  str r1, [r0], #4
-     \\  cmp r0, r2
-     \\  blo start_2
-     \\ start_3:
-        else "") ++ "\n" ++
-        (if (!TOPPERS_OMIT_DATA_INIT)
-     \\ // dataセクションの初期化（ROM化対応）
-     \\ //
-     \\ // __start_dataから__end_dataまでに，__start_idata以降のデータ
-     \\ // をコピーする．
-     \\  ldr r0, ___start_data
-     \\  ldr r2, ___end_data
-     \\  cmp r0, r2
-     \\  bhs start_5
-     \\  ldr r1, ___start_idata
-     \\ start_4:
-     \\  ldr r3, [r1], #4
-     \\  str r3, [r0], #4
-     \\  cmp r0, r2
-     \\  blo start_4
-     \\ start_5:
-        else "") ++ "\n" ++
-     \\ // _kernel_istkptの設定
-     \\  ldr r0, 5f
-     \\  str sp, [r0]
-     \\
-     \\ // software_init_hookの呼出し（0でない場合）
-     \\ //
-     \\ // ソフトウェア環境（特にライブラリ）に依存して必要な初期化処理が
-     \\ // ある場合は，software_init_hookという関数を用意すればよい．
-     \\  ldr r0, _software_init_hook
-     \\  cmp r0, #0
-     \\  movne lr, pc
-     \\  bxne r0
-     \\
-     \\ // カーネルの起動
-     \\  b %[sta_ker]
-     \\
-     \\ 5:
-     \\  .long %[istkpt]
-     \\ __kernel_istk:
-     \\  .long %[istk]
-     \\ __kernel_istksz:
-     \\  .long %[istksz]
-     \\ _hardware_init_hook:
-     \\  .long hardware_init_hook
-     \\ _software_init_hook:
-     \\  .long software_init_hook
-     \\ ___start_bss:
-     \\  .long __start_bss
-     \\ ___end_bss:
-     \\  .long __end_bss
-     \\ ___start_data:
-     \\  .long __start_data
-     \\ ___end_data:
-     \\  .long __end_data
-     \\ ___start_idata:
-     \\  .long __start_idata
-     :
-     : [cpsr_svc_intlock] "n" (@as(u32, arm.CPSR_SVC_MODE | CPSR_INTLOCK)),
-       [istk] "s" (&cfg._kernel_istk),
-       [istksz] "s" (&cfg._kernel_istksz),
-       [istkpt] "s" (&cfg._kernel_istkpt),
-       [sta_ker] "s" (startup.sta_ker),
+            (if (!TOPPERS_OMIT_BSS_INIT)
+            \\ // bssセクションのクリア
+            \\ //
+            \\ // __start_bssから__end_bssまでをゼロクリアする．
+            \\  ldr r0, ___start_bss
+            \\  ldr r2, ___end_bss
+            \\  cmp r0, r2
+            \\  bhs start_3
+            \\  mov r1, #0
+            \\ start_2:
+            \\  str r1, [r0], #4
+            \\  cmp r0, r2
+            \\  blo start_2
+            \\ start_3:
+        else
+            "") ++ "\n" ++
+            (if (!TOPPERS_OMIT_DATA_INIT)
+            \\ // dataセクションの初期化（ROM化対応）
+            \\ //
+            \\ // __start_dataから__end_dataまでに，__start_idata以降のデータ
+            \\ // をコピーする．
+            \\  ldr r0, ___start_data
+            \\  ldr r2, ___end_data
+            \\  cmp r0, r2
+            \\  bhs start_5
+            \\  ldr r1, ___start_idata
+            \\ start_4:
+            \\  ldr r3, [r1], #4
+            \\  str r3, [r0], #4
+            \\  cmp r0, r2
+            \\  blo start_4
+            \\ start_5:
+        else
+            "") ++ "\n" ++
+            \\ // _kernel_istkptの設定
+            \\  ldr r0, 5f
+            \\  str sp, [r0]
+            \\
+            \\ // software_init_hookの呼出し（0でない場合）
+            \\ //
+            \\ // ソフトウェア環境（特にライブラリ）に依存して必要な初期化処理が
+            \\ // ある場合は，software_init_hookという関数を用意すればよい．
+            \\  ldr r0, _software_init_hook
+            \\  cmp r0, #0
+            \\  movne lr, pc
+            \\  bxne r0
+            \\
+            \\ // カーネルの起動
+            \\  b %[sta_ker]
+            \\
+            \\ 5:
+            \\  .long %[istkpt]
+            \\ __kernel_istk:
+            \\  .long %[istk]
+            \\ __kernel_istksz:
+            \\  .long %[istksz]
+            \\ _hardware_init_hook:
+            \\  .long hardware_init_hook
+            \\ _software_init_hook:
+            \\  .long software_init_hook
+            \\ ___start_bss:
+            \\  .long __start_bss
+            \\ ___end_bss:
+            \\  .long __end_bss
+            \\ ___start_data:
+            \\  .long __start_data
+            \\ ___end_data:
+            \\  .long __end_data
+            \\ ___start_idata:
+            \\  .long __start_idata
+        :
+        : [cpsr_svc_intlock] "n" (@as(u32, arm.CPSR_SVC_MODE | CPSR_INTLOCK)),
+          [istk] "s" (&cfg._kernel_istk),
+          [istksz] "s" (&cfg._kernel_istksz),
+          [istkpt] "s" (&cfg._kernel_istkpt),
+          [sta_ker] "s" (startup.sta_ker),
     );
     unreachable;
 }
@@ -2002,35 +2030,35 @@ fn start() callconv(.Naked) noreturn {
 ///  例外ベクタテーブル
 ///
 pub fn vector_table() linksection(".vector") callconv(.Naked) void {
-    asm volatile(
-     \\  ldr pc, reset_vector       // リセット
-     \\  ldr pc, undef_vector       // 未定義命令
-     \\  ldr pc, svc_vector         // ソフトウェア割込み
-     \\  ldr pc, pabort_vector      // プリフェッチアボート
-     \\  ldr pc, dabort_vector      // データアボート
-     \\  ldr pc, reset_vector       // 未使用
-     \\  ldr pc, irq_vector         // IRQ
-     \\  ldr pc, fiq_vector         // FIQ
-     \\
-     \\ // 例外ベクタの命令から参照されるジャンプ先アドレス
-     \\ reset_vector:
-     \\  .long start
-     \\ undef_vector:
-     \\  .long undef_handler
-     \\ svc_vector:
-     \\  .long svc_handler
-     \\ pabort_vector:
-     \\  .long pabort_handler
-     \\ dabort_vector:
-     \\  .long dabort_handler
-     \\ irq_vector:
-     \\  .long irq_handler
-     \\ fiq_vector:
-     \\  .long fiq_handler
-     :
-     : [start] "s" (start),
-       [irq_handler] "s" (irq_handler),
-       [exc_entry] "s" (exc_entry),
+    asm volatile (
+        \\  ldr pc, reset_vector       // リセット
+        \\  ldr pc, undef_vector       // 未定義命令
+        \\  ldr pc, svc_vector         // ソフトウェア割込み
+        \\  ldr pc, pabort_vector      // プリフェッチアボート
+        \\  ldr pc, dabort_vector      // データアボート
+        \\  ldr pc, reset_vector       // 未使用
+        \\  ldr pc, irq_vector         // IRQ
+        \\  ldr pc, fiq_vector         // FIQ
+        \\
+        \\ // 例外ベクタの命令から参照されるジャンプ先アドレス
+        \\ reset_vector:
+        \\  .long start
+        \\ undef_vector:
+        \\  .long undef_handler
+        \\ svc_vector:
+        \\  .long svc_handler
+        \\ pabort_vector:
+        \\  .long pabort_handler
+        \\ dabort_vector:
+        \\  .long dabort_handler
+        \\ irq_vector:
+        \\  .long irq_handler
+        \\ fiq_vector:
+        \\  .long fiq_handler
+        :
+        : [start] "s" (start),
+          [irq_handler] "s" (irq_handler),
+          [exc_entry] "s" (exc_entry),
     );
 }
 
@@ -2048,8 +2076,7 @@ pub const CoreExportDefs = struct {
     ///
     ///  未定義の例外が入った場合の処理
     ///
-    export fn _kernel_default_exc_handler(p_excinf: *T_EXCINF,
-                                          excno: EXCNO) void {
+    export fn _kernel_default_exc_handler(p_excinf: *T_EXCINF, excno: EXCNO) void {
         default_exc_handler(p_excinf, excno);
     }
 

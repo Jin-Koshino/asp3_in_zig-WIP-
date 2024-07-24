@@ -39,13 +39,48 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  待ち状態管理モジュール
 ///
-usingnamespace @import("kernel_impl.zig");
-usingnamespace task;
-usingnamespace time_event;
+const kernel_impl = @import("kernel_impl.zig");
+///usingnamespace task;
+const task = kernel_impl.task;
+///usingnamespace time_event;
+const time_event = kernel_impl.time_event;
+
+////
+const zig = kernel_impl.zig;
+const t_stddef = zig.t_stddef;
+
+const ItronError = t_stddef.ItronError;
+const TMEVTB = time_event.TMEVTB;
+const queue = kernel_impl.queue;
+const TCB = task.TCB;
+const getTCBFromQueue = task.getTCBFromQueue;
+
+const make_non_runnable = task.make_non_runnable;
+const TMO = t_stddef.TMO;
+const TMO_FEVR = t_stddef.TMO_FEVR;
+const assert = t_stddef.assert;
+const TMAX_RELTIM = t_stddef.TMAX_RELTIM;
+const tmevtb_enqueue_reltim = time_event.tmevtb_enqueue_reltim;
+const RELTIM = t_stddef.RELTIM;
+const isWaiting = task.isWaiting;
+const isSuspended = task.isSuspended;
+const TS_RUNNABLE = task.TS_RUNNABLE;
+const traceLog = kernel_impl.traceLog;
+const make_runnable = task.make_runnable;
+const TS_SUSPENDED = task.TS_SUSPENDED;
+const isWaitingWobj = task.isWaitingWobj;
+const tmevtb_dequeue = time_event.tmevtb_dequeue;
+
+const target_impl = kernel_impl.target_impl;
+const ID = t_stddef.ID;
+const getTskIdFromTCB = task.getTskIdFromTCB;
+const TSK_NONE = zig.TPRI_SELF;
+const ATR = t_stddef.ATR;
+const TA_TPRI = zig.TA_TPRI;
+////
 
 ///
 ///  待ち情報ブロック（WINFO）の定義
@@ -85,8 +120,8 @@ usingnamespace time_event;
 ///  トブロックを登録解除した後にしなければならない．
 ///
 pub const WINFO = union {
-    werror: ?ItronError,    // 待ち解除時のエラー
-    p_tmevtb: ?*TMEVTB,     // 待ち状態用のタイムイベントブロック
+    werror: ?ItronError, // 待ち解除時のエラー
+    p_tmevtb: ?*TMEVTB, // 待ち状態用のタイムイベントブロック
 };
 
 ///
@@ -115,9 +150,9 @@ pub fn queue_insert_tpri(p_queue: *queue.Queue, p_tcb: *TCB) void {
 ///  ルド，WINFOのp_tmevtbフィールドを設定する．
 ///
 pub fn make_wait(tstat: u8, p_winfo: *WINFO) void {
-    p_runtsk.?.tstat = tstat;
-    make_non_runnable(p_runtsk.?);
-    p_runtsk.?.p_winfo = p_winfo;
+    task.p_runtsk.?.tstat = tstat;
+    make_non_runnable(task.p_runtsk.?);
+    task.p_runtsk.?.p_winfo = p_winfo;
     p_winfo.* = WINFO{ .p_tmevtb = null };
 }
 
@@ -129,19 +164,17 @@ pub fn make_wait(tstat: u8, p_winfo: *WINFO) void {
 ///  削除し，TCBのp_winfoフィールド，WINFOのp_tmevtbフィールドを設定す
 ///  る．また，タイムイベントブロックを登録する．
 ///
-pub fn make_wait_tmout(tstat: u8, p_winfo: *WINFO,
-                       p_tmevtb: *TMEVTB, tmout: TMO) void {
-    p_runtsk.?.tstat = tstat;
-    make_non_runnable(p_runtsk.?);
-    p_runtsk.?.p_winfo = p_winfo;
+pub fn make_wait_tmout(tstat: u8, p_winfo: *WINFO, p_tmevtb: *TMEVTB, tmout: TMO) void {
+    task.p_runtsk.?.tstat = tstat;
+    make_non_runnable(task.p_runtsk.?);
+    task.p_runtsk.?.p_winfo = p_winfo;
     if (tmout == TMO_FEVR) {
         p_winfo.p_tmevtb = null;
-    }
-    else {
+    } else {
         assert(tmout <= TMAX_RELTIM);
         p_winfo.p_tmevtb = p_tmevtb;
         p_tmevtb.callback = wait_tmout;
-        p_tmevtb.arg = @ptrToInt(p_runtsk);
+        p_tmevtb.arg = @ptrToInt(task.p_runtsk);
         tmevtb_enqueue_reltim(p_tmevtb, @intCast(RELTIM, tmout));
     }
 }
@@ -159,13 +192,12 @@ pub fn make_non_wait(p_tcb: *TCB) void {
     if (!isSuspended(p_tcb.tstat)) {
         // 待ち状態から実行できる状態への遷移
         p_tcb.tstat = TS_RUNNABLE;
-        traceLog("taskStateChange", .{ p_tcb });
+        traceLog("taskStateChange", .{p_tcb});
         make_runnable(p_tcb);
-    }
-    else {
+    } else {
         // 二重待ち状態から強制待ち状態への遷移
         p_tcb.tstat = TS_SUSPENDED;
-        traceLog("taskStateChange", .{ p_tcb });
+        traceLog("taskStateChange", .{p_tcb});
     }
 }
 
@@ -227,14 +259,14 @@ pub fn wait_tmout(arg: usize) void {
     wait_dequeue_wobj(p_tcb);
     p_tcb.p_winfo.* = WINFO{ .werror = ItronError.TimeoutError };
     make_non_wait(p_tcb);
-    if (p_runtsk != p_schedtsk) {
-        target_impl.requestDispatchRetint();
+    if (task.p_runtsk != task.p_schedtsk) {
+        target_impl.mpcore_kernel_impl.core_kernel_impl.requestDispatchRetint();
     }
 
     // ここで優先度の高い割込みを受け付ける．
-    target_impl.unlockCpu();
-    target_impl.delayForInterrupt();
-    target_impl.lockCpu();
+    target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
+    target_impl.mpcore_kernel_impl.core_kernel_impl.delayForInterrupt();
+    target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
 }
 
 pub fn wait_tmout_ok(arg: usize) void {
@@ -242,14 +274,14 @@ pub fn wait_tmout_ok(arg: usize) void {
 
     p_tcb.p_winfo.* = WINFO{ .werror = null };
     make_non_wait(p_tcb);
-    if (p_runtsk != p_schedtsk) {
-        target_impl.requestDispatchRetint();
+    if (task.p_runtsk != task.p_schedtsk) {
+        target_impl.mpcore_kernel_impl.core_kernel_impl.requestDispatchRetint();
     }
 
     // ここで優先度の高い割込みを受け付ける．
-    target_impl.unlockCpu();
-    target_impl.delayForInterrupt();
-    target_impl.lockCpu();
+    target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
+    target_impl.mpcore_kernel_impl.core_kernel_impl.delayForInterrupt();
+    target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
 }
 
 ///
@@ -261,8 +293,7 @@ pub fn wait_tmout_ok(arg: usize) void {
 pub fn wait_tskid(p_wait_queue: *queue.Queue) ID {
     if (!p_wait_queue.isEmpty()) {
         return getTskIdFromTCB(getTCBFromQueue(p_wait_queue.p_next));
-    }
-    else {
+    } else {
         return TSK_NONE;
     }
 }
@@ -279,19 +310,17 @@ pub fn wait_tskid(p_wait_queue: *queue.Queue) ID {
 ///  ブジェクト属性のTA_TPRIビットを参照するので，このビットを他の目的
 ///  に使っている場合も，これらのルーチンは使えない．
 ///
-
 ///
 ///  同期・通信オブジェクトの初期化ブロックの共通部分
 ///
 pub const WOBJINIB = struct {
-    wobjatr: ATR,                   // オブジェクト属性
+    wobjatr: ATR, // オブジェクト属性
 };
 
 // 同期・通信オブジェクトの管理ブロックのチェック
 pub fn checkWobjIniB(comptime T: type) void {
-    if (@byteOffsetOf(T, "wobjatr") != @byteOffsetOf(WOBJINIB, "wobjatr")) {
-        @compileError("offsets of wobjatr in " ++ @typeName(T)
-                          ++ " and wobjatr in WOBJINIB are different.");
+    if (@offsetOf(T, "wobjatr") != @offsetOf(WOBJINIB, "wobjatr")) {
+        @compileError("offsets of wobjatr in " ++ @typeName(T) ++ " and wobjatr in WOBJINIB are different.");
     }
 }
 
@@ -299,22 +328,18 @@ pub fn checkWobjIniB(comptime T: type) void {
 ///  同期・通信オブジェクトの管理ブロックの共通部分
 ///
 pub const WOBJCB = struct {
-    wait_queue: queue.Queue,        // 待ちキュー
-    p_wobjinib: *const WOBJINIB,    // 初期化ブロックへのポインタ
+    wait_queue: queue.Queue, // 待ちキュー
+    p_wobjinib: *const WOBJINIB, // 初期化ブロックへのポインタ
 };
 
 // 同期・通信オブジェクトの管理ブロックのチェック
 pub fn checkWobjCB(comptime T: type) void {
-    const qname = if (@hasField(T, "wait_queue")) "wait_queue"
-                                             else "swait_queue";
-    if (@byteOffsetOf(T, qname)
-            != @byteOffsetOf(WOBJCB, "wait_queue")) {
-        @compileError("offsets of " ++ qname ++ " in " ++ @typeName(T)
-                          ++ " and wait_queue in WOBJCB are different.");
+    const qname = if (@hasField(T, "wait_queue")) "wait_queue" else "swait_queue";
+    if (@offsetOf(T, qname) != @offsetOf(WOBJCB, "wait_queue")) {
+        @compileError("offsets of " ++ qname ++ " in " ++ @typeName(T) ++ " and wait_queue in WOBJCB are different.");
     }
-    if (@byteOffsetOf(T, "p_wobjinib") != @byteOffsetOf(WOBJCB, "p_wobjinib")) {
-        @compileError("offsets of p_wobjinib in " ++ @typeName(T)
-                          ++ " and wobjinib in WOBJCB are different.");
+    if (@offsetOf(T, "p_wobjinib") != @offsetOf(WOBJCB, "p_wobjinib")) {
+        @compileError("offsets of p_wobjinib in " ++ @typeName(T) ++ " and wobjinib in WOBJCB are different.");
     }
 }
 
@@ -322,19 +347,17 @@ pub fn checkWobjCB(comptime T: type) void {
 ///  同期・通信オブジェクトの待ち情報ブロックの共通部分
 ///
 pub const WINFO_WOBJ = struct {
-    winfo: WINFO,                   // 標準の待ち情報ブロック
-    p_wobjcb: *WOBJCB,              // 待ちオブジェクトの管理ブロック
+    winfo: WINFO, // 標準の待ち情報ブロック
+    p_wobjcb: *WOBJCB, // 待ちオブジェクトの管理ブロック
 };
 
 // 同期・通信オブジェクトの待ち情報ブロックのチェック
 pub fn checkWinfoWobj(comptime T: type) void {
-    if (@byteOffsetOf(T, "winfo") != @byteOffsetOf(WINFO_WOBJ, "winfo")) {
-        @compileError("offsets of winfo in " ++ @typeName(T)
-                          ++ " and winfo in WINFO_WOBJ are different.");
+    if (@offsetOf(T, "winfo") != @offsetOf(WINFO_WOBJ, "winfo")) {
+        @compileError("offsets of winfo in " ++ @typeName(T) ++ " and winfo in WINFO_WOBJ are different.");
     }
-    if (@byteOffsetOf(T, "p_wobjcb") != @byteOffsetOf(WINFO_WOBJ, "p_wobjcb")) {
-        @compileError("offsets of p_wobjcb in " ++ @typeName(T)
-                          ++ " and wobjcb in WINFO_WOBJ are different.");
+    if (@offsetOf(T, "p_wobjcb") != @offsetOf(WINFO_WOBJ, "p_wobjcb")) {
+        @compileError("offsets of p_wobjcb in " ++ @typeName(T) ++ " and wobjcb in WINFO_WOBJ are different.");
     }
 }
 
@@ -343,10 +366,9 @@ pub fn checkWinfoWobj(comptime T: type) void {
 ///
 fn wobj_queue_insert(p_wobjcb: *WOBJCB) void {
     if ((p_wobjcb.p_wobjinib.wobjatr & TA_TPRI) != 0) {
-        queue_insert_tpri(&p_wobjcb.wait_queue, p_runtsk.?);
-    }
-    else {
-        p_wobjcb.wait_queue.insertPrev(&p_runtsk.?.task_queue);
+        queue_insert_tpri(&p_wobjcb.wait_queue, task.p_runtsk.?);
+    } else {
+        p_wobjcb.wait_queue.insertPrev(&task.p_runtsk.?.task_queue);
     }
 }
 
@@ -357,37 +379,32 @@ fn wobj_queue_insert(p_wobjcb: *WOBJCB) void {
 ///  キューにつなぐ．また，待ち情報ブロック（WINFO）のp_wobjcbを設定す
 ///  る．wobj_make_wait_tmoutは，タイムイベントブロックの登録も行う．
 ///
-pub fn wobj_make_wait(p_wobjcb: anytype, tstat: u8,
-                      p_winfo_wobj: anytype) void {
+pub fn wobj_make_wait(p_wobjcb: anytype, tstat: u8, p_winfo_wobj: anytype) void {
     make_wait(tstat, &p_winfo_wobj.winfo);
     wobj_queue_insert(@ptrCast(*WOBJCB, p_wobjcb));
     p_winfo_wobj.p_wobjcb = p_wobjcb;
-    traceLog("taskStateChange", .{ p_runtsk.? });
+    traceLog("taskStateChange", .{task.p_runtsk.?});
 }
 
-pub fn wobj_make_wait_tmout(p_wobjcb: anytype, tstat: u8, p_winfo_wobj: anytype,
-                            p_tmevtb: *TMEVTB, tmout: TMO) void {
+pub fn wobj_make_wait_tmout(p_wobjcb: anytype, tstat: u8, p_winfo_wobj: anytype, p_tmevtb: *TMEVTB, tmout: TMO) void {
     make_wait_tmout(tstat, &p_winfo_wobj.winfo, p_tmevtb, tmout);
     wobj_queue_insert(@ptrCast(*WOBJCB, p_wobjcb));
     p_winfo_wobj.p_wobjcb = p_wobjcb;
-    traceLog("taskStateChange", .{ p_runtsk.? });
+    traceLog("taskStateChange", .{task.p_runtsk.?});
 }
 
-pub fn wobj_make_rwait(p_wobjcb: anytype, tstat: u8,
-                       p_winfo_wobj: anytype) void {
+pub fn wobj_make_rwait(p_wobjcb: anytype, tstat: u8, p_winfo_wobj: anytype) void {
     make_wait(tstat, &p_winfo_wobj.winfo);
-    p_wobjcb.rwait_queue.insertPrev(&p_runtsk.?.task_queue);
+    p_wobjcb.rwait_queue.insertPrev(&task.p_runtsk.?.task_queue);
     p_winfo_wobj.p_wobjcb = p_wobjcb;
-    traceLog("taskStateChange", .{ p_runtsk.? });
+    traceLog("taskStateChange", .{task.p_runtsk.?});
 }
 
-pub fn wobj_make_rwait_tmout(p_wobjcb: anytype,
-                             tstat: u8, p_winfo_wobj: anytype,
-                             p_tmevtb: *TMEVTB, tmout: TMO) void {
+pub fn wobj_make_rwait_tmout(p_wobjcb: anytype, tstat: u8, p_winfo_wobj: anytype, p_tmevtb: *TMEVTB, tmout: TMO) void {
     make_wait_tmout(tstat, &p_winfo_wobj.winfo, p_tmevtb, tmout);
-    p_wobjcb.rwait_queue.insertPrev(&p_runtsk.?.task_queue);
+    p_wobjcb.rwait_queue.insertPrev(&task.p_runtsk.?.task_queue);
     p_winfo_wobj.p_wobjcb = p_wobjcb;
-    traceLog("taskStateChange", .{ p_runtsk.? });
+    traceLog("taskStateChange", .{task.p_runtsk.?});
 }
 
 ///

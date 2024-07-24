@@ -3,12 +3,12 @@
 ///
 ///  $Id$
 ///
-usingnamespace @import("../kernel/kernel_cfg.zig");
+const kernel_cfg = @import("../kernel/kernel_cfg.zig");
 
 ///
 ///  TECSが生成するコンフィギュレーション記述
 ///
-const tecs = @import("../" ++ TECSGENDIR ++ "/tecsgen_cfg.zig");
+const tecs = @import("../OBJ-ARM/gen/tecsgen_cfg.zig");
 
 ///
 ///  C言語ヘッダファイルの取り込み

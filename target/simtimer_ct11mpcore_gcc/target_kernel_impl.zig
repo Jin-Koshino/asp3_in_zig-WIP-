@@ -3,7 +3,7 @@
 ///  （CT11MPCore＋タイマドライバシミュレータ用）
 ///
 
-pub usingnamespace @import("../ct11mpcore_gcc/target_kernel_impl.zig");
+pub const target_kernel_impl = @import("../ct11mpcore_gcc/target_kernel_impl.zig");
 
 ///
 ///  カーネルのアイドル処理でタイマドライバシミュレータを動作させる

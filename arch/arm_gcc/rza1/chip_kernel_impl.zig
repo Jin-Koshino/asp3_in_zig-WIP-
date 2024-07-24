@@ -1,7 +1,7 @@
 ///
 ///  カーネルのチップ依存部（RZ/A1用）
 ///
-usingnamespace @import("../../../kernel/kernel_impl.zig");
+const kernel_impl = @import("../../../kernel/kernel_impl.zig");
 
 ///
 ///  コンフィギュレーションオプションの取り込み
@@ -65,7 +65,7 @@ pub const irc_end_exc = mpcore.irc_end_exc;
 ///  MPCore依存部をusingnamespaceで取り込めないため，コア依存部を取り
 ///  込む．
 ///
-pub usingnamespace @import("../common/core_kernel_impl.zig");
+pub const core_kernel_impl = @import("../common/core_kernel_impl.zig");
 
 ///
 ///  L2キャッシュコントローラ（PL310）の操作ライブラリ
@@ -112,35 +112,28 @@ pub fn config_int(intno: INTNO, intatr: ATR, intpri: PRI) void {
     if (rza1.INTNO_IRQ0 <= intno and intno <= rza1.INTNO_IRQ7) {
         var reg = sil.reh_mem(rza1.RZA1_ICR1);
         reg &= ~(@as(u16, 0x03) << @intCast(u4, (intno - rza1.INTNO_IRQ0) * 2));
-        reg |= (@intCast(u16, intatr >> 2)
-                                << @intCast(u4, (intno - rza1.INTNO_IRQ0) * 2));
+        reg |= (@intCast(u16, intatr >> 2) << @intCast(u4, (intno - rza1.INTNO_IRQ0) * 2));
         sil.wrh_mem(rza1.RZA1_ICR1, reg);
     }
 
     if ((intatr & TA_EDGE) != 0) {
         if (GIC_ARM11MPCORE) {
-            mpcore.gicd_config(intno, mpcore.GICD_ICFGRn_EDGE
-                                    | mpcore.GICD_ICFGRn_1_N);
-        }
-        else {
+            mpcore.gicd_config(intno, mpcore.GICD_ICFGRn_EDGE | mpcore.GICD_ICFGRn_1_N);
+        } else {
             mpcore.gicd_config(intno, mpcore.GICD_ICFGRn_EDGE);
         }
-        target_impl.clearInt(intno);
-    }
-    else {
+        target_impl.mpcore_kernel_impl.gic_kernel_impl.clearInt(intno);
+    } else {
         if (GIC_ARM11MPCORE) {
-            mpcore.gicd_config(intno, mpcore.GICD_ICFGRn_LEVEL
-                                    | mpcore.GICD_ICFGRn_1_N);
-        }
-        else {
+            mpcore.gicd_config(intno, mpcore.GICD_ICFGRn_LEVEL | mpcore.GICD_ICFGRn_1_N);
+        } else {
             mpcore.gicd_config(intno, mpcore.GICD_ICFGRn_LEVEL);
         }
     }
 
     // 割込み優先度とターゲットプロセッサを設定
     mpcore.gicd_set_priority(intno, mpcore.internalIpm(intpri));
-    mpcore.gicd_set_target(intno, @as(u32, 1)
-                                    << @intCast(u5, arm.get_my_prcidx()));
+    mpcore.gicd_set_target(intno, @as(u32, 1) << @intCast(u5, arm.get_my_prcidx()));
 
     // 割込みを許可
     if ((intatr & TA_ENAINT) != 0) {

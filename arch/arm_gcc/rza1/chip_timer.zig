@@ -4,14 +4,30 @@
 ///  RZ/A1は2チャンネルのOSタイマを持つが，その内の1つを用いて高分解能
 ///  タイマを，もう1つを用いてオーバランタイマを実現する．
 ///
-usingnamespace @import("../../../kernel/kernel_impl.zig");
+const kernel_impl = @import("../../../kernel/kernel_impl.zig");
+
+////
+const zig = kernel_impl.zig;
+const t_stddef = zig.t_stddef;
+
+const TMAX_INTPRI = zig.TMAX_INTPRI;
+const TA_EDGE = zig.TA_EDGE;
+const TCYC_HRTCNT = zig.TCYC_HRTCNT;
+const sil = kernel_impl.sil;
+const target_impl = kernel_impl.target_impl;
+const HRTCNT = t_stddef.HRTCNT;
+const time_event = kernel_impl.time_event;
+const PRCTIM = t_stddef.PRCTIM;
+const TOPPERS_SUPPORT_OVRHDR = zig.TOPPERS_SUPPORT_OVRHDR;
+const overrun = kernel_impl.overrun;
+const EXINF = t_stddef.EXINF;
+////
 
 ///
 ///  RZ/A1のハードウェア資源の定義
 ///
 const rza1 = @import("rza1.zig");
 
-//
 //  OSタイマの周波数の想定値のチェック
 //
 //  現在の実装は，クロックが33.33…MHzの場合のみに対応している．
@@ -57,8 +73,8 @@ const OSTM_TT_STOP = 0x01;
 ///
 ///  OSタイマ 制御レジスタの設定値の定義
 ///
-const OSTM_CTL_INTERVAL = 0x00;     // インターバルタイマモード
-const OSTM_CTL_FRCMP    = 0x02;     // フリーランニングコンペアモード
+const OSTM_CTL_INTERVAL = 0x00; // インターバルタイマモード
+const OSTM_CTL_FRCMP = 0x02; // フリーランニングコンペアモード
 
 ///
 ///  高分解能タイマドライバ
@@ -67,10 +83,10 @@ pub const hrt = struct {
     ///
     ///  高分解能タイマ割込みハンドラ登録のための定数
     ///
-    pub const INHNO_HRT  = rza1.INTNO_OSTM0;        // 割込みハンドラ番号
-    pub const INTNO_HRT  = rza1.INTNO_OSTM0;        // 割込み番号
-    pub const INTPRI_HRT = TMAX_INTPRI - 1;         // 割込み優先度
-    pub const INTATR_HRT = TA_EDGE;                 // 割込み属性
+    pub const INHNO_HRT = rza1.INTNO_OSTM0; // 割込みハンドラ番号
+    pub const INTNO_HRT = rza1.INTNO_OSTM0; // 割込み番号
+    pub const INTPRI_HRT = TMAX_INTPRI - 1; // 割込み優先度
+    pub const INTATR_HRT = TA_EDGE; // 割込み属性
 
     // TCYC_HRTCNTの定義のチェック
     comptime {
@@ -93,7 +109,7 @@ pub const hrt = struct {
         sil.wrb_mem(OSTM_TS(rza1.OSTM0_BASE), OSTM_TS_START);
 
         // タイマ割込み要求をクリアする．
-        target_impl.clearInt(rza1.INTNO_OSTM0);
+        target_impl.mpcore_kernel_impl.gic_kernel_impl.clearInt(rza1.INTNO_OSTM0);
     }
 
     ///
@@ -104,7 +120,7 @@ pub const hrt = struct {
         sil.wrb_mem(OSTM_TT(rza1.OSTM0_BASE), OSTM_TT_STOP);
 
         // タイマ割込み要求をクリアする．
-        target_impl.clearInt(rza1.INTNO_OSTM0);
+        target_impl.mpcore_kernel_impl.gic_kernel_impl.clearInt(rza1.INTNO_OSTM0);
     }
 
     ///
@@ -115,8 +131,7 @@ pub const hrt = struct {
 
         // μ秒単位に変換（クロックが33.33…MHzである前提）
         const cnt1 = cnt / 1000000000;
-        return @intCast(HRTCNT, (cnt - cnt1 * 999999999) * 3 / 100
-                            + cnt1 * 30000000);
+        return @intCast(HRTCNT, (cnt - cnt1 * 999999999) * 3 / 100 + cnt1 * 30000000);
     }
 
     ///
@@ -135,7 +150,7 @@ pub const hrt = struct {
         // 上で現在のカウント値を読んで以降に，cnt以上カウントアップしてい
         // た場合には，割込みを発生させる．
         if (sil.rew_mem(OSTM_CNT(rza1.OSTM0_BASE)) -% current >= cnt) {
-            target_impl.raiseInt(rza1.INTNO_OSTM0);
+            target_impl.mpcore_kernel_impl.gic_kernel_impl.raiseInt(rza1.INTNO_OSTM0);
         }
     }
 
@@ -143,7 +158,7 @@ pub const hrt = struct {
     ///  高分解能タイマ割込みの要求
     ///
     pub fn raise_event() void {
-        target_impl.raiseInt(rza1.INTNO_OSTM0);
+        target_impl.mpcore_kernel_impl.gic_kernel_impl.raiseInt(rza1.INTNO_OSTM0);
     }
 
     ///
@@ -167,10 +182,10 @@ pub const ovrtimer = struct {
     ///
     ///  オーバランタイマ割込みハンドラ登録のための定数
     ///
-    pub const INHNO_OVRTIMER  = rza1.INTNO_OSTM1;   // 割込みハンドラ番号
-    pub const INTNO_OVRTIMER  = rza1.INTNO_OSTM1;   // 割込み番号
-    pub const INTPRI_OVRTIMER = TMAX_INTPRI;        // 割込み優先度
-    pub const INTATR_OVRTIMER = TA_EDGE;            // 割込み属性
+    pub const INHNO_OVRTIMER = rza1.INTNO_OSTM1; // 割込みハンドラ番号
+    pub const INTNO_OVRTIMER = rza1.INTNO_OSTM1; // 割込み番号
+    pub const INTPRI_OVRTIMER = TMAX_INTPRI; // 割込み優先度
+    pub const INTATR_OVRTIMER = TA_EDGE; // 割込み属性
 
     ///
     ///  オーバランタイマの初期化処理
@@ -180,7 +195,7 @@ pub const ovrtimer = struct {
         sil.wrb_mem(OSTM_CTL(rza1.OSTM1_BASE), OSTM_CTL_INTERVAL);
 
         // オーバランタイマ割込み要求をクリアする．
-        target_impl.clearInt(rza1.INTNO_OSTM1);
+        target_impl.mpcore_kernel_impl.gic_kernel_impl.clearInt(rza1.INTNO_OSTM1);
     }
 
     ///
@@ -191,7 +206,7 @@ pub const ovrtimer = struct {
         sil.wrb_mem(OSTM_TT(rza1.OSTM1_BASE), OSTM_TT_STOP);
 
         // オーバランタイマ割込み要求をクリアする．
-        target_impl.clearInt(rza1.INTNO_OSTM1);
+        target_impl.mpcore_kernel_impl.gic_kernel_impl.clearInt(rza1.INTNO_OSTM1);
     }
 
     ///
@@ -210,12 +225,11 @@ pub const ovrtimer = struct {
         // OSタイマを停止する．
         sil.wrb_mem(OSTM_TT(rza1.OSTM1_BASE), OSTM_TT_STOP);
 
-        if (target_impl.probeInt(rza1.INTNO_OSTM1)) {
+        if (target_impl.mpcore_kernel_impl.gic_kernel_impl.probeInt(rza1.INTNO_OSTM1)) {
             // 割込み要求が発生している場合
-            target_impl.clearInt(rza1.INTNO_OSTM1);
+            target_impl.mpcore_kernel_impl.gic_kernel_impl.clearInt(rza1.INTNO_OSTM1);
             return 0;
-        }
-        else {
+        } else {
             const cnt = sil.rew_mem(OSTM_CNT(rza1.OSTM1_BASE));
             return @intCast(PRCTIM, (cnt + 34) / 5 * 3 / 20);
         }
@@ -225,11 +239,10 @@ pub const ovrtimer = struct {
     ///  オーバランタイマの現在値の読出し
     ///
     pub fn get_current() PRCTIM {
-        if (target_impl.probeInt(rza1.INTNO_OSTM1)) {
+        if (target_impl.mpcore_kernel_impl.gic_kernel_impl.probeInt(rza1.INTNO_OSTM1)) {
             // 割込み要求が発生している場合
             return 0;
-        }
-        else {
+        } else {
             const cnt = sil.rew_mem(OSTM_CNT(rza1.OSTM1_BASE));
             return @intCast(PRCTIM, (cnt + 34) / 5 * 3 / 20);
         }
@@ -259,11 +272,13 @@ pub const ExportDefs = struct {
     // 高分解能タイマの起動処理
     export fn _kernel_target_hrt_initialize(exinf: EXINF) void {
         hrt.initialize();
+        _ = exinf;
     }
 
     // 高分解能タイマの停止処理
     export fn _kernel_target_hrt_terminate(exinf: EXINF) void {
         hrt.terminate();
+        _ = exinf;
     }
 
     // 高分解能タイマ割込みハンドラ
@@ -274,11 +289,13 @@ pub const ExportDefs = struct {
     // オーバランタイマの初期化処理
     export fn _kernel_target_ovrtimer_initialize(exinf: EXINF) void {
         ovrtimer.initialize();
+        _ = exinf;
     }
 
     // オーバランタイマの停止処理
     export fn _kernel_target_ovrtimer_terminate(exinf: EXINF) void {
         ovrtimer.terminate();
+        _ = exinf;
     }
 
     // オーバランタイマ割込みハンドラ

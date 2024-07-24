@@ -39,7 +39,6 @@
 ///
 ///  $Id$
 ///
-
 /// 
 ///  タイマドライバ（MPCore内蔵タイマ用）
 ///
@@ -62,7 +61,24 @@
 ///  WDG_OVRTIMER：
 ///		ウォッチドッグを用いて，オーバランタイマを実現する．
 ///
-usingnamespace @import("../../../kernel/kernel_impl.zig");
+const kernel_impl = @import("../../../kernel/kernel_impl.zig");
+
+////
+const zig = kernel_impl.zig;
+const t_stddef = zig.t_stddef;
+
+const option = kernel_impl.option;
+const isTrue = kernel_impl.isTrue;
+const target_impl = kernel_impl.target_impl;
+const TMAX_INTPRI = zig.TMAX_INTPRI;
+const TA_NULL = t_stddef.TA_NULL;
+const HRTCNT = t_stddef.HRTCNT;
+const TCYC_HRTCNT = zig.TCYC_HRTCNT;
+const sil = kernel_impl.sil;
+const time_event = kernel_impl.time_event;
+const PRCTIM = t_stddef.PRCTIM;
+const overrun = kernel_impl.overrun;
+////
 
 ///
 ///  コンフィギュレーションオプションの取り込み
@@ -103,14 +119,15 @@ const TMRWDG_HRT_PARAM = struct {
 };
 
 pub fn TMRWDG_HRT(param: TMRWDG_HRT_PARAM) type {
+    _ = param;
     return struct {
         ///
         ///  高分解能タイマ割込みハンドラ登録のための定数
         ///
-        pub const INHNO_HRT = mpcore.IRQNO_TMR;     // 割込みハンドラ番号
-        pub const INTNO_HRT = mpcore.IRQNO_TMR;     // 割込み番号
-        pub const INTPRI_HRT = TMAX_INTPRI - 1;     // 割込み優先度
-        pub const INTATR_HRT = TA_NULL;             // 割込み属性
+        pub const INHNO_HRT = mpcore.IRQNO_TMR; // 割込みハンドラ番号
+        pub const INTNO_HRT = mpcore.IRQNO_TMR; // 割込み番号
+        pub const INTPRI_HRT = TMAX_INTPRI - 1; // 割込み優先度
+        pub const INTATR_HRT = TA_NULL; // 割込み属性
 
         // HRTCNTとTCYC_HRTCNTの定義のチェック
         comptime {
@@ -137,21 +154,17 @@ pub fn TMRWDG_HRT(param: TMRWDG_HRT_PARAM) type {
 
             // ウォッチドッグのリロード値を設定し，動作を開始する．
             sil.wrw_mem(mpcore.WDG_LR, param.WDG_LR_VALUE);
-            sil.wrw_mem(mpcore.WDG_CTRL,
-                        mpcore.WDG_CTRL_ENABLE | mpcore.WDG_CTRL_AUTORELOAD
-                            | (param.WDG_PS_VALUE << mpcore.WDG_CTRL_PS_SHIFT));
+            sil.wrw_mem(mpcore.WDG_CTRL, mpcore.WDG_CTRL_ENABLE | mpcore.WDG_CTRL_AUTORELOAD | (param.WDG_PS_VALUE << mpcore.WDG_CTRL_PS_SHIFT));
 
             // タイマのカウント値を0（カウントダウンして停止した状態）に設
             // 定し，動作を開始する．
             sil.wrw_mem(mpcore.TMR_CNT, 0);
-            sil.wrw_mem(mpcore.TMR_CTRL,
-                        mpcore.TMR_CTRL_ENABLE | mpcore.TMR_CTRL_ENAINT
-                            | (param.TMR_PS_VALUE << mpcore.TMR_CTRL_PS_SHIFT));
+            sil.wrw_mem(mpcore.TMR_CTRL, mpcore.TMR_CTRL_ENABLE | mpcore.TMR_CTRL_ENAINT | (param.TMR_PS_VALUE << mpcore.TMR_CTRL_PS_SHIFT));
 
             // タイマ割込み要求をクリアする．
             sil.wrw_mem(mpcore.TMR_ISR, mpcore.TMR_ISR_EVENTFLAG);
             if (TOPPERS_USE_QEMU) {
-                target_impl.clearInt(mpcore.IRQNO_TMR);
+                target_impl.mpcore_kernel_impl.gic_kernel_impl.clearInt(mpcore.IRQNO_TMR);
             }
         }
 
@@ -166,7 +179,7 @@ pub fn TMRWDG_HRT(param: TMRWDG_HRT_PARAM) type {
             // タイマ割込み要求をクリアする．
             sil.wrw_mem(mpcore.TMR_ISR, mpcore.TMR_ISR_EVENTFLAG);
             if (TOPPERS_USE_QEMU) {
-                target_impl.clearInt(mpcore.IRQNO_TMR);
+                target_impl.mpcore_kernel_impl.gic_kernel_impl.clearInt(mpcore.IRQNO_TMR);
             }
         }
 
@@ -176,9 +189,7 @@ pub fn TMRWDG_HRT(param: TMRWDG_HRT_PARAM) type {
         pub fn get_current() HRTCNT {
             // ウォッチドッグのカウント値を読み出し，ダウンカウンタである
             // ため，WDG_LR_VALUEから引き，WDG_FREQで除した値を返す．
-            return @intCast(HRTCNT,
-                            (param.WDG_LR_VALUE - sil.rew_mem(mpcore.WDG_CNT))
-                                / param.WDG_FREQ);
+            return @intCast(HRTCNT, (param.WDG_LR_VALUE - sil.rew_mem(mpcore.WDG_CNT)) / param.WDG_FREQ);
         }
 
         ///
@@ -193,7 +204,7 @@ pub fn TMRWDG_HRT(param: TMRWDG_HRT_PARAM) type {
         ///  高分解能タイマ割込みの要求
         ///
         pub fn raise_event() void {
-            target_impl.raiseInt(mpcore.IRQNO_TMR);
+            target_impl.mpcore_kernel_impl.gic_kernel_impl.raiseInt(mpcore.IRQNO_TMR);
         }
 
         ///
@@ -203,7 +214,7 @@ pub fn TMRWDG_HRT(param: TMRWDG_HRT_PARAM) type {
             // タイマ割込み要求をクリアする．
             sil.wrw_mem(mpcore.TMR_ISR, mpcore.TMR_ISR_EVENTFLAG);
             if (TOPPERS_USE_QEMU) {
-                target_impl.clearInt(mpcore.IRQNO_TMR);
+                target_impl.mpcore_kernel_impl.gic_kernel_impl.clearInt(mpcore.IRQNO_TMR);
             }
 
             // 高分解能タイマ割込みを処理する．
@@ -236,10 +247,10 @@ pub fn GTC_HRT(param: GTC_HRT_PARAM) type {
         ///
         ///  高分解能タイマ割込みハンドラ登録のための定数
         ///
-        pub const INHNO_HRT = mpcore.IRQNO_GTC;     // 割込みハンドラ番号
-        pub const INTNO_HRT = mpcore.IRQNO_GTC;     // 割込み番号
-        pub const INTPRI_HRT = TMAX_INTPRI - 1;     // 割込み優先度
-        pub const INTATR_HRT = TA_NULL;             // 割込み属性
+        pub const INHNO_HRT = mpcore.IRQNO_GTC; // 割込みハンドラ番号
+        pub const INTNO_HRT = mpcore.IRQNO_GTC; // 割込み番号
+        pub const INTPRI_HRT = TMAX_INTPRI - 1; // 割込み優先度
+        pub const INTATR_HRT = TA_NULL; // 割込み属性
 
         // TCYC_HRTCNTの定義のチェック
         comptime {
@@ -279,8 +290,7 @@ pub fn GTC_HRT(param: GTC_HRT_PARAM) type {
 
             // コンパレータをディスエーブル
             reg = sil.rew_mem(mpcore.GTC_CTRL);
-            sil.wrw_mem(mpcore.GTC_CTRL,
-                        reg & ~@as(u32, mpcore.GTC_CTRL_ENACOMP));
+            sil.wrw_mem(mpcore.GTC_CTRL, reg & ~@as(u32, mpcore.GTC_CTRL_ENACOMP));
 
             // コンパレータ値を設定
             sil.wrw_mem(mpcore.GTC_CVR_L, cvr_l);
@@ -289,12 +299,11 @@ pub fn GTC_HRT(param: GTC_HRT_PARAM) type {
             if (ARM_CA9_GTC_ERRATA) {
                 // ARM Cortex-A9 Errata 740657への対策
                 sil.wrw_mem(mpcore.GTC_ISR, mpcore.GTC_ISR_EVENTFLAG);
-                target_impl.clearInt(mpcore.IRQNO_GTC);
+                target_impl.mpcore_kernel_impl.gic_kernel_impl.clearInt(mpcore.IRQNO_GTC);
             }
 
             // コンパレータと割込みをイネーブル
-            sil.wrw_mem(mpcore.GTC_CTRL,
-                        reg | (mpcore.GTC_CTRL_ENACOMP|mpcore.GTC_CTRL_ENAINT));
+            sil.wrw_mem(mpcore.GTC_CTRL, reg | (mpcore.GTC_CTRL_ENACOMP | mpcore.GTC_CTRL_ENAINT));
         }
 
         ///
@@ -309,9 +318,7 @@ pub fn GTC_HRT(param: GTC_HRT_PARAM) type {
             sil.wrw_mem(mpcore.GTC_COUNT_U, 0);
 
             // タイマの動作を開始する（コンパレータと割込みはディスエーブル）．
-            sil.wrw_mem(mpcore.GTC_CTRL,
-                        mpcore.GTC_CTRL_ENABLE
-                            | (param.GTC_PS_VALUE << mpcore.GTC_CTRL_PS_SHIFT));
+            sil.wrw_mem(mpcore.GTC_CTRL, mpcore.GTC_CTRL_ENABLE | (param.GTC_PS_VALUE << mpcore.GTC_CTRL_PS_SHIFT));
 
             // タイマ割込み要求をクリアする．
             sil.wrw_mem(mpcore.GTC_ISR, mpcore.GTC_ISR_EVENTFLAG);
@@ -334,7 +341,7 @@ pub fn GTC_HRT(param: GTC_HRT_PARAM) type {
         pub fn get_current() HRTCNT {
             // グローバルタイマのカウント値（64ビット）を読み出し，
             // mpcore.GTC_FREQで除し，HRTCNTのビット数に切り詰めた値を返す．
-            return(@truncate(HRTCNT, get_count() / param.GTC_FREQ));
+            return (@truncate(HRTCNT, get_count() / param.GTC_FREQ));
         }
 
         ///
@@ -346,20 +353,18 @@ pub fn GTC_HRT(param: GTC_HRT_PARAM) type {
         pub fn set_event(hrtcnt: HRTCNT) void {
             // コンパレータ値を，(現在のカウント値＋hrtcnt×mpcore.GTC_FREQ)
             // に設定し，コンパレータと割込みをイネーブルする．
-            return gtc_set_cvr(get_count()
-                                   + @intCast(u64, hrtcnt) * param.GTC_FREQ);
+            return gtc_set_cvr(get_count() + @intCast(u64, hrtcnt) * param.GTC_FREQ);
         }
-        
+
         ///
         ///  高分解能タイマへの割込みタイミングのクリア
         ///
         pub fn clear_event() void {
-            sil.wrw_mem(mpcore.GTC_CTRL, sil.rew_mem(mpcore.GTC_CTRL)
-                            & ~@as(u32, mpcore.GTC_CTRL_ENACOMP));
+            sil.wrw_mem(mpcore.GTC_CTRL, sil.rew_mem(mpcore.GTC_CTRL) & ~@as(u32, mpcore.GTC_CTRL_ENACOMP));
             if (ARM_CA9_GTC_ERRATA) {
                 // ARM Cortex-A9 Errata 740657への対策
                 sil.wrw_mem(mpcore.GTC_ISR, mpcore.GTC_ISR_EVENTFLAG);
-                target_impl.clearInt(mpcore.IRQNO_GTC);
+                target_impl.mpcore_kernel_impl.gic_kernel_impl.clearInt(mpcore.IRQNO_GTC);
             }
         }
 
@@ -367,7 +372,7 @@ pub fn GTC_HRT(param: GTC_HRT_PARAM) type {
         ///  高分解能タイマ割込みの要求
         ///
         pub fn raise_event() void {
-            target_impl.raiseInt(mpcore.IRQNO_GTC);
+            target_impl.mpcore_kernel_impl.gic_kernel_impl.raiseInt(mpcore.IRQNO_GTC);
         }
 
         ///
@@ -408,10 +413,10 @@ pub fn WDG_OVRTIMER(param: WDG_OVRTIMER_PARAM) type {
         ///
         ///  オーバランタイマ割込みハンドラ登録のための定数
         ///
-        pub const INHNO_OVRTIMER  = mpcore.IRQNO_WDG;   // 割込みハンドラ番号
-        pub const INTNO_OVRTIMER  = mpcore.IRQNO_WDG;   // 割込み番号
-        pub const INTPRI_OVRTIMER = TMAX_INTPRI;        // 割込み優先度
-        pub const INTATR_OVRTIMER = TA_NULL;            // 割込み属性
+        pub const INHNO_OVRTIMER = mpcore.IRQNO_WDG; // 割込みハンドラ番号
+        pub const INTNO_OVRTIMER = mpcore.IRQNO_WDG; // 割込み番号
+        pub const INTPRI_OVRTIMER = TMAX_INTPRI; // 割込み優先度
+        pub const INTATR_OVRTIMER = TA_NULL; // 割込み属性
 
         ///
         ///  オーバランタイマの初期化処理
@@ -425,9 +430,7 @@ pub fn WDG_OVRTIMER(param: WDG_OVRTIMER_PARAM) type {
             sil.wrw_mem(mpcore.WDG_DIS, 0x87654321);
 
             // ウォッチドッグタイマを停止した状態で設定する．
-            sil.wrw_mem(mpcore.WDG_CTRL,
-                        mpcore.WDG_CTRL_ENAINT
-                            | (param.WDG_PS_VALUE << mpcore.WDG_CTRL_PS_SHIFT));
+            sil.wrw_mem(mpcore.WDG_CTRL, mpcore.WDG_CTRL_ENAINT | (param.WDG_PS_VALUE << mpcore.WDG_CTRL_PS_SHIFT));
 
             // ウォッチドッグ割込み要求をクリアする．
             sil.wrw_mem(mpcore.WDG_ISR, mpcore.WDG_ISR_EVENTFLAG);
@@ -453,8 +456,7 @@ pub fn WDG_OVRTIMER(param: WDG_OVRTIMER_PARAM) type {
             sil.wrw_mem(mpcore.WDG_CNT, ovrtim * param.WDG_FREQ);
 
             // ウォッチドッグの動作を開始する．
-            sil.wrw_mem(mpcore.WDG_CTRL,
-                        sil.rew_mem(mpcore.WDG_CTRL) | mpcore.WDG_CTRL_ENABLE);
+            sil.wrw_mem(mpcore.WDG_CTRL, sil.rew_mem(mpcore.WDG_CTRL) | mpcore.WDG_CTRL_ENABLE);
         }
 
         ///
@@ -462,12 +464,10 @@ pub fn WDG_OVRTIMER(param: WDG_OVRTIMER_PARAM) type {
         ///
         pub fn stop() PRCTIM {
             // ウォッチドッグの現在値の読出し
-            const ovrtim = @intCast(PRCTIM, sil.rew_mem(mpcore.WDG_CNT)
-                                            / param.WDG_FREQ);
+            const ovrtim = @intCast(PRCTIM, sil.rew_mem(mpcore.WDG_CNT) / param.WDG_FREQ);
 
             // ウォッチドッグを停止する．
-            sil.wrw_mem(mpcore.WDG_CTRL, sil.rew_mem(mpcore.WDG_CTRL)
-                            & ~@as(u32, mpcore.WDG_CTRL_ENABLE));
+            sil.wrw_mem(mpcore.WDG_CTRL, sil.rew_mem(mpcore.WDG_CTRL) & ~@as(u32, mpcore.WDG_CTRL_ENABLE));
             return ovrtim;
         }
 
@@ -477,8 +477,7 @@ pub fn WDG_OVRTIMER(param: WDG_OVRTIMER_PARAM) type {
         pub fn get_current() PRCTIM {
             // ウォッチドッグのカウント値を読み出し，mpcore.WDG_FREQで除し
             // た値を返す．
-            return @intCast(PRCTIM, sil.rew_mem(mpcore.WDG_CNT)
-                                    / param.WDG_FREQ);
+            return @intCast(PRCTIM, sil.rew_mem(mpcore.WDG_CNT) / param.WDG_FREQ);
         }
 
         ///

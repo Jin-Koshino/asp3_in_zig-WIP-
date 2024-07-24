@@ -39,18 +39,49 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  カーネルの初期化と終了処理
 ///
-usingnamespace @import("kernel_impl.zig");
-usingnamespace time_event;
-usingnamespace check;
+const kernel_impl = @import("kernel_impl.zig");
+///usingnamespace time_event;
+const time_event = kernel_impl.time_event;
+///usingnamespace check;
+const check = kernel_impl.check;
+
+////
+const zig = kernel_impl.zig;
+const t_stddef = zig.t_stddef;
+
+const isTrue = kernel_impl.isTrue;
+const target_impl = kernel_impl.target_impl;
+const decl = kernel_impl.decl;
+const INIRTN = zig.INIRTN;
+const EXINF = t_stddef.EXINF;
+const TERRTN = zig.TERRTN;
+const option = kernel_impl.option;
+const initialize_tmevt = time_event.initialize_tmevt;
+const cfg = kernel_impl.cfg;
+const target_timer = kernel_impl.target_timer;
+const set_hrt_event = time_event.set_hrt_event;
+const traceLog = kernel_impl.traceLog;
+const sil = kernel_impl.sil;
+const T_DICS = zig.T_DICS;
+const ItronError = t_stddef.ItronError;
+const checkParameterError = check.checkParameterError;
+const checkParameter = check.checkParameter;
+const ctsk = kernel_impl.ctsk;
+const T_AINI = zig.T_AINI;
+const checkValidAtr = check.checkValidAtr;
+const TA_NULL = t_stddef.TA_NULL;
+const T_ATER = zig.T_ATER;
+const exportCheck = kernel_impl.exportCheck;
+const TOPPERS_ROUND_SZ = zig.TOPPERS_ROUND_SZ;
+////
 
 ///
 ///  非タスクコンテキスト用のスタックの初期値を使用するか
 ///
-const TOPPERS_ISTKPT = isTrue(target_impl, "TOPPERS_ISTKPT");
+const TOPPERS_ISTKPT = isTrue(target_impl.mpcore_kernel_impl.core_kernel_impl, "TOPPERS_ISTKPT");
 
 ///
 ///  非タスクコンテキスト用スタックサイズの最小値
@@ -76,16 +107,16 @@ const STACK_ALIGN = decl(usize, target_impl, "STACK_ALIGN", CHECK_STACK_ALIGN);
 ///  初期化ルーチンブロック
 ///
 pub const INIRTNB = struct {
-    inirtn: INIRTN,             // 初期化ルーチンの先頭番地
-    exinf: EXINF,               // 初期化ルーチンの拡張情報
+    inirtn: INIRTN, // 初期化ルーチンの先頭番地
+    exinf: EXINF, // 初期化ルーチンの拡張情報
 };
 
 ///
 ///  終了処理ルーチンブロック
 ///
 pub const TERRTNB = struct {
-    terrtn: TERRTN,             // 終了処理ルーチンの先頭番地
-    exinf: EXINF,               // 終了処理ルーチンの拡張情報
+    terrtn: TERRTN, // 終了処理ルーチンの先頭番地
+    exinf: EXINF, // 終了処理ルーチンの拡張情報
 };
 
 ///
@@ -157,7 +188,7 @@ pub fn sta_ker() noreturn {
     target_impl.initialize();
 
     // 各モジュールの初期化
-    initialize_tmevt();                             //［ASPD1061］
+    initialize_tmevt(); //［ASPD1061］
     cfg._kernel_initialize_object();
 
     // 初期化ルーチンの実行
@@ -166,13 +197,13 @@ pub fn sta_ker() noreturn {
     }
 
     // 高分解能タイマの設定
-    current_hrtcnt = target_timer.hrt.get_current();    //［ASPD1063］
-    set_hrt_event();                                    //［ASPD1064］
+    time_event.current_hrtcnt = target_timer.hrt.get_current(); //［ASPD1063］
+    set_hrt_event(); //［ASPD1064］
 
     // カーネル動作の開始
     kerflg = true;
     traceLog("kernelEnter", .{});
-    target_impl.startDispatch();
+    target_impl.mpcore_kernel_impl.core_kernel_impl.startDispatch();
 }
 
 ///
@@ -191,7 +222,7 @@ pub fn ext_ker() noreturn {
     kerflg = false;
 
     // カーネルの終了処理の呼出し
-    target_impl.callExitKernel();
+    target_impl.mpcore_kernel_impl.core_kernel_impl.callExitKernel();
 }
 
 /// カーネルの終了処理
@@ -251,7 +282,7 @@ pub fn ExportIniRtnB(inirtnb_table: []INIRTNB) type {
     // チェック処理用の定義の生成
     exportCheck(@sizeOf(INIRTNB), "sizeof_INIRTNB");
     exportCheck(@sizeOf(INIRTN), "sizeof_INIRTN");
-    exportCheck(@byteOffsetOf(INIRTNB, "inirtn"), "offsetof_INIRTNB_inirtn");
+    exportCheck(@offsetOf(INIRTNB, "inirtn"), "offsetof_INIRTNB_inirtn");
 
     return struct {
         pub export const _kernel_inirtnb_table = inirtnb_table;
@@ -265,7 +296,7 @@ pub fn ExportTerRtnB(terrtnb_table: []TERRTNB) type {
     // チェック処理用の定義の生成
     exportCheck(@sizeOf(TERRTNB), "sizeof_TERRTNB");
     exportCheck(@sizeOf(TERRTN), "sizeof_TERRTN");
-    exportCheck(@byteOffsetOf(TERRTNB, "terrtn"), "offsetof_TERRTNB_terrtn");
+    exportCheck(@offsetOf(TERRTNB, "terrtn"), "offsetof_TERRTNB_terrtn");
 
     return struct {
         pub export const _kernel_terrtnb_table = terrtnb_table;
@@ -280,10 +311,9 @@ pub fn ExportIcs(dics: T_DICS) type {
     return struct {
         pub export const _kernel_istksz: usize = istksz;
         pub export const _kernel_istk: [*]u8 =
-            if (dics.istk) |istk| istk
-            else &struct {
-                var istack: [istksz]u8 align(STACK_ALIGN) = undefined;
-            }.istack;
+            if (dics.istk) |istk| istk else &struct {
+            var istack: [istksz]u8 align(STACK_ALIGN) = undefined;
+        }.istack;
         pub usingnamespace if (TOPPERS_ISTKPT) struct {
             pub export var _kernel_istkpt: [*]u8 = undefined;
         } else struct {};

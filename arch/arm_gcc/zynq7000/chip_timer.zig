@@ -1,7 +1,15 @@
 ///
 ///  タイマドライバ（Zynq7000用）
 ///
-usingnamespace @import("../../../kernel/kernel_impl.zig");
+const kernel_impl = @import("../../../kernel/kernel_impl.zig");
+
+////
+const zig = kernel_impl.zig;
+const t_stddef = zig.t_stddef;
+
+const option = kernel_impl.option;
+const EXINF = t_stddef.EXINF;
+////
 
 ///
 ///  コンフィギュレーションオプションの取り込み
@@ -23,7 +31,7 @@ const mpcore_timer = @import("../common/mpcore_timer.zig");
 ///
 pub const hrt = mpcore_timer.GTC_HRT(.{
     .GTC_PS_VALUE = MPCORE_GTC_PS_VALUE,
-    .GTC_FREQ     = MPCORE_GTC_FREQ,
+    .GTC_FREQ = MPCORE_GTC_FREQ,
 });
 
 ///
@@ -31,14 +39,13 @@ pub const hrt = mpcore_timer.GTC_HRT(.{
 ///
 ///  MPCoreのウォッチドッグを用いてオーバランタイマを実現する．
 ///
-usingnamespace @import("../common/mpcore_timer.zig");
-
+///usingnamespace @import("../common/mpcore_timer.zig");
 ///
 ///  オーバランタイマドライバのインスタンシエート
 ///
 pub const ovrtimer = mpcore_timer.WDG_OVRTIMER(.{
     .WDG_PS_VALUE = MPCORE_WDG_PS_VALUE,
-    .WDG_FREQ     = MPCORE_WDG_FREQ,
+    .WDG_FREQ = MPCORE_WDG_FREQ,
 });
 
 ///
@@ -51,11 +58,13 @@ pub const ExportDefs = struct {
     // 高分解能タイマの起動処理
     export fn _kernel_target_hrt_initialize(exinf: EXINF) void {
         hrt.initialize();
+        _ = exinf;
     }
 
     // 高分解能タイマの停止処理
     export fn _kernel_target_hrt_terminate(exinf: EXINF) void {
         hrt.terminate();
+        _ = exinf;
     }
 
     // 高分解能タイマ割込みハンドラ
@@ -66,11 +75,13 @@ pub const ExportDefs = struct {
     // オーバランタイマの初期化処理
     export fn _kernel_target_ovrtimer_initialize(exinf: EXINF) void {
         ovrtimer.initialize();
+        _ = exinf;
     }
 
     // オーバランタイマの停止処理
     export fn _kernel_target_ovrtimer_terminate(exinf: EXINF) void {
         ovrtimer.terminate();
+        _ = exinf;
     }
 
     // オーバランタイマ割込みハンドラ

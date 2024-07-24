@@ -1,7 +1,6 @@
 ///
 ///  t_stddef.zigのターゲット依存部（ZYBO用）
 ///
-
 ///
 ///  コンフィギュレーションオプションの取り込み
 ///
@@ -11,7 +10,7 @@ const abort = option.target.abort;
 ///
 ///  チップ依存部（Zynq7000用）
 ///
-pub usingnamespace @import("../../arch/arm_gcc/zynq7000/chip_stddef.zig");
+pub const chip_stddef = @import("../../arch/arm_gcc/zynq7000/chip_stddef.zig");
 
 ///
 ///  アサーションの失敗時の実行中断処理

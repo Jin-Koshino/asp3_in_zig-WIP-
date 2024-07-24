@@ -39,11 +39,26 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  通知処理
 ///
-usingnamespace @import("kernel_impl.zig");
+const kernel_impl = @import("kernel_impl.zig");
+
+////
+const zig = kernel_impl.zig;
+const t_stddef = zig.t_stddef;
+
+const ID = t_stddef.ID;
+const ER = t_stddef.ER;
+const FLGPTN = zig.FLGPTN;
+const T_NFYINFO = zig.T_NFYINFO;
+const EXINF = t_stddef.EXINF;
+const castToExinf = t_stddef.castToExinf;
+const exinfToPtr = t_stddef.exinfToPtr;
+const NFYHDR = kernel_impl.NFYHDR;
+const ATR = t_stddef.ATR;
+const TA_CHECK_USIZE = kernel_impl.TA_CHECK_USIZE;
+////
 
 ///
 ///  呼び出すC言語APIの宣言
@@ -160,8 +175,7 @@ fn genNotifyFunction(comptime nfyinfo: T_NFYINFO) type {
                             _ = c_api.set_flg(setflg.flgid, setflg.flgptn);
                         },
                         .SndDtq => |snddtq| {
-                            _ = c_api.psnd_dtq(snddtq.dtqid,
-                                    @bitCast(usize, @intCast(isize, ercd)));
+                            _ = c_api.psnd_dtq(snddtq.dtqid, @bitCast(usize, @intCast(isize, ercd)));
                         },
                     }
                 }
@@ -196,13 +210,20 @@ pub fn genHandler(comptime nfyinfo: T_NFYINFO) NFYHDR {
 ///
 pub fn genFlag(comptime nfyinfo: T_NFYINFO) ATR {
     switch (comptime nfyinfo.nfy) {
-        .Handler => |handler| { return 0; },
-        .SetVar, .IncVar => { return TA_CHECK_USIZE; },
+        .Handler => |handler| {
+            defer _ = handler;
+            return 0;
+        },
+        .SetVar, .IncVar => {
+            return TA_CHECK_USIZE;
+        },
         else => {},
     }
     if (comptime nfyinfo.enfy) |enfy| {
         switch (comptime enfy) {
-            .SetVar, .IncVar => { return TA_CHECK_USIZE; },
+            .SetVar, .IncVar => {
+                return TA_CHECK_USIZE;
+            },
             else => {},
         }
     }

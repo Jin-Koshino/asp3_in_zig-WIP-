@@ -36,11 +36,9 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  L2キャッシュコントローラ（PL310）の操作ライブラリ
 ///
-
 ///
 ///  コンフィギュレーションオプションの取り込み
 ///
@@ -55,56 +53,56 @@ const sil = @import("../../../include/sil.zig");
 ///
 ///  PL310のレジスタの番地の定義
 ///
-pub const CACHE_ID       = @intToPtr(*u32, PL310_BASE + 0x000);
-pub const CACHE_TYPE     = @intToPtr(*u32, PL310_BASE + 0x004);
-pub const CTRL           = @intToPtr(*u32, PL310_BASE + 0x100);
-pub const AUX_CTRL       = @intToPtr(*u32, PL310_BASE + 0x104);
-pub const TAG_RAM_CTRL   = @intToPtr(*u32, PL310_BASE + 0x108);
-pub const DATA_RAM_CTRL  = @intToPtr(*u32, PL310_BASE + 0x10c);
+pub const CACHE_ID = @intToPtr(*u32, PL310_BASE + 0x000);
+pub const CACHE_TYPE = @intToPtr(*u32, PL310_BASE + 0x004);
+pub const CTRL = @intToPtr(*u32, PL310_BASE + 0x100);
+pub const AUX_CTRL = @intToPtr(*u32, PL310_BASE + 0x104);
+pub const TAG_RAM_CTRL = @intToPtr(*u32, PL310_BASE + 0x108);
+pub const DATA_RAM_CTRL = @intToPtr(*u32, PL310_BASE + 0x10c);
 pub const EVENT_CNT_CTRL = @intToPtr(*u32, PL310_BASE + 0x200);
 pub const EVENT_CNT1_CFG = @intToPtr(*u32, PL310_BASE + 0x204);
 pub const EVENT_CNT0_CFG = @intToPtr(*u32, PL310_BASE + 0x208);
-pub const EVENT_CNT1     = @intToPtr(*u32, PL310_BASE + 0x20c);
-pub const EVENT_CNT0     = @intToPtr(*u32, PL310_BASE + 0x210);
-pub const INT_MASK       = @intToPtr(*u32, PL310_BASE + 0x214);
-pub const INT_MASK_STAT  = @intToPtr(*u32, PL310_BASE + 0x218);
-pub const INT_RAW_STAT   = @intToPtr(*u32, PL310_BASE + 0x21c);
-pub const INT_CLEAR      = @intToPtr(*u32, PL310_BASE + 0x220);
-pub const CACHE_SYNC     = @intToPtr(*u32, PL310_BASE + 0x730);
-pub const INV_PA         = @intToPtr(*u32, PL310_BASE + 0x770);
-pub const INV_WAY        = @intToPtr(*u32, PL310_BASE + 0x77c);
-pub const CLEAN_PA       = @intToPtr(*u32, PL310_BASE + 0x7b0);
-pub const CLEAN_IDX      = @intToPtr(*u32, PL310_BASE + 0x7b8);
-pub const CLEAN_WAY      = @intToPtr(*u32, PL310_BASE + 0x7bc);
-pub const CLEAN_INV_PA   = @intToPtr(*u32, PL310_BASE + 0x7f0);
-pub const CLEAN_INV_IDX  = @intToPtr(*u32, PL310_BASE + 0x7f8);
-pub const CLEAN_INV_WAY  = @intToPtr(*u32, PL310_BASE + 0x7Fc);
-pub const D_LOCKDOWN0    = @intToPtr(*u32, PL310_BASE + 0x900);
-pub const I_LOCKDOWN0    = @intToPtr(*u32, PL310_BASE + 0x904);
-pub const DEBUG_CTRL     = @intToPtr(*u32, PL310_BASE + 0xf40);
-pub const PREFETCH_CTRL  = @intToPtr(*u32, PL310_BASE + 0xf60);
-pub const POWER_CTRL     = @intToPtr(*u32, PL310_BASE + 0xf80);
+pub const EVENT_CNT1 = @intToPtr(*u32, PL310_BASE + 0x20c);
+pub const EVENT_CNT0 = @intToPtr(*u32, PL310_BASE + 0x210);
+pub const INT_MASK = @intToPtr(*u32, PL310_BASE + 0x214);
+pub const INT_MASK_STAT = @intToPtr(*u32, PL310_BASE + 0x218);
+pub const INT_RAW_STAT = @intToPtr(*u32, PL310_BASE + 0x21c);
+pub const INT_CLEAR = @intToPtr(*u32, PL310_BASE + 0x220);
+pub const CACHE_SYNC = @intToPtr(*u32, PL310_BASE + 0x730);
+pub const INV_PA = @intToPtr(*u32, PL310_BASE + 0x770);
+pub const INV_WAY = @intToPtr(*u32, PL310_BASE + 0x77c);
+pub const CLEAN_PA = @intToPtr(*u32, PL310_BASE + 0x7b0);
+pub const CLEAN_IDX = @intToPtr(*u32, PL310_BASE + 0x7b8);
+pub const CLEAN_WAY = @intToPtr(*u32, PL310_BASE + 0x7bc);
+pub const CLEAN_INV_PA = @intToPtr(*u32, PL310_BASE + 0x7f0);
+pub const CLEAN_INV_IDX = @intToPtr(*u32, PL310_BASE + 0x7f8);
+pub const CLEAN_INV_WAY = @intToPtr(*u32, PL310_BASE + 0x7Fc);
+pub const D_LOCKDOWN0 = @intToPtr(*u32, PL310_BASE + 0x900);
+pub const I_LOCKDOWN0 = @intToPtr(*u32, PL310_BASE + 0x904);
+pub const DEBUG_CTRL = @intToPtr(*u32, PL310_BASE + 0xf40);
+pub const PREFETCH_CTRL = @intToPtr(*u32, PL310_BASE + 0xf60);
+pub const POWER_CTRL = @intToPtr(*u32, PL310_BASE + 0xf80);
 
 ///
 ///  キャッシュ補助制御レジスタ（AUX_CTRL）の設定値
 ///
-pub const AUX_CTRL_ASSOCIATIVITY  = 0x00010000;
+pub const AUX_CTRL_ASSOCIATIVITY = 0x00010000;
 pub const AUX_CTRL_WAY_SIZE_SHIFT = 17;
-pub const AUX_CTRL_WAY_SIZE_MASK  = 0x000e0000;
-pub const AUX_CTRL_IGNORE_SHARE   = 0x00400000;
-pub const AUX_CTRL_NS_LOCKDOWN    = 0x04000000;
-pub const AUX_CTRL_NS_INT_CTRL    = 0x08000000;
-pub const AUX_CTRL_DATA_PREFETCH  = 0x10000000;
-pub const AUX_CTRL_INST_PREFETCH  = 0x20000000;
-pub const AUX_CTRL_EARLY_BRESP    = 0x40000000;
+pub const AUX_CTRL_WAY_SIZE_MASK = 0x000e0000;
+pub const AUX_CTRL_IGNORE_SHARE = 0x00400000;
+pub const AUX_CTRL_NS_LOCKDOWN = 0x04000000;
+pub const AUX_CTRL_NS_INT_CTRL = 0x08000000;
+pub const AUX_CTRL_DATA_PREFETCH = 0x10000000;
+pub const AUX_CTRL_INST_PREFETCH = 0x20000000;
+pub const AUX_CTRL_EARLY_BRESP = 0x40000000;
 
 ///
 ///  プリフェッチ制御レジスタ（PREFETCH_CTRL）の設定値
 ///
 pub const PREFETCH_CTRL_INCR_DLINEFILL = 0x00800000;
-pub const PREFETCH_CTRL_DATA_PREFETCH  = 0x10000000;
-pub const PREFETCH_CTRL_INST_PREFETCH  = 0x20000000;
-pub const PREFETCH_CTRL_DLINEFILL      = 0x40000000;
+pub const PREFETCH_CTRL_DATA_PREFETCH = 0x10000000;
+pub const PREFETCH_CTRL_INST_PREFETCH = 0x20000000;
+pub const PREFETCH_CTRL_DLINEFILL = 0x40000000;
 
 ///
 ///  PL310の操作ライブラリ
@@ -114,8 +112,7 @@ fn get_way_mask() u32 {
     if ((aux & AUX_CTRL_ASSOCIATIVITY) != 0) {
         // 16ウェイ
         return 0x0000ffff;
-    }
-    else {
+    } else {
         // 8ウェイ
         return 0x000000ff;
     }
@@ -129,8 +126,7 @@ fn inv_all() void {
     // すべてのウェイを無効化する
     const way_mask = get_way_mask();
     sil.wrw_mem(INV_WAY, 0xffff);
-    while ((sil.rew_mem(INV_WAY) & way_mask) != 0) {
-    }
+    while ((sil.rew_mem(INV_WAY) & way_mask) != 0) {}
     cache_sync();
 }
 
@@ -161,7 +157,7 @@ pub fn initialize(aux_val: u32, aux_mask: u32) void {
         // ダブルラインフィルをイネーブル
         prefetch_set |= PREFETCH_CTRL_DLINEFILL;
         prefetch_set |= PREFETCH_CTRL_INCR_DLINEFILL;
-                
+
         // 補助制御レジスタを設定
         var aux = sil.rew_mem(AUX_CTRL);
         sil.wrw_mem(AUX_CTRL, (aux & aux_mask) | aux_set);
@@ -172,13 +168,13 @@ pub fn initialize(aux_val: u32, aux_mask: u32) void {
 
         // L2キャッシュの全体の無効化
         inv_all();
-        
+
         // クロックゲーティングとスタンバイモードをイネーブル
         sil.wrw_mem(POWER_CTRL, 0x03);
-        
+
         // L2キャッシュのイネーブル
         sil.wrw_mem(CTRL, 0x01);
-    }    
+    }
 }
 
 ///
@@ -205,8 +201,7 @@ pub fn clean_and_invalidate_all() void {
     const way_mask = get_way_mask();
     debug_set(0x03);
     sil.wrw_mem(CLEAN_INV_WAY, way_mask);
-    while ((sil.rew_mem(CLEAN_INV_WAY) & way_mask) != 0) {
-    }
+    while ((sil.rew_mem(CLEAN_INV_WAY) & way_mask) != 0) {}
     cache_sync();
     debug_set(0x00);
 }

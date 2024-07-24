@@ -38,11 +38,21 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  トレースログ機能のサンプル設定
 ///
-usingnamespace @import("../../kernel/kernel_impl.zig");
+const kernel_impl = @import("../../kernel/kernel_impl.zig");
+
+////
+const zig = kernel_impl.zig;
+const t_stddef = zig.t_stddef;
+
+const LOG_TYPE_TSKSTAT = kernel_impl.LOG_TYPE_TSKSTAT;
+const LOG_TYPE_DSP = kernel_impl.LOG_TYPE_DSP;
+const LOG_LEAVE = kernel_impl.LOG_LEAVE;
+const HRTCNT = t_stddef.HRTCNT;
+const ER = t_stddef.ER;
+////
 
 ///
 ///  トレースログ方法の設定
@@ -51,7 +61,7 @@ pub fn taskStateChange(args: anytype) void {
     traceWrite(LOG_TYPE_TSKSTAT, .{ args.@"0", args.@"0".tstat });
 }
 pub fn dispatchLeave(args: anytype) void {
-    traceWrite(LOG_TYPE_DSP|LOG_LEAVE, .{ args.@"0" });
+    traceWrite(LOG_TYPE_DSP | LOG_LEAVE, .{args.@"0"});
 }
 
 ///
@@ -59,14 +69,14 @@ pub fn dispatchLeave(args: anytype) void {
 ///
 ///  システムログ機能のログ情報のデータ構造と同じにしている．
 ///
-const LOGTIM = HRTCNT;              // ログ時刻のデータ型
-const TNUM_LOGPAR = 6;              // ログパラメータの数
-const LOGPAR = usize;               // ログパラメータのデータ型
+const LOGTIM = HRTCNT; // ログ時刻のデータ型
+const TNUM_LOGPAR = 6; // ログパラメータの数
+const LOGPAR = usize; // ログパラメータのデータ型
 
 const TRACE = extern struct {
-    logtype: c_uint,                // ログ情報の種別
-    logtim: LOGTIM,                 // ログ時刻
-    logpar: [TNUM_LOGPAR]LOGPAR,    // ログパラメータ
+    logtype: c_uint, // ログ情報の種別
+    logtim: LOGTIM, // ログ時刻
+    logpar: [TNUM_LOGPAR]LOGPAR, // ログパラメータ
 };
 
 ///
@@ -81,13 +91,12 @@ extern fn tTraceLog_eTraceLog_write(p_trace: *const TRACE) ER;
 ///
 ///  ログ情報のパラメータの強制変換
 ///
-fn logPar(arg : anytype) usize {
+fn logPar(arg: anytype) usize {
     return switch (@typeInfo(@TypeOf(arg))) {
         .Bool => @boolToInt(arg),
         .Int, .ComptimeInt => @intCast(usize, arg),
         .Enum => @enumToInt(arg),
-        .Pointer => |pointer|
-            @ptrToInt(if (pointer.size == .Slice) arg.ptr else arg),
+        .Pointer => |pointer| @ptrToInt(if (pointer.size == .Slice) arg.ptr else arg),
         .Array => @ptrToInt(&arg),
         .Optional => logPar(arg.?),
         else => @compileError("unsupported data type for syslog."),
@@ -101,11 +110,23 @@ fn traceWrite(logtype: c_uint, args: anytype) void {
     var tracebuf: TRACE = undefined;
 
     tracebuf.logtype = logtype;
-    if (args.len > 0) { tracebuf.logpar[0] = logPar(args.@"0"); }
-    if (args.len > 1) { tracebuf.logpar[1] = logPar(args.@"1"); }
-    if (args.len > 2) { tracebuf.logpar[2] = logPar(args.@"2"); }
-    if (args.len > 3) { tracebuf.logpar[3] = logPar(args.@"3"); }
-    if (args.len > 4) { tracebuf.logpar[4] = logPar(args.@"4"); }
-    if (args.len > 5) { tracebuf.logpar[5] = logPar(args.@"5"); }
+    if (args.len > 0) {
+        tracebuf.logpar[0] = logPar(args.@"0");
+    }
+    if (args.len > 1) {
+        tracebuf.logpar[1] = logPar(args.@"1");
+    }
+    if (args.len > 2) {
+        tracebuf.logpar[2] = logPar(args.@"2");
+    }
+    if (args.len > 3) {
+        tracebuf.logpar[3] = logPar(args.@"3");
+    }
+    if (args.len > 4) {
+        tracebuf.logpar[4] = logPar(args.@"4");
+    }
+    if (args.len > 5) {
+        tracebuf.logpar[5] = logPar(args.@"5");
+    }
     _ = tTraceLog_eTraceLog_write(&tracebuf);
 }

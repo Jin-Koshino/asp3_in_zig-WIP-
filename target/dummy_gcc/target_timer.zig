@@ -1,7 +1,7 @@
 ///
 ///  タイマドライバ（ダミーターゲット用）
 ///
-usingnamespace @import("../../kernel/kernel_impl.zig");
+const kernel_impl = @import("../../kernel/kernel_impl.zig");
 
 ///
 ///  ハードウェア資源の定義
@@ -15,10 +15,10 @@ pub const hrt = struct {
     ///
     ///  高分解能タイマ割込みハンドラ登録のための定数
     ///
-    pub const INHNO_HRT = dummy.TINTNO_HRT;     // 割込みハンドラ番号
-    pub const INTNO_HRT = dummy.TINTNO_HRT;     // 割込み番号
-    pub const INTPRI_HRT = TMAX_INTPRI - 1;     // 割込み優先度
-    pub const INTATR_HRT = TA_EDGE;             // 割込み属性
+    pub const INHNO_HRT = dummy.TINTNO_HRT; // 割込みハンドラ番号
+    pub const INTNO_HRT = dummy.TINTNO_HRT; // 割込み番号
+    pub const INTPRI_HRT = TMAX_INTPRI - 1; // 割込み優先度
+    pub const INTATR_HRT = TA_EDGE; // 割込み属性
 
     ///
     ///  タイマの起動処理
@@ -33,7 +33,9 @@ pub const hrt = struct {
     ///
     ///  高分解能タイマの現在のカウント値の読出し
     ///
-    pub fn get_current() HRTCNT { return 0; }
+    pub fn get_current() HRTCNT {
+        return 0;
+    }
 
     ///
     ///  高分解能タイマへの割込みタイミングの設定
@@ -66,10 +68,10 @@ pub const ovrtimer = struct {
     ///
     ///  オーバランタイマ割込みハンドラ登録のための定数
     ///
-    pub const INHNO_OVRTIMER = dummy.TINTNO_OVRTIMER;   // 割込みハンドラ番号
-    pub const INTNO_OVRTIMER = dummy.TINTNO_OVRTIMER;   // 割込み番号
-    pub const INTPRI_OVRTIMER = TMAX_INTPRI;            // 割込み優先度
-    pub const INTATR_OVRTIMER = TA_EDGE;                // 割込み属性
+    pub const INHNO_OVRTIMER = dummy.TINTNO_OVRTIMER; // 割込みハンドラ番号
+    pub const INTNO_OVRTIMER = dummy.TINTNO_OVRTIMER; // 割込み番号
+    pub const INTPRI_OVRTIMER = TMAX_INTPRI; // 割込み優先度
+    pub const INTATR_OVRTIMER = TA_EDGE; // 割込み属性
 
     ///
     ///  オーバランタイマの初期化処理
@@ -89,12 +91,16 @@ pub const ovrtimer = struct {
     ///
     ///  オーバランタイマの停止
     ///
-    pub fn stop() PRCTIM { return 0; }
+    pub fn stop() PRCTIM {
+        return 0;
+    }
 
     ///
     ///  オーバランタイマの現在値の読出し
     ///
-    pub fn get_current() PRCTIM { return 0; }
+    pub fn get_current() PRCTIM {
+        return 0;
+    }
 
     ///
     ///  オーバランタイマ割込みハンドラ
@@ -108,7 +114,6 @@ pub const ovrtimer = struct {
 ///
 ///  システムコンフィギュレーションファイルに記述する関数
 ///
-
 ///
 ///  タイマモジュールからexportする関数
 ///

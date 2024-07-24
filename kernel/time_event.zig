@@ -44,13 +44,32 @@ const std = @import("std");
 ///
 ///  タイムイベント管理モジュール
 ///
-usingnamespace @import("kernel_impl.zig");
+const kernel_impl = @import("kernel_impl.zig");
+
+////
+const zig = kernel_impl.zig;
+const t_stddef = zig.t_stddef;
+
+const decl = kernel_impl.decl;
+const target_timer = kernel_impl.target_timer;
+const TSTEP_HRTCNT = zig.TSTEP_HRTCNT;
+const TCYC_HRTCNT = zig.TCYC_HRTCNT;
+const HRTCNT = t_stddef.HRTCNT;
+const cfg = kernel_impl.cfg;
+const SYSTIM = t_stddef.SYSTIM;
+const RELTIM = t_stddef.RELTIM;
+const TMAX_ADJTIM = zig.TMAX_ADJTIM;
+const TMIN_ADJTIM = zig.TMIN_ADJTIM;
+const assert = t_stddef.assert;
+const target_impl = kernel_impl.target_impl;
+const syslog = kernel_impl.t_syslog.syslog;
+const LOG_NOTICE = kernel_impl.t_syslog.LOG_NOTICE;
+////
 
 ///
 ///  ターゲット依存の定義の取り込み
 ///
-const HRTCNT_BOUND = decl(?comptime_int, target_timer.hrt, "HRTCNT_BOUND",
-                          null);
+const HRTCNT_BOUND = decl(?comptime_int, target_timer.hrt, "HRTCNT_BOUND", null);
 
 //
 //  TSTEP_HRTCNTの範囲チェック
@@ -69,15 +88,13 @@ comptime {
         var tcyc_hrtcnt: comptime_int = undefined;
         if (TCYC_HRTCNT != null) {
             tcyc_hrtcnt = TCYC_HRTCNT.?;
-        }
-        else {
+        } else {
             tcyc_hrtcnt = std.math.maxInt(HRTCNT) + 1;
         }
         if (hrtcnt_bound > tcyc_hrtcnt - 50_000) {
             @compileError("HRTCNT_BOUND is too large.");
         }
-    }
-    else {
+    } else {
         if (HRTCNT != u64 and TCYC_HRTCNT != null) {
             @compileError("HRTCNT_BOUND must be defined.");
         }
@@ -118,10 +135,10 @@ pub const CBACK = fn (usize) void;
 ///  タイムイベントブロックのデータ型の定義
 ///
 pub const TMEVTB = struct {
-    evttim: EVTTIM,     // タイムイベントの発生時刻
-    index: usize,       // タイムイベントヒープ中での位置
-    callback: CBACK,    // コールバック関数
-    arg: usize,         // コールバック関数へ渡す引数
+    evttim: EVTTIM, // タイムイベントの発生時刻
+    index: usize, // タイムイベントヒープ中での位置
+    callback: CBACK, // コールバック関数
+    arg: usize, // コールバック関数へ渡す引数
 };
 
 ///
@@ -191,12 +208,12 @@ pub var in_signal_time: bool = undefined;
 ///  タイムイベント管理モジュールの初期化［ASPD1061］
 ///
 pub fn initialize_tmevt() void {
-    current_evttim = 0;                         //［ASPD1047］
+    current_evttim = 0; //［ASPD1047］
     boundary_evttim = current_evttim -% BOUNDARY_MARGIN;
-                                                //［ASPD1048］
-    monotonic_evttim = 0;                       //［ASPD1046］
-    systim_offset = 0;                          //［ASPD1044］
-    in_signal_time = false;                     //［ASPD1033］
+    //［ASPD1048］
+    monotonic_evttim = 0; //［ASPD1046］
+    systim_offset = 0; //［ASPD1044］
+    in_signal_time = false; //［ASPD1033］
     num_tmevt = 0;
 }
 
@@ -227,7 +244,7 @@ fn tmevt_up(index: usize, evttim: EVTTIM) usize {
         // currentを親ノードの位置に更新．
         current = parent;
     }
-    return(current);
+    return (current);
 }
 
 ///
@@ -241,15 +258,13 @@ fn tmevt_up(index: usize, evttim: EVTTIM) usize {
 fn tmevt_down(index: usize, evttim: EVTTIM) usize {
     var current = index;
     var child: usize = undefined;
-    
+
     while (LCHILD(current) < num_tmevt) {
         // 左右の子ノードのイベント発生時刻を比較し，早い方の子ノード
         // の位置をchildに設定する．以下の子ノードは，ここで選ばれた方
         // の子ノードのこと．
         child = LCHILD(current);
-        if (child + 1 < num_tmevt
-                and EVTTIM_LT(cfg._kernel_tmevt_heap[child + 1].evttim,
-                              cfg._kernel_tmevt_heap[child].evttim)) {
+        if (child + 1 < num_tmevt and EVTTIM_LT(cfg._kernel_tmevt_heap[child + 1].evttim, cfg._kernel_tmevt_heap[child].evttim)) {
             child += 1;
         }
 
@@ -266,7 +281,7 @@ fn tmevt_down(index: usize, evttim: EVTTIM) usize {
         // currentを子ノードの位置に更新．
         current = child;
     }
-    return(current);
+    return (current);
 }
 
 ///
@@ -312,8 +327,7 @@ fn tmevtb_delete(p_tmevtb: *TMEVTB) void {
     // ベント発生時刻より前の場合には，上に向かって挿入位置を探す．そ
     // うでない場合には，下に向かって探す．
     event_evttim = cfg._kernel_tmevt_heap[num_tmevt].evttim;
-    if (index > 0 and EVTTIM_LT(event_evttim,
-                                cfg._kernel_tmevt_heap[PARENT(index)].evttim)) {
+    if (index > 0 and EVTTIM_LT(event_evttim, cfg._kernel_tmevt_heap[PARENT(index)].evttim)) {
         // 親ノードをindexの位置に移動させる．
         parent = PARENT(index);
         cfg._kernel_tmevt_heap[index] = cfg._kernel_tmevt_heap[parent];
@@ -321,8 +335,7 @@ fn tmevtb_delete(p_tmevtb: *TMEVTB) void {
 
         // 削除したノードの親ノードから上に向かって挿入位置を探す．
         index = tmevt_up(parent, event_evttim);
-    }
-    else {
+    } else {
         // 削除したノードから下に向かって挿入位置を探す．
         index = tmevt_down(index, event_evttim);
     }
@@ -365,25 +378,24 @@ pub fn update_current_evttim() void {
     var hrtcnt_advance: HRTCNT = undefined;
     var previous_evttim: EVTTIM = undefined;
 
-    new_hrtcnt = target_timer.hrt.get_current();    //［ASPD1013］
-    hrtcnt_advance = new_hrtcnt -% current_hrtcnt;  //［ASPD1014］
+    new_hrtcnt = target_timer.hrt.get_current(); //［ASPD1013］
+    hrtcnt_advance = new_hrtcnt -% current_hrtcnt; //［ASPD1014］
     if (TCYC_HRTCNT != null) {
         if (new_hrtcnt < current_hrtcnt) {
             hrtcnt_advance +%= TCYC_HRTCNT.?;
         }
     }
-    current_hrtcnt = new_hrtcnt;                    //［ASPD1016］
+    current_hrtcnt = new_hrtcnt; //［ASPD1016］
 
     previous_evttim = current_evttim;
-    current_evttim +%= @intCast(EVTTIM, hrtcnt_advance);    //［ASPD1015］
-    boundary_evttim = current_evttim -% BOUNDARY_MARGIN;    //［ASPD1011］
+    current_evttim +%= @intCast(EVTTIM, hrtcnt_advance); //［ASPD1015］
+    boundary_evttim = current_evttim -% BOUNDARY_MARGIN; //［ASPD1011］
 
-    if (monotonic_evttim -% previous_evttim
-                              < @intCast(EVTTIM, hrtcnt_advance)) {
-        if (current_evttim < monotonic_evttim) {    //［ASPD1045］
+    if (monotonic_evttim -% previous_evttim < @intCast(EVTTIM, hrtcnt_advance)) {
+        if (current_evttim < monotonic_evttim) { //［ASPD1045］
             systim_offset +%= @as(SYSTIM, 1) << @bitSizeOf(EVTTIM);
         }
-        monotonic_evttim = current_evttim;          //［ASPD1042］
+        monotonic_evttim = current_evttim; //［ASPD1042］
     }
 }
 
@@ -406,20 +418,16 @@ pub fn set_hrt_event() void {
         // タイムイベントがない場合
         if (HRTCNT_BOUND == null) {
             target_timer.hrt.clear_event();
-        }
-        else {                                      //［ASPD1007］
+        } else { //［ASPD1007］
             target_timer.hrt.set_event(HRTCNT_BOUND.?);
         }
-    }
-    else if (EVTTIM_LE(top_evttim(), current_evttim)) {
-        target_timer.hrt.raise_event();             //［ASPD1017］
-    }
-    else {
+    } else if (EVTTIM_LE(top_evttim(), current_evttim)) {
+        target_timer.hrt.raise_event(); //［ASPD1017］
+    } else {
         const hrtcnt = @intCast(HRTCNT, top_evttim() -% current_evttim);
         if (HRTCNT_BOUND == null or hrtcnt <= HRTCNT_BOUND.?) {
-            target_timer.hrt.set_event(hrtcnt);     //［ASPD1006］
-        }
-        else {                                      //［ASPD1002］
+            target_timer.hrt.set_event(hrtcnt); //［ASPD1006］
+        } else { //［ASPD1002］
             target_timer.hrt.set_event(HRTCNT_BOUND.?);
         }
     }
@@ -488,10 +496,9 @@ pub fn tmevtb_dequeue(p_tmevtb: *TMEVTB) void {
 ///
 pub fn check_adjtim(adjtim: i32) bool {
     if (adjtim > 0) {
-        return num_tmevt > 0                    //［NGKI3588］
-            and EVTTIM_LE(top_evttim() +% TMAX_ADJTIM, current_evttim);
-    }
-    else if (adjtim < 0) {                      //［NGKI3589］
+        return num_tmevt > 0 //［NGKI3588］
+        and EVTTIM_LE(top_evttim() +% TMAX_ADJTIM, current_evttim);
+    } else if (adjtim < 0) { //［NGKI3589］
         return monotonic_evttim -% current_evttim >= -TMIN_ADJTIM;
     }
     return false;
@@ -513,8 +520,7 @@ pub fn tmevt_lefttim(p_tmevtb: *TMEVTB) RELTIM {
     if (EVTTIM_LE(evttim, current_evttim_ub)) {
         // タイムイベントの発生時刻を過ぎている場合には0を返す［NGKI0552］．
         return 0;
-    }
-    else {
+    } else {
         return @intCast(RELTIM, evttim -% current_evttim_ub);
     }
 }
@@ -527,15 +533,15 @@ pub fn signal_time() void {
     var callflag: bool = true;
     var nocall: c_uint = 0;
 
-    assert(target_impl.senseContext());
-    assert(!target_impl.senseLock());
+    assert(target_impl.mpcore_kernel_impl.core_kernel_impl.senseContext());
+    assert(!target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock());
 
-    target_impl.lockCpu();
-    defer target_impl.unlockCpu();
-    in_signal_time = true;                          //［ASPD1033］
+    target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+    defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
+    in_signal_time = true; //［ASPD1033］
     defer in_signal_time = false;
 
-    while (callflag) {                              //［ASPD1020］
+    while (callflag) { //［ASPD1020］
         // コールバック関数を呼び出さなければループを抜ける［ASPD1020］．
         callflag = false;
 
@@ -565,7 +571,6 @@ pub fn signal_time() void {
 ///
 ///  カーネルの整合性検査のための関数
 ///
-
 ///
 ///  タイムイベントブロックのチェック
 ///

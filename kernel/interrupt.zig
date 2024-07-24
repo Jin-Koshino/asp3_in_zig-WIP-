@@ -39,24 +39,78 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  割込み管理機能
 ///
 const std = @import("std");
-usingnamespace @import("kernel_impl.zig");
-usingnamespace task;
-usingnamespace check;
+const kernel_impl = @import("kernel_impl.zig");
+///usingnamespace task;
+const task = kernel_impl.task;
+///usingnamespace check;
+const check = kernel_impl.check;
+
+////
+const zig = kernel_impl.zig;
+const t_stddef = zig.t_stddef;
+
+const INHNO = zig.INHNO;
+const INTNO = zig.INTNO;
+const PRI = t_stddef.PRI;
+const TMIN_INTPRI = zig.TMIN_INTPRI;
+const TMAX_INTPRI = zig.TMAX_INTPRI;
+const TIPM_ENAALL = zig.TIPM_ENAALL;
+const decl = kernel_impl.decl;
+const INTHDR = zig.INTHDR;
+const checkNotSupported = check.checkNotSupported;
+const TOPPERS_SUPPORT_DIS_INT = kernel_impl.zig.TOPPERS_SUPPORT_DIS_INT;
+const TOPPERS_SUPPORT_CLR_INT = kernel_impl.zig.TOPPERS_SUPPORT_CLR_INT;
+const TOPPERS_SUPPORT_RAS_INT = kernel_impl.zig.TOPPERS_SUPPORT_RAS_INT;
+const TOPPERS_SUPPORT_PRB_INT = kernel_impl.zig.TOPPERS_SUPPORT_PRB_INT;
+const checkContextTaskUnlock = check.checkContextTaskUnlock;
+const set_dspflg = task.set_dspflg;
+const TOPPERS_SUPPORT_OVRHDR = zig.TOPPERS_SUPPORT_OVRHDR;
+const target_timer = kernel_impl.target_timer;
+const task_terminate = task.task_terminate;
+const taskDispatch = task.taskDispatch;
+const T_CINT = zig.T_CINT;
+const TA_ENAINT = zig.TA_ENAINT;
+const TA_EDGE = zig.TA_EDGE;
+const into = kernel_impl.into;
+const T_DINH = zig.T_DINH;
+const static_api = kernel_impl.static_api;
+const checkObjectState = check.checkObjectState;
+const inho = kernel_impl.inho;
+const T_CISR = zig.T_CISR;
+const TMIN_ISRPRI = zig.TMIN_ISRPRI;
+const TMAX_ISRPRI = zig.TMAX_ISRPRI;
+const ID = t_stddef.ID;
+const ER = t_stddef.ER;
+const TA_NULL = t_stddef.TA_NULL;
+const EXCNO = zig.EXCNO;
+const target_impl = kernel_impl.target_impl;
+const ATR = t_stddef.ATR;
+const EXCHDR = zig.EXCHDR;
+const cfg = kernel_impl.cfg;
+const traceLog = kernel_impl.traceLog;
+const startup = kernel_impl.startup;
+const T_DEXC = zig.T_DEXC;
+const ItronError = t_stddef.ItronError;
+
+const checkParameter = check.checkParameter;
+const checkValidAtr = check.checkValidAtr;
+const exco = kernel_impl.exco;
+
+const exportCheck = kernel_impl.exportCheck;
+////
 
 ///
 ///  割込みハンドラの範囲の判定
 ///
 pub fn validInhnoDefInh(inhno: INHNO) bool {
-    if (@hasDecl(target_impl, "validInhnoDefInh")) {
-        return target_impl.validInhnoDefInh(inhno);
-    }
-    else {
-        return target_impl.validInhno(inhno);
+    if (@hasDecl(target_impl.mpcore_kernel_impl.gic_kernel_impl, "validInhnoDefInh")) {
+        return target_impl.mpcore_kernel_impl.gic_kernel_impl.validInhnoDefInh(inhno);
+    } else {
+        return target_impl.mpcore_kernel_impl.gic_kernel_impl.validInhno(inhno);
     }
 }
 
@@ -64,70 +118,62 @@ pub fn validInhnoDefInh(inhno: INHNO) bool {
 ///  割込み番号の範囲の判定
 ///
 pub fn validIntnoCfgInt(intno: INTNO) bool {
-    if (@hasDecl(target_impl, "validIntnoCfgInt")) {
-        return target_impl.validIntnoCfgInt(intno);
-    }
-    else {
-        return target_impl.validIntno(intno);
+    if (@hasDecl(target_impl.mpcore_kernel_impl.gic_kernel_impl, "validIntnoCfgInt")) {
+        return target_impl.mpcore_kernel_impl.gic_kernel_impl.validIntnoCfgInt(intno);
+    } else {
+        return target_impl.mpcore_kernel_impl.gic_kernel_impl.validIntno(intno);
     }
 }
 pub fn validIntnoCreIsr(intno: INTNO) bool {
-    if (@hasDecl(target_impl, "validIntnoCreIsr")) {
-        return target_impl.validIntnoCreIsr(intno);
-    }
-    else {
-        return target_impl.validIntno(intno);
+    if (@hasDecl(target_impl.mpcore_kernel_impl.gic_kernel_impl, "validIntnoCreIsr")) {
+        return target_impl.mpcore_kernel_impl.gic_kernel_impl.validIntnoCreIsr(intno);
+    } else {
+        return target_impl.mpcore_kernel_impl.gic_kernel_impl.validIntno(intno);
     }
 }
 pub fn validIntnoDisInt(intno: INTNO) bool {
-    if (@hasDecl(target_impl, "validIntnoDisInt")) {
-        return target_impl.validIntnoDisInt(intno);
-    }
-    else {
-        return target_impl.validIntno(intno);
+    if (@hasDecl(target_impl.mpcore_kernel_impl.gic_kernel_impl, "validIntnoDisInt")) {
+        return target_impl.mpcore_kernel_impl.gic_kernel_impl.validIntnoDisInt(intno);
+    } else {
+        return target_impl.mpcore_kernel_impl.gic_kernel_impl.validIntno(intno);
     }
 }
 pub fn validIntnoClrInt(intno: INTNO) bool {
-    if (@hasDecl(target_impl, "validIntnoClrInt")) {
-        return target_impl.validIntnoClrInt(intno);
-    }
-    else {
-        return target_impl.validIntno(intno);
+    if (@hasDecl(target_impl.mpcore_kernel_impl.gic_kernel_impl, "validIntnoClrInt")) {
+        return target_impl.mpcore_kernel_impl.gic_kernel_impl.validIntnoClrInt(intno);
+    } else {
+        return target_impl.mpcore_kernel_impl.gic_kernel_impl.validIntno(intno);
     }
 }
 pub fn validIntnoRasInt(intno: INTNO) bool {
-    if (@hasDecl(target_impl, "validIntnoRasInt")) {
-        return target_impl.validIntnoRasInt(intno);
-    }
-    else {
-        return target_impl.validIntno(intno);
+    if (@hasDecl(target_impl.mpcore_kernel_impl.gic_kernel_impl, "validIntnoRasInt")) {
+        return target_impl.mpcore_kernel_impl.gic_kernel_impl.validIntnoRasInt(intno);
+    } else {
+        return target_impl.mpcore_kernel_impl.gic_kernel_impl.validIntno(intno);
     }
 }
 pub fn validIntnoPrbInt(intno: INTNO) bool {
-    if (@hasDecl(target_impl, "validIntnoPrbInt")) {
-        return target_impl.validIntnoPrbInt(intno);
-    }
-    else {
-        return target_impl.validIntno(intno);
+    if (@hasDecl(target_impl.mpcore_kernel_impl.gic_kernel_impl, "validIntnoPrbInt")) {
+        return target_impl.mpcore_kernel_impl.gic_kernel_impl.validIntnoPrbInt(intno);
+    } else {
+        return target_impl.mpcore_kernel_impl.gic_kernel_impl.validIntno(intno);
     }
 }
 
 ///
 ///  割込み優先度の範囲の判定
 ///
-pub fn validIntPriCfgInt(intpri : PRI) bool {
-    if (@hasDecl(target_impl, "validIntPriCfgInt")) {
-        return target_impl.validIntPriCfgInt(intpri);
-    }
-    else {
+pub fn validIntPriCfgInt(intpri: PRI) bool {
+    if (@hasDecl(target_impl.mpcore_kernel_impl.gic_kernel_impl, "validIntPriCfgInt")) {
+        return target_impl.mpcore_kernel_impl.gic_kernel_impl.validIntPriCfgInt(intpri);
+    } else {
         return TMIN_INTPRI <= intpri and intpri <= TMAX_INTPRI;
     }
 }
-pub fn validIntPriChgIpm(intpri : PRI) bool {
-    if (@hasDecl(target_impl, "validIntPriChgIpm")) {
-        return target_impl.validIntPriChgIpm(intpri);
-    }
-    else {
+pub fn validIntPriChgIpm(intpri: PRI) bool {
+    if (@hasDecl(target_impl.mpcore_kernel_impl.gic_kernel_impl, "validIntPriChgIpm")) {
+        return target_impl.mpcore_kernel_impl.gic_kernel_impl.validIntPriChgIpm(intpri);
+    } else {
         return TMIN_INTPRI <= intpri and intpri <= TIPM_ENAALL;
     }
 }
@@ -138,16 +184,14 @@ pub fn validIntPriChgIpm(intpri : PRI) bool {
 fn inhnoToIntno(inhno: INHNO) ?INTNO {
     if (@hasDecl(target_impl, "inhnoToIntno")) {
         return target_impl.inhnoToIntno(inhno);
-    }
-    else {
+    } else {
         return @intCast(INTNO, inhno);
     }
 }
 pub fn intnoToInhno(intno: INTNO) INHNO {
     if (@hasDecl(target_impl, "intnoToInhno")) {
         return target_impl.intnoToInhno(intno);
-    }
-    else {
+    } else {
         return @intCast(INHNO, intno);
     }
 }
@@ -171,64 +215,57 @@ const TARGET_ISRATR = decl(ATR, target_impl, "TARGET_ISRATR", 0);
 ///  割込み要求ライン初期化ブロック
 ///
 pub const INTINIB =
-    if (@hasDecl(target_impl, "INTINIB")) target_impl.INTINIB
-    else struct {
-        intno: INTNO,           // 割込み番号
-        intatr: ATR,            // 割込み属性
-        intpri: PRI,            // 割込み優先度
-    };
+    if (@hasDecl(target_impl, "INTINIB")) target_impl.INTINIB else struct {
+    intno: INTNO, // 割込み番号
+    intatr: ATR, // 割込み属性
+    intpri: PRI, // 割込み優先度
+};
 
 ///
 ///  割込みハンドラ初期化ブロック
 ///
 pub const INHINIB =
-    if (@hasDecl(target_impl, "INHINIB")) target_impl.INHINIB
-    else struct {
-        inhno: INHNO,           // 割込みハンドラ番号
-        inhatr: ATR,            // 割込みハンドラ属性
-        inthdr: INTHDR,         // 割込みハンドラの先頭の番地
-    };
+    if (@hasDecl(target_impl, "INHINIB")) target_impl.INHINIB else struct {
+    inhno: INHNO, // 割込みハンドラ番号
+    inhatr: ATR, // 割込みハンドラ属性
+    inthdr: INTHDR, // 割込みハンドラの先頭の番地
+};
 
 ///
 ///  割込み要求ライン初期化ブロックの取り込み
 ///
 pub const ExternIntIniB =
-    if (@hasDecl(target_impl, "ExternIntIniB")) target_impl.ExternIntIniB
-    else struct {
-        ///
-        /// 割込みハンドラ初期化ブロック（スライス）
-        ///
-        pub extern const _kernel_inhinib_table: []INHINIB;
-    };
+    if (@hasDecl(target_impl.mpcore_kernel_impl.core_kernel_impl, "ExternIntIniB")) target_impl.mpcore_kernel_impl.core_kernel_impl.ExternIntIniB else struct {
+    ///
+    /// 割込みハンドラ初期化ブロック（スライス）
+    ///
+    pub extern const _kernel_inhinib_table: []INHINIB;
+};
 
 ///
 ///  標準的な割込みハンドラ初期化ブロックの取り込み
 ///
 pub const ExternInhIniB =
-    if (@hasDecl(target_impl, "ExternInhIniB")) target_impl.ExternInhIniB
-    else struct {
-        ///
-        ///  割込み要求ライン初期化ブロック（スライス）
-        ///
-        pub extern const _kernel_intinib_table: []INTINIB;
-    };
+    if (@hasDecl(target_impl.mpcore_kernel_impl.core_kernel_impl, "ExternInhIniB")) target_impl.mpcore_kernel_impl.core_kernel_impl.ExternInhIniB else struct {
+    ///
+    ///  割込み要求ライン初期化ブロック（スライス）
+    ///
+    pub extern const _kernel_intinib_table: []INTINIB;
+};
 
 ///
 ///  割込み管理機能の初期化
 ///
 pub fn initialize_interrupt() void {
-    if (@hasDecl(target_impl, "initialize_interrupt")) {
-        target_impl.initialize_interrupt();
-    }
-    else {
+    if (@hasDecl(target_impl.mpcore_kernel_impl.gic_kernel_impl, "initialize_interrupt")) {
+        target_impl.mpcore_kernel_impl.gic_kernel_impl.initialize_interrupt();
+    } else {
         // 標準的な初期化処理
         for (cfg._kernel_inhinib_table) |*p_inhinib| {
-            target_impl.define_inh(p_inhinib.inhno, p_inhinib.inhatr,
-                                   p_inhinib.inthdr);
+            target_impl.define_inh(p_inhinib.inhno, p_inhinib.inhatr, p_inhinib.inthdr);
         }
         for (cfg._kernel_intinib_table) |*p_intinib| {
-            target_impl.config_int(p_intinib.intno, p_intinib.intatr,
-                                   p_intinib.intpri);
+            target_impl.config_int(p_intinib.intno, p_intinib.intatr, p_intinib.intpri);
         }
     }
 }
@@ -242,195 +279,186 @@ pub fn dis_int(intno: INTNO) ItronError!void {
     comptime try checkNotSupported(TOPPERS_SUPPORT_DIS_INT);    //［NGKI3093］
     try checkParameter(validIntnoDisInt(intno));    //［NGKI3083］［NGKI3087］
     {
-        var locked = target_impl.senseLock();
+        var locked = target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock();
         if (!locked) {
-            target_impl.lockCpu();
+            target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
         }
         defer {
             if (!locked) {
-                target_impl.unlockCpu();
+                target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
             }
         }
 
-        if (target_impl.checkIntnoCfg(intno)) {
-            target_impl.disableInt(intno);      //［NGKI3086］
-        }
-        else {                                  //［NGKI3085］
+        if (target_impl.mpcore_kernel_impl.gic_kernel_impl.checkIntnoCfg(intno)) {
+            target_impl.mpcore_kernel_impl.gic_kernel_impl.disableInt(intno); //［NGKI3086］
+        } else { //［NGKI3085］
             return ItronError.ObjectStateError;
         }
     }
-    traceLog("disIntLeave", .{ null });
+    traceLog("disIntLeave", .{null});
 }
 
 ///
 ///  割込みの許可［NGKI3556］
 ///
 pub fn ena_int(intno: INTNO) ItronError!void {
-    traceLog("enaIntEnter", .{ intno });
-    errdefer |err| traceLog("enaIntLeave", .{ err });
-    comptime try checkNotSupported(TOPPERS_SUPPORT_DIS_INT);    //［NGKI3106］
-    try checkParameter(validIntnoDisInt(intno));    //［NGKI3096］［NGKI3100］
-                                                
+    traceLog("enaIntEnter", .{intno});
+    errdefer |err| traceLog("enaIntLeave", .{err});
+    comptime try checkNotSupported(TOPPERS_SUPPORT_DIS_INT); //［NGKI3106］
+    try checkParameter(validIntnoDisInt(intno)); //［NGKI3096］［NGKI3100］
+
     {
-        var locked = target_impl.senseLock();
+        var locked = target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock();
         if (!locked) {
-            target_impl.lockCpu();
+            target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
         }
         defer {
             if (!locked) {
-                target_impl.unlockCpu();
+                target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
             }
         }
 
-        if (target_impl.checkIntnoCfg(intno)) {
-            target_impl.enableInt(intno);       //［NGKI3099］
-        }
-        else {                                  //［NGKI3098］
+        if (target_impl.mpcore_kernel_impl.gic_kernel_impl.checkIntnoCfg(intno)) {
+            target_impl.mpcore_kernel_impl.gic_kernel_impl.enableInt(intno); //［NGKI3099］
+        } else { //［NGKI3098］
             return ItronError.ObjectStateError;
         }
     }
-    traceLog("enaIntLeave", .{ null });
+    traceLog("enaIntLeave", .{null});
 }
 
 ///
 ///  割込み要求のクリア［NGKI3920］
 ///
 pub fn clr_int(intno: INTNO) ItronError!void {
-    traceLog("clrIntEnter", .{ intno });
-    errdefer |err| traceLog("clrIntLeave", .{ err });
-    comptime try checkNotSupported(TOPPERS_SUPPORT_CLR_INT);    //［NGKI3927］
-    try checkParameter(validIntnoClrInt(intno));    //［NGKI3921］［NGKI3930］
-                                                
+    traceLog("clrIntEnter", .{intno});
+    errdefer |err| traceLog("clrIntLeave", .{err});
+    comptime try checkNotSupported(TOPPERS_SUPPORT_CLR_INT); //［NGKI3927］
+    try checkParameter(validIntnoClrInt(intno)); //［NGKI3921］［NGKI3930］
+
     {
-        var locked = target_impl.senseLock();
+        var locked = target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock();
         if (!locked) {
-            target_impl.lockCpu();
+            target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
         }
         defer {
             if (!locked) {
-                target_impl.unlockCpu();
+                target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
             }
         }
 
-        if (target_impl.checkIntnoCfg(intno)
-                and target_impl.checkIntnoClear(intno)) {
-            target_impl.clearInt(intno);        //［NGKI3924］
-        }
-        else {                                  //［NGKI3923］［NGKI3929］
+        if (target_impl.mpcore_kernel_impl.gic_kernel_impl.checkIntnoCfg(intno) and target_impl.mpcore_kernel_impl.gic_kernel_impl.checkIntnoClear(intno)) {
+            target_impl.mpcore_kernel_impl.gic_kernel_impl.clearInt(intno); //［NGKI3924］
+        } else { //［NGKI3923］［NGKI3929］
             return ItronError.ObjectStateError;
         }
     }
-    traceLog("clrIntLeave", .{ null });
+    traceLog("clrIntLeave", .{null});
 }
 
 ///
 ///  割込みの要求［NGKI3932］
 ///
 pub fn ras_int(intno: INTNO) ItronError!void {
-    traceLog("rasIntEnter", .{ intno });
-    errdefer |err| traceLog("rasIntLeave", .{ err });
-    comptime try checkNotSupported(TOPPERS_SUPPORT_RAS_INT);    //［NGKI3939］
-    try checkParameter(validIntnoRasInt(intno));    //［NGKI3933］［NGKI3942］
-                                                
+    traceLog("rasIntEnter", .{intno});
+    errdefer |err| traceLog("rasIntLeave", .{err});
+    comptime try checkNotSupported(TOPPERS_SUPPORT_RAS_INT); //［NGKI3939］
+    try checkParameter(validIntnoRasInt(intno)); //［NGKI3933］［NGKI3942］
+
     {
-        var locked = target_impl.senseLock();
+        var locked = target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock();
         if (!locked) {
-            target_impl.lockCpu();
+            target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
         }
         defer {
             if (!locked) {
-                target_impl.unlockCpu();
+                target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
             }
         }
 
-        if (target_impl.checkIntnoCfg(intno)
-                and target_impl.checkIntnoRaise(intno)) {
-            target_impl.raiseInt(intno);        //［NGKI3936］
-        }
-        else {                                  //［NGKI3935］［NGKI3941］
+        if (target_impl.mpcore_kernel_impl.gic_kernel_impl.checkIntnoCfg(intno) and target_impl.mpcore_kernel_impl.gic_kernel_impl.checkIntnoRaise(intno)) {
+            target_impl.mpcore_kernel_impl.gic_kernel_impl.raiseInt(intno); //［NGKI3936］
+        } else { //［NGKI3935］［NGKI3941］
             return ItronError.ObjectStateError;
         }
     }
-    traceLog("rasIntLeave", .{ null });
+    traceLog("rasIntLeave", .{null});
 }
 
 ///
 ///  割込み要求のチェック［NGKI3944］
 ///
 pub fn prb_int(intno: INTNO) ItronError!bool {
-    traceLog("prbIntEnter", .{ intno });
-    errdefer |err| traceLog("prbIntLeave", .{ err });
-    comptime try checkNotSupported(TOPPERS_SUPPORT_PRB_INT);    //［NGKI3951］
-    try checkParameter(validIntnoPrbInt(intno));    //［NGKI3945］［NGKI3952］
+    traceLog("prbIntEnter", .{intno});
+    errdefer |err| traceLog("prbIntLeave", .{err});
+    comptime try checkNotSupported(TOPPERS_SUPPORT_PRB_INT); //［NGKI3951］
+    try checkParameter(validIntnoPrbInt(intno)); //［NGKI3945］［NGKI3952］
     {
-        var locked = target_impl.senseLock();
+        var locked = target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock();
         if (!locked) {
-            target_impl.lockCpu();
+            target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
         }
         defer {
             if (!locked) {
-                target_impl.unlockCpu();
+                target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
             }
         }
 
-        if (target_impl.checkIntnoCfg(intno)) {
-            return target_impl.probeInt(intno); //［NGKI3948］
-        }
-        else {                                  //［NGKI3947］
+        if (target_impl.mpcore_kernel_impl.gic_kernel_impl.checkIntnoCfg(intno)) {
+            return target_impl.mpcore_kernel_impl.gic_kernel_impl.probeInt(intno); //［NGKI3948］
+        } else { //［NGKI3947］
             return ItronError.ObjectStateError;
         }
     }
-    traceLog("prbIntLeave", .{ null });
+    traceLog("prbIntLeave", .{null});
 }
 
 ///
 ///  割込み優先度マスクの変更［NGKI3107］
 ///
 pub fn chg_ipm(intpri: PRI) ItronError!void {
-    traceLog("chgIpmEnter", .{ intpri });
-    errdefer |err| traceLog("chgIpmLeave", .{ err });
-    try checkContextTaskUnlock();               //［NGKI3108］［NGKI3109］
+    traceLog("chgIpmEnter", .{intpri});
+    errdefer |err| traceLog("chgIpmLeave", .{err});
+    try checkContextTaskUnlock(); //［NGKI3108］［NGKI3109］
     try checkParameter(validIntPriChgIpm(intpri));
-                                                //［NGKI3113］［NGKI3114］
+    //［NGKI3113］［NGKI3114］
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
-        target_impl.setIpm(intpri);             //［NGKI3111］
-        if (intpri == TIPM_ENAALL and enadsp) {
+        target_impl.mpcore_kernel_impl.gic_kernel_impl.setIpm(intpri); //［NGKI3111］
+        if (intpri == TIPM_ENAALL and task.enadsp) {
             set_dspflg();
-            if (p_runtsk.?.flags.raster and p_runtsk.?.flags.enater) {
+            if (task.p_runtsk.?.flags.raster and task.p_runtsk.?.flags.enater) {
                 if (TOPPERS_SUPPORT_OVRHDR) {
-                    if (p_runtsk.?.flags.staovr) {
+                    if (task.p_runtsk.?.flags.staovr) {
                         _ = target_timer.ovrtimer.stop();
                     }
                 }
-                task_terminate(p_runtsk.?);
-                target_impl.exitAndDispatch();
-            }
-            else {
+                task_terminate(task.p_runtsk.?);
+                target_impl.mpcore_kernel_impl.core_kernel_impl.exitAndDispatch();
+            } else {
                 taskDispatch();
             }
-        }
-        else {
-            dspflg = false;
+        } else {
+            task.dspflg = false;
         }
     }
-    traceLog("chgIpmLeave", .{ null });
+    traceLog("chgIpmLeave", .{null});
 }
 
 ///
 ///  割込み優先度マスクの参照［NGKI3115］
 ///
 pub fn get_ipm(p_intpri: *PRI) ItronError!void {
-    traceLog("getIpmEnter", .{ p_intpri });
+    traceLog("getIpmEnter", .{p_intpri});
     errdefer |err| traceLog("getIpmLeave", .{ err, p_intpri });
-    try checkContextTaskUnlock();               //［NGKI3116］［NGKI3117］
+    try checkContextTaskUnlock(); //［NGKI3116］［NGKI3117］
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
-        p_intpri.* = target_impl.getIpm();      //［NGKI3120］
+        p_intpri.* = target_impl.mpcore_kernel_impl.gic_kernel_impl.getIpm(); //［NGKI3120］
     }
     traceLog("getIpmLeave", .{ null, p_intpri });
 }
@@ -444,7 +472,7 @@ pub fn cfg_int(intno: INTNO, cint: T_CINT) ItronError!INTINIB {
 
     // intatrが無効の場合（E_RSATR）［NGKI2969］［NGKI2944］［NGKI2945］
     //（TA_ENAINT，TA_EDGE，TARGET_INTATR以外のビットがセットされている場合）
-    try checkValidAtr(cint.intatr, TA_ENAINT|TA_EDGE|TARGET_INTATR);
+    try checkValidAtr(cint.intatr, TA_ENAINT | TA_EDGE | TARGET_INTATR);
 
     // intpriがCFG_INTに対する割込み優先度として正しくない場合（E_PAR）
     // ［NGKI2973］
@@ -457,10 +485,13 @@ pub fn cfg_int(intno: INTNO, cint: T_CINT) ItronError!INTINIB {
 
     // 割込み要求ライン初期化ブロックを返す
     return if (@hasDecl(target_impl, "buildIntIniB"))
-               target_impl.buildIntIniB(intno, cint)
-           else INTINIB{ .intno = intno,
-                         .intatr = cint.intatr,
-                         .intpri = cint.intpri, };
+        target_impl.buildIntIniB(intno, cint)
+    else
+        INTINIB{
+            .intno = intno,
+            .intatr = cint.intatr,
+            .intpri = cint.intpri,
+        };
 }
 
 ///
@@ -475,8 +506,7 @@ pub fn ExportIntIniB(intinib_table: []INTINIB) type {
 ///
 ///  割込みハンドラの定義（静的APIの処理）
 ///
-pub fn def_inh(inhno: INHNO, dinh: T_DINH,
-               comptime cfg_data: *static_api.CfgData) ItronError!INHINIB {
+pub fn def_inh(inhno: INHNO, dinh: T_DINH, comptime cfg_data: *static_api.CfgData) ItronError!INHINIB {
     // inhnoが有効範囲外の場合（E_PAR）［NGKI3055］
     try checkParameter(validInhnoDefInh(inhno));
 
@@ -501,10 +531,13 @@ pub fn def_inh(inhno: INHNO, dinh: T_DINH,
 
     // 割込みハンドラ初期化ブロックを返す
     return if (@hasDecl(target_impl, "buildInhIniB"))
-               target_impl.buildInhIniB(inhno, dinh)
-           else INHINIB{ .inhno = inhno,
-                         .inhatr = dinh.inhatr,
-                         .inthdr = dinh.inthdr, };
+        target_impl.buildInhIniB(inhno, dinh)
+    else
+        INHINIB{
+            .inhno = inhno,
+            .inhatr = dinh.inhatr,
+            .inthdr = dinh.inthdr,
+        };
 }
 
 ///
@@ -515,8 +548,8 @@ pub fn ExportInhIniB(inhinib_table: []INHINIB) type {
     exportCheck(@sizeOf(INHINIB), "sizeof_INHINIB");
     exportCheck(@sizeOf(INHNO), "sizeof_INHNO");
     exportCheck(@sizeOf(INTHDR), "sizeof_INTHDR");
-    exportCheck(@byteOffsetOf(INHINIB, "inhno"), "offsetof_INHINIB_inhno");
-    exportCheck(@byteOffsetOf(INHINIB, "inthdr"), "offsetof_INHINIB_inthdr");
+    exportCheck(@offsetOf(INHINIB, "inhno"), "offsetof_INHINIB_inhno");
+    exportCheck(@offsetOf(INHINIB, "inthdr"), "offsetof_INHINIB_inthdr");
 
     return struct {
         export const _kernel_inhinib_table = inhinib_table;
@@ -526,8 +559,7 @@ pub fn ExportInhIniB(inhinib_table: []INHINIB) type {
 ///
 ///  割込みサービスルーチンの生成（静的APIの処理）
 ///
-pub fn cre_isr(cisr: T_CISR,
-               comptime cfg_data: *static_api.CfgData) ItronError!T_CISR {
+pub fn cre_isr(cisr: T_CISR, comptime cfg_data: *static_api.CfgData) ItronError!T_CISR {
     // isratrが無効の場合（E_RSATR）［NGKI2998］［NGKI2952］［NGKI5176］
     //（TARGET_ISRATR以外のビットがセットされている場合）
     try checkValidAtr(cisr.isratr, TARGET_ISRATR);
@@ -537,8 +569,7 @@ pub fn cre_isr(cisr: T_CISR,
 
     // isrpriが有効範囲外の場合（E_PAR）［NGKI3005］
     //（TMIN_ISRPRI <= isrpri && isrpri <= TMAX_ISRPRIでない場合）
-    try checkParameter(TMIN_ISRPRI <= cisr.isrpri
-                           and cisr.isrpri <= TMAX_ISRPRI);
+    try checkParameter(TMIN_ISRPRI <= cisr.isrpri and cisr.isrpri <= TMAX_ISRPRI);
 
     // intnoに対応するinhnoに対してDEF_INHがある場合（E_OBJ）［NGKI3013］
     const inhno = intnoToInhno(cisr.intno);
@@ -546,7 +577,7 @@ pub fn cre_isr(cisr: T_CISR,
 
     // intnoに対するCFG_INTがない場合（E_OBJ）［NGKI3012］
     try checkObjectState(cfg_data.referIntIniB(cisr.intno) != null);
-                           
+
     // ターゲット依存のエラーチェック［NGKI3014］
     if (@hasDecl(target_impl, "checkCreIsr")) {
         try target_impl.checkCreIsr(cisr, cfg_data);
@@ -560,9 +591,9 @@ pub fn cre_isr(cisr: T_CISR,
 ///  割込みサービスルーチンのコンフィギュレーション情報
 ///
 pub const ISRCFG = struct {
-    cisr: T_CISR,           // 割込みサービスルーチンの生成情報
-    isrid: ID,              // 割込みサービスルーチンID
-    genflag: bool,          // 生成済みであることを示すフラグ
+    cisr: T_CISR, // 割込みサービスルーチンの生成情報
+    isrid: ID, // 割込みサービスルーチンID
+    genflag: bool, // 生成済みであることを示すフラグ
 };
 
 ///
@@ -585,9 +616,9 @@ fn GenInterruptHandler(comptime isrcfg_table: []ISRCFG) type {
                         _ = c_api.unl_cpu();
                     }
                 }
-                traceLog("isrEnter", .{ isrcfg.isrid });
+                traceLog("isrEnter", .{isrcfg.isrid});
                 isrcfg.cisr.isr(isrcfg.cisr.exinf);
-                traceLog("isrLeave", .{ isrcfg.isrid });
+                traceLog("isrLeave", .{isrcfg.isrid});
             }
         }
     };
@@ -597,14 +628,14 @@ fn GenInterruptHandler(comptime isrcfg_table: []ISRCFG) type {
 ///  割込みサービスルーチン優先度の比較
 ///
 fn isrcfgLessThan(context: void, lhs: ISRCFG, rhs: ISRCFG) bool {
+    defer _ = context;
     return lhs.cisr.isrpri < rhs.cisr.isrpri;
 }
 
 ///
 ///  割込みサービスルーチンを呼び出す割込みハンドラの生成（静的APIの処理）
 ///
-pub fn generateInhForIsr(isrcfg_table: []ISRCFG,
-                         comptime cfg_data: *static_api.CfgData) void {
+pub fn generateInhForIsr(isrcfg_table: []ISRCFG, comptime cfg_data: *static_api.CfgData) void {
     // 各ISRに対して割込みハンドラを生成する
     inline for (isrcfg_table) |isrcfg| {
         // 生成済みのISRをスキップ

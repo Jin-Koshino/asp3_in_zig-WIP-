@@ -39,25 +39,83 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  固定長メモリプール機能
 ///
-usingnamespace @import("kernel_impl.zig");
-usingnamespace task;
-usingnamespace wait;
-usingnamespace time_event;
-usingnamespace check;
+const kernel_impl = @import("kernel_impl.zig");
+///usingnamespace task;
+const task = kernel_impl.task;
+///usingnamespace wait;
+const wait = kernel_impl.wait;
+///usingnamespace time_event;
+const time_event = kernel_impl.time_event;
+///usingnamespace check;
+const check = kernel_impl.check;
+
+////
+const zig = kernel_impl.zig;
+const t_stddef = zig.t_stddef;
+
+const ATR = t_stddef.ATR;
+const checkWobjIniB = check.checkWobjIniB;
+const queue = kernel_impl.queue;
+const checkWobjCB = wait.checkWobjCB;
+const WINFO = wait.WINFO;
+const checkWinfoWobj = wait.checkWinfoWobj;
+const ID = t_stddef.ID;
+const TMIN_DTQID = kernel_impl.TMIN_DTQID;
+const cfg = kernel_impl.cfg;
+const ItronError = t_stddef.ItronError;
+const checkId = check.checkId;
+const getTCBFromQueue = task.getTCBFromQueue;
+const wait_complete = wait.wait_complete;
+const traceLog = kernel_impl.traceLog;
+const checkDispatch = check.checkDispatch;
+const target_impl = kernel_impl.target_impl;
+
+const taskDispatch = task.taskDispatch;
+const wobj_make_wait = wait.wobj_make_wait;
+const TS_WAITING_SDTQ = task.TS_WAITING_SDTQ;
+const checkContextUnlock = check.checkContextUnlock;
+const requestTaskDispatch = task.requestTaskDispatch;
+const TMO = t_stddef.TMO;
+const checkParameter = check.checkParameter;
+const validTimeout = check.validTimeout;
+const TMO_POL = t_stddef.TMO_POL;
+const TMEVTB = time_event.TMEVTB;
+const wobj_make_wait_tmout = wait.wobj_make_wait_tmout;
+const checkIllegalUse = check.checkIllegalUse;
+const wobj_make_rwait = wait.wobj_make_rwait;
+const TS_WAITING_RDTQ = task.TS_WAITING_RDTQ;
+const checkContextTaskUnlock = check.checkContextTaskUnlock;
+const wobj_make_rwait_tmout = wait.wobj_make_rwait_tmout;
+const init_wait_queue = wait.init_wait_queue;
+const T_RDTQ = zig.T_RDTQ;
+const wait_tskid = wait.wait_tskid;
+const T_CDTQ = zig.T_CDTQ;
+const checkValidAtr = check.checkValidAtr;
+const TA_TPRI = zig.TA_TPRI;
+const checkNotSupported = check.checkNotSupported;
+const option = kernel_impl.option;
+const TMIN_MPFID = kernel_impl.TMIN_MPFID;
+const TS_WAITING_MPF = task.TS_WAITING_MPF;
+const ptrAlignCast = kernel_impl.ptrAlignCast;
+const T_RMPF = zig.T_RMPF;
+const T_CMPF = zig.T_CMPF;
+const TOPPERS_ROUND_SZ = zig.TOPPERS_ROUND_SZ;
+const exportCheck = kernel_impl.exportCheck;
+////
 
 ///
 ///  固定長メモリプール領域のアライン単位
 ///
 const MPF_ALIGN =
     if (@hasDecl(target_impl, "MPF_ALIGN"))
-        target_impl.MPF_ALIGN
-    else if (@hasDecl(target_impl, "CHECK_MPF_ALIGN"))
-        target_impl.CHECK_MPF_ALIGN
-    else 1;
+    target_impl.MPF_ALIGN
+else if (@hasDecl(target_impl, "CHECK_MPF_ALIGN"))
+    target_impl.CHECK_MPF_ALIGN
+else
+    1;
 
 ///
 ///  固定長メモリブロック管理ブロック
@@ -67,10 +125,10 @@ const MPF_ALIGN =
 ///  する．最後の未割当てブロックの場合には，INDEX_NULLを格納する．
 ///
 const MPFMB = struct {
-    next: c_uint,                       // 次の未割当てブロック
+    next: c_uint, // 次の未割当てブロック
 };
-const INDEX_NULL = ~@as(c_uint, 0);     // 空きブロックリストの最後
-const INDEX_ALLOC = ~@as(c_uint, 1);    // 割当て済みのブロック
+const INDEX_NULL = ~@as(c_uint, 0); // 空きブロックリストの最後
+const INDEX_ALLOC = ~@as(c_uint, 1); // 割当て済みのブロック
 
 ///
 ///  固定長メモリプール初期化ブロック
@@ -80,16 +138,16 @@ const INDEX_ALLOC = ~@as(c_uint, 1);    // 割当て済みのブロック
 ///  最初のフィールドが共通になっている．
 ///
 pub const MPFINIB = struct {
-    wobjatr: ATR,               // 固定長メモリプール属性
-    blkcnt: c_uint,             // メモリブロック数
-    blksz: c_uint,              // メモリブロックのサイズ（丸めた値）
-    mpf: [*]u8,                 // 固定長メモリプール領域の先頭番地
-    p_mpfmb: [*]MPFMB,          // 固定長メモリプール管理領域の先頭番地
+    wobjatr: ATR, // 固定長メモリプール属性
+    blkcnt: c_uint, // メモリブロック数
+    blksz: c_uint, // メモリブロックのサイズ（丸めた値）
+    mpf: [*]u8, // 固定長メモリプール領域の先頭番地
+    p_mpfmb: [*]MPFMB, // 固定長メモリプール管理領域の先頭番地
 };
 
 // 固定長メモリプール初期化ブロックのチェック
 comptime {
-    checkWobjIniB(MPFINIB);
+    wait.checkWobjIniB(MPFINIB);
 }
 
 ///
@@ -100,11 +158,11 @@ comptime {
 ///  最初の2つのフィールドが共通になっている．
 ///
 const MPFCB = struct {
-    wait_queue: queue.Queue,     // 固定長メモリプール待ちキュー
+    wait_queue: queue.Queue, // 固定長メモリプール待ちキュー
     p_wobjinib: *const MPFINIB, // 初期化ブロックへのポインタ
-    fblkcnt: c_uint,            // 未割当てブロック数
-    unused: c_uint,             // 未使用ブロックの先頭
-    freelist: c_uint,           // 未割当てブロックのリスト
+    fblkcnt: c_uint, // 未割当てブロック数
+    unused: c_uint, // 未使用ブロックの先頭
+    freelist: c_uint, // 未割当てブロックのリスト
 };
 
 // 固定長メモリプール管理ブロックのチェック
@@ -120,9 +178,9 @@ comptime {
 ///  で，最初の2つのフィールドが共通になっている．
 ///
 const WINFO_MPF = struct {
-    winfo: WINFO,              // 標準の待ち情報ブロック
-    p_wobjcb: *MPFCB,          // 待っている固定長メモリプールの管理ブロック
-    blk: [*]u8,                // 獲得したメモリブロック
+    winfo: WINFO, // 標準の待ち情報ブロック
+    p_wobjcb: *MPFCB, // 待っている固定長メモリプールの管理ブロック
+    blk: [*]u8, // 獲得したメモリブロック
 };
 
 // 固定長メモリプール待ち情報ブロックのチェック
@@ -168,9 +226,7 @@ fn checkAndGetMpfCB(mpfid: ID) ItronError!*MPFCB {
 ///  固定長メモリプール管理ブロックから固定長メモリプールIDを取り出すための関数
 ///
 fn getMpfIdFromMpfCB(p_mpfcb: *MPFCB) ID {
-    return @intCast(ID, (@ptrToInt(p_mpfcb)
-                             - @ptrToInt(&cfg._kernel_mpfcb_table))
-                        / @sizeOf(MPFCB)) + TMIN_MPFID;
+    return @intCast(ID, (@ptrToInt(p_mpfcb) - @ptrToInt(&cfg._kernel_mpfcb_table)) / @sizeOf(MPFCB)) + TMIN_MPFID;
 }
 
 ///
@@ -191,8 +247,7 @@ pub fn getMpfIdFromWinfo(p_winfo: *WINFO) ID {
 ///  固定長メモリプール機能の初期化
 ///
 pub fn initialize_mempfix() void {
-    for (cfg._kernel_mpfcb_table[0 .. cfg._kernel_mpfinib_table.len])
-                                                        |*p_mpfcb, i| {
+    for (cfg._kernel_mpfcb_table[0..cfg._kernel_mpfinib_table.len]) |*p_mpfcb, i| {
         p_mpfcb.wait_queue.initialize();
         p_mpfcb.p_wobjinib = &cfg._kernel_mpfinib_table[i];
         p_mpfcb.fblkcnt = p_mpfcb.p_wobjinib.blkcnt;
@@ -210,8 +265,7 @@ fn getMpfBlock(p_mpfcb: *MPFCB, p_blk: *[*]u8) void {
     if (p_mpfcb.freelist != INDEX_NULL) {
         blkidx = p_mpfcb.freelist;
         p_mpfcb.freelist = p_mpfcb.p_wobjinib.p_mpfmb[blkidx].next;
-    }
-    else {
+    } else {
         blkidx = p_mpfcb.unused;
         p_mpfcb.unused += 1;
     }
@@ -229,19 +283,17 @@ pub fn get_mpf(mpfid: ID, p_blk: **u8) ItronError!void {
     try checkDispatch();
     const p_mpfcb = try checkAndGetMpfCB(mpfid);
     {
-        target_impl.lockCpuDsp();
-        defer target_impl.unlockCpuDsp();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpuDsp();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpuDsp();
 
-        if (p_runtsk.?.flags.raster) {
+        if (task.p_runtsk.?.flags.raster) {
             return ItronError.TerminationRequestRaised;
-        }
-        else if (p_mpfcb.fblkcnt > 0) {
+        } else if (p_mpfcb.fblkcnt > 0) {
             getMpfBlock(p_mpfcb, @ptrCast(*[*]u8, p_blk));
-        }
-        else {
+        } else {
             var winfo_mpf: WINFO_MPF = undefined;
             wobj_make_wait(p_mpfcb, TS_WAITING_MPF, &winfo_mpf);
-            target_impl.dispatch();
+            target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_mpf.winfo.werror) |werror| {
                 return werror;
             }
@@ -259,13 +311,12 @@ pub fn pget_mpf(mpfid: ID, p_blk: **u8) ItronError!void {
     try checkContextTaskUnlock();
     const p_mpfcb = try checkAndGetMpfCB(mpfid);
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (p_mpfcb.fblkcnt > 0) {
             getMpfBlock(p_mpfcb, @ptrCast(*[*]u8, p_blk));
-        }
-        else {
+        } else {
             return ItronError.TimeoutError;
         }
     }
@@ -282,24 +333,20 @@ pub fn tget_mpf(mpfid: ID, p_blk: **u8, tmout: TMO) ItronError!void {
     const p_mpfcb = try checkAndGetMpfCB(mpfid);
     try checkParameter(validTimeout(tmout));
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
-        if (p_runtsk.?.flags.raster) {
+        if (task.p_runtsk.?.flags.raster) {
             return ItronError.TerminationRequestRaised;
-        }
-        else if (p_mpfcb.fblkcnt > 0) {
+        } else if (p_mpfcb.fblkcnt > 0) {
             getMpfBlock(p_mpfcb, @ptrCast(*[*]u8, p_blk));
-        }
-        else if (tmout == TMO_POL) {
+        } else if (tmout == TMO_POL) {
             return ItronError.TimeoutError;
-        }
-        else {
+        } else {
             var winfo_mpf: WINFO_MPF = undefined;
             var tmevtb: TMEVTB = undefined;
-            wobj_make_wait_tmout(p_mpfcb, TS_WAITING_MPF, &winfo_mpf,
-                                 &tmevtb, tmout);
-            target_impl.dispatch();
+            wobj_make_wait_tmout(p_mpfcb, TS_WAITING_MPF, &winfo_mpf, &tmevtb, tmout);
+            target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_mpf.winfo.werror) |werror| {
                 return werror;
             }
@@ -313,7 +360,7 @@ pub fn tget_mpf(mpfid: ID, p_blk: **u8, tmout: TMO) ItronError!void {
 ///
 pub fn rel_mpf(mpfid: ID, blk: *u8) ItronError!void {
     traceLog("relMpfEnter", .{ mpfid, blk });
-    errdefer |err| traceLog("relMpfLeave", .{ err });
+    errdefer |err| traceLog("relMpfLeave", .{err});
     try checkContextTaskUnlock();
     const p_mpfcb = try checkAndGetMpfCB(mpfid);
     try checkParameter(@ptrToInt(p_mpfcb.p_wobjinib.mpf) <= @ptrToInt(blk));
@@ -323,35 +370,34 @@ pub fn rel_mpf(mpfid: ID, blk: *u8) ItronError!void {
     var blkidx = @intCast(c_uint, blkoffset / p_mpfcb.p_wobjinib.blksz);
     try checkParameter(p_mpfcb.p_wobjinib.p_mpfmb[blkidx].next == INDEX_ALLOC);
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (!p_mpfcb.wait_queue.isEmpty()) {
             const p_tcb = getTCBFromQueue(p_mpfcb.wait_queue.deleteNext());
             getWinfoMpf(p_tcb.p_winfo).blk = ptrAlignCast([*]u8, blk);
             wait_complete(p_tcb);
             taskDispatch();
-        }
-        else {
+        } else {
             p_mpfcb.fblkcnt += 1;
             p_mpfcb.p_wobjinib.p_mpfmb[blkidx].next = p_mpfcb.freelist;
             p_mpfcb.freelist = blkidx;
         }
     }
-    traceLog("relMpfLeave", .{ null });
+    traceLog("relMpfLeave", .{null});
 }
 
 ///
 ///  固定長メモリプールの再初期化
 ///
 pub fn ini_mpf(mpfid: ID) ItronError!void {
-    traceLog("iniMpfEnter", .{ mpfid });
-    errdefer |err| traceLog("iniMpfLeave", .{ err });
+    traceLog("iniMpfEnter", .{mpfid});
+    errdefer |err| traceLog("iniMpfLeave", .{err});
     try checkContextTaskUnlock();
     const p_mpfcb = try checkAndGetMpfCB(mpfid);
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         init_wait_queue(&p_mpfcb.wait_queue);
         p_mpfcb.fblkcnt = p_mpfcb.p_wobjinib.blkcnt;
@@ -359,7 +405,7 @@ pub fn ini_mpf(mpfid: ID) ItronError!void {
         p_mpfcb.freelist = INDEX_NULL;
         taskDispatch();
     }
-    traceLog("iniMpfLeave", .{ null });
+    traceLog("iniMpfLeave", .{null});
 }
 
 ///
@@ -371,8 +417,8 @@ pub fn ref_mpf(mpfid: ID, pk_rmpf: *T_RMPF) ItronError!void {
     try checkContextTaskUnlock();
     const p_mpfcb = try checkAndGetMpfCB(mpfid);
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         pk_rmpf.wtskid = wait_tskid(&p_mpfcb.wait_queue);
         pk_rmpf.fblkcnt = p_mpfcb.fblkcnt;
@@ -395,26 +441,27 @@ pub fn cre_mpf(comptime cmpf: T_CMPF) ItronError!MPFINIB {
     try checkParameter(cmpf.blksz > 0);
 
     // 固定長メモリプール領域の確保
-    comptime const blksz = TOPPERS_ROUND_SZ(cmpf.blksz, MPF_ALIGN);
-    comptime const mpf = if (cmpf.mpf) |mpf| mpf
-        else &struct {
-            var mpf: [cmpf.blkcnt * blksz]u8 align(MPF_ALIGN) = undefined;
-        }.mpf;
+    const blksz = comptime TOPPERS_ROUND_SZ(cmpf.blksz, MPF_ALIGN);
+    const mpf = comptime if (cmpf.mpf) |mpf| mpf else &struct {
+        var mpf: [cmpf.blkcnt * blksz]u8 align(MPF_ALIGN) = undefined;
+    }.mpf;
 
     // mpfmbがNULLでない場合（E_NOSPT）［ASPS0132］
     try checkNotSupported(cmpf.mpfmb == null);
 
     // 固定長メモリプール管理領域の確保
-    comptime const p_mpfmb =  &struct {
+    const p_mpfmb = comptime &struct {
         var mpfmb: [cmpf.blkcnt]MPFMB = undefined;
     }.mpfmb;
 
     // データキュー初期化ブロックを返す
-    return MPFINIB{ .wobjatr = cmpf.mpfatr,
-                    .blkcnt = cmpf.blkcnt,
-                    .blksz = cmpf.blksz,
-                    .mpf = mpf,
-                    .p_mpfmb = p_mpfmb, };
+    return MPFINIB{
+        .wobjatr = cmpf.mpfatr,
+        .blkcnt = cmpf.blkcnt,
+        .blksz = cmpf.blksz,
+        .mpf = mpf,
+        .p_mpfmb = p_mpfmb,
+    };
 }
 
 ///
@@ -424,7 +471,7 @@ pub fn cre_mpf(comptime cmpf: T_CMPF) ItronError!MPFINIB {
 pub fn ExportMpfCfg(mpfinib_table: []MPFINIB) type {
     // チェック処理用の定義の生成
     exportCheck(@sizeOf(MPFINIB), "sizeof_MPFINIB");
-    exportCheck(@byteOffsetOf(MPFINIB, "mpf"), "offsetof_MPFINIB_mpf");
+    exportCheck(@offsetOf(MPFINIB, "mpf"), "offsetof_MPFINIB_mpf");
 
     const tnum_mpf = mpfinib_table.len;
     return struct {
@@ -432,8 +479,8 @@ pub fn ExportMpfCfg(mpfinib_table: []MPFINIB) type {
 
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする
-        pub export var _kernel_mpfcb_table:
-            [if (option.BIND_CFG == null or tnum_mpf > 0) tnum_mpf
-                 else 1]MPFCB = undefined;
+        pub export var _kernel_mpfcb_table: [
+            if (option.BIND_CFG == null or tnum_mpf > 0) tnum_mpf else 1
+        ]MPFCB = undefined;
     };
 }

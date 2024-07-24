@@ -37,14 +37,68 @@
 ///
 ///  $Id$
 ///
-usingnamespace @import("kernel_impl.zig");
+const kernel_impl = @import("kernel_impl.zig");
+
+////
+const zig = kernel_impl.zig;
+const t_stddef = zig.t_stddef;
+
+const ItronError = t_stddef.ItronError;
+const ER = t_stddef.ER;
+const ER_UINT = t_stddef.ER_UINT;
+const ER_BOOL = t_stddef.ER_BOOL;
+const ID = t_stddef.ID;
+const task_manage = kernel_impl.task_manage;
+const STAT = t_stddef.STAT;
+const PRI = t_stddef.PRI;
+const EXINF = t_stddef.EXINF;
+const T_RTSK = zig.T_RTSK;
+const task_refer = kernel_impl.task_refer;
+const task_sync = kernel_impl.task_sync;
+const TMO = t_stddef.TMO;
+const RELTIM= t_stddef.RELTIM;
+const task_term = kernel_impl.task_term;
+const semaphore = kernel_impl.semaphore;
+const T_RSEM = zig.T_RSEM;
+const FLGPTN = zig.FLGPTN;
+const eventflag = kernel_impl.eventflag;
+const MODE= t_stddef.MODE;
+const T_RFLG = zig.T_RFLG;
+const dataqueue = kernel_impl.dataqueue;
+const T_RDTQ = zig.T_RDTQ;
+const pridataq = kernel_impl.pridataq;
+const T_RPDQ = zig.T_RPDQ;
+const mutex = kernel_impl.mutex;
+const T_RMTX = zig.T_RMTX;
+const mempfix = kernel_impl.mempfix;
+const T_RMPF = zig.T_RMPF;
+const SYSTIM = t_stddef.SYSTIM;
+const time_manage = kernel_impl.time_manage;
+const HRTCNT = t_stddef.HRTCNT;
+const cyclic = kernel_impl.cyclic;
+const T_RCYC = zig.T_RCYC;
+const alarm = kernel_impl.alarm;
+const T_RALM = zig.T_RALM;
+const overrun = kernel_impl.overrun;
+const T_ROVR = zig.T_ROVR;
+const sys_manage = kernel_impl.sys_manage;
+const startup = kernel_impl.startup;
+const INTNO = zig.INTNO;
+const interrupt = kernel_impl.interrupt;
+const exception = kernel_impl.exception;
+const sil = kernel_impl.sil;
+const task = kernel_impl.task;
+const target_impl = kernel_impl.target_impl;
+const target_timer = kernel_impl.target_timer;
+const option = kernel_impl.option;
+////
 
 ///
 ///  C言語ヘッダファイルの取り込み
 ///
 pub const c = @cImport({
     @cDefine("UINT_C(val)", "val");
-    @cInclude("kernel.h");
+    @cInclude("../include/kernel.h");
 });
 
 ///
@@ -60,8 +114,7 @@ const errorcode = @import("../library/errorcode.zig");
 fn callService(result: ItronError!void) ER {
     if (result) {
         return c.E_OK;
-    }
-    else |err| {
+    } else |err| {
         return errorcode.itronErrorCode(err);
     }
 }
@@ -69,9 +122,8 @@ fn callService(result: ItronError!void) ER {
 // 返値をER_UINT型に変換
 fn callServiceUint(result: ItronError!c_uint) ER_UINT {
     if (result) |retval| {
-        return  @intCast(ER_UINT, @intCast(u31, retval));
-    }
-    else |err| {
+        return @intCast(ER_UINT, @intCast(u31, retval));
+    } else |err| {
         return errorcode.itronErrorCode(err);
     }
 }
@@ -79,9 +131,8 @@ fn callServiceUint(result: ItronError!c_uint) ER_UINT {
 // 返値をER_BOOL型に変換
 fn callServiceBool(result: ItronError!bool) ER_BOOL {
     if (result) |retval| {
-        return  @intCast(ER_BOOL, @boolToInt(retval));
-    }
-    else |err| {
+        return @intCast(ER_BOOL, @boolToInt(retval));
+    } else |err| {
         return errorcode.itronErrorCode(err);
     }
 }
@@ -236,22 +287,18 @@ export fn clr_flg(flgid: ID, clrptn: FLGPTN) ER {
 }
 
 // wai_flgのC言語API
-export fn wai_flg(flgid: ID, waiptn: FLGPTN,
-                  wfmode: MODE, p_flgptn: *FLGPTN) ER {
+export fn wai_flg(flgid: ID, waiptn: FLGPTN, wfmode: MODE, p_flgptn: *FLGPTN) ER {
     return callService(eventflag.wai_flg(flgid, waiptn, wfmode, p_flgptn));
 }
 
 // pol_flgのC言語API
-export fn pol_flg(flgid: ID, waiptn: FLGPTN,
-                  wfmode: MODE, p_flgptn: *FLGPTN) ER {
+export fn pol_flg(flgid: ID, waiptn: FLGPTN, wfmode: MODE, p_flgptn: *FLGPTN) ER {
     return callService(eventflag.pol_flg(flgid, waiptn, wfmode, p_flgptn));
 }
 
 // twai_flgのC言語API
-export fn twai_flg(flgid: ID, waiptn: FLGPTN,
-                   wfmode: MODE, p_flgptn: *FLGPTN, tmout: TMO) ER {
-    return callService(eventflag.twai_flg(flgid, waiptn, wfmode,
-                                          p_flgptn, tmout));
+export fn twai_flg(flgid: ID, waiptn: FLGPTN, wfmode: MODE, p_flgptn: *FLGPTN, tmout: TMO) ER {
+    return callService(eventflag.twai_flg(flgid, waiptn, wfmode, p_flgptn, tmout));
 }
 
 // ini_flgのC言語API
@@ -380,17 +427,17 @@ export fn ref_mtx(mtxid: ID, pk_rmtx: *T_RMTX) ER {
 }
 
 // get_mpfのC言語API
-export fn get_mpf(mpfid: ID, p_blk: **c_void) ER {
+export fn get_mpf(mpfid: ID, p_blk: **anyopaque) ER {
     return callService(mempfix.get_mpf(mpfid, @ptrCast(**u8, p_blk)));
 }
 
 // pget_mpfのC言語API
-export fn pget_mpf(mpfid: ID, p_blk: **c_void) ER {
+export fn pget_mpf(mpfid: ID, p_blk: **anyopaque) ER {
     return callService(mempfix.pget_mpf(mpfid, @ptrCast(**u8, p_blk)));
 }
 
 // tget_mpfのC言語API
-export fn tget_mpf(mpfid: ID, p_blk: **c_void, tmout: TMO) ER {
+export fn tget_mpf(mpfid: ID, p_blk: **anyopaque, tmout: TMO) ER {
     return callService(mempfix.tget_mpf(mpfid, @ptrCast(**u8, p_blk), tmout));
 }
 
@@ -581,7 +628,7 @@ export fn get_ipm(p_intpri: *PRI) ER {
 }
 
 // xsns_dpnのC言語API
-export fn xsns_dpn(p_excinf: *c_void) c_int {
+export fn xsns_dpn(p_excinf: *anyopaque) c_int {
     return @boolToInt(exception.xsns_dpn(p_excinf));
 }
 
@@ -676,52 +723,43 @@ export fn _kernel_bit_kernel() ER {
 //
 comptime {
     if (option.BIND_CFG == null) {
-    asm(
-     \\ .weak _kernel_seminib_table
-     \\ _kernel_seminib_table:
-     \\ .weak _kernel_semcb_table
-     \\ _kernel_semcb_table:
-
-     \\ .weak _kernel_flginib_table
-     \\ _kernel_flginib_table:
-     \\ .weak _kernel_flgcb_table
-     \\ _kernel_flgcb_table:
-
-     \\ .weak _kernel_dtqinib_table
-     \\ _kernel_dtqinib_table:
-     \\ .weak _kernel_dtqcb_table
-     \\ _kernel_dtqcb_table:
-
-     \\ .weak _kernel_pdqinib_table
-     \\ _kernel_pdqinib_table:
-     \\ .weak _kernel_pdqcb_table
-     \\ _kernel_pdqcb_table:
-
-     \\ .weak _kernel_mtxinib_table
-     \\ _kernel_mtxinib_table:
-     \\ .weak _kernel_mtxcb_table
-     \\ _kernel_mtxcb_table:
-
-     \\ .weak _kernel_mpfinib_table
-     \\ _kernel_mpfinib_table:
-     \\ .weak _kernel_mpfcb_table
-     \\ _kernel_mpfcb_table:
-
-     \\ .weak _kernel_cycinib_table
-     \\ _kernel_cycinib_table:
-     \\ .weak _kernel_cyccb_table
-     \\ _kernel_cyccb_table:
-
-     \\ .weak _kernel_alminib_table
-     \\ _kernel_alminib_table:
-     \\ .weak _kernel_almcb_table
-     \\ _kernel_almcb_table:
-
-     \\ .weak _kernel_inirtnb_table
-     \\ _kernel_inirtnb_table:
-
-     \\ .weak _kernel_terrtnb_table
-     \\ _kernel_terrtnb_table:
-    );
+        asm (
+            \\ .weak _kernel_seminib_table
+            \\ _kernel_seminib_table:
+            \\ .weak _kernel_semcb_table
+            \\ _kernel_semcb_table:
+            \\ .weak _kernel_flginib_table
+            \\ _kernel_flginib_table:
+            \\ .weak _kernel_flgcb_table
+            \\ _kernel_flgcb_table:
+            \\ .weak _kernel_dtqinib_table
+            \\ _kernel_dtqinib_table:
+            \\ .weak _kernel_dtqcb_table
+            \\ _kernel_dtqcb_table:
+            \\ .weak _kernel_pdqinib_table
+            \\ _kernel_pdqinib_table:
+            \\ .weak _kernel_pdqcb_table
+            \\ _kernel_pdqcb_table:
+            \\ .weak _kernel_mtxinib_table
+            \\ _kernel_mtxinib_table:
+            \\ .weak _kernel_mtxcb_table
+            \\ _kernel_mtxcb_table:
+            \\ .weak _kernel_mpfinib_table
+            \\ _kernel_mpfinib_table:
+            \\ .weak _kernel_mpfcb_table
+            \\ _kernel_mpfcb_table:
+            \\ .weak _kernel_cycinib_table
+            \\ _kernel_cycinib_table:
+            \\ .weak _kernel_cyccb_table
+            \\ _kernel_cyccb_table:
+            \\ .weak _kernel_alminib_table
+            \\ _kernel_alminib_table:
+            \\ .weak _kernel_almcb_table
+            \\ _kernel_almcb_table:
+            \\ .weak _kernel_inirtnb_table
+            \\ _kernel_inirtnb_table:
+            \\ .weak _kernel_terrtnb_table
+            \\ _kernel_terrtnb_table:
+        );
     }
 }

@@ -5,7 +5,7 @@
 ///
 ///  チップ依存部（RZ/A1用）
 ///
-pub usingnamespace @import("../../arch/arm_gcc/rza1/chip_stddef.zig");
+pub const chip_stddef = @import("../../arch/arm_gcc/rza1/chip_stddef.zig");
 
 ///
 ///  アサーションの失敗時の実行中断処理

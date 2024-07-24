@@ -39,44 +39,68 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  システム時刻管理機能
 ///
-usingnamespace @import("kernel_impl.zig");
-usingnamespace time_event;
-usingnamespace check;
+const kernel_impl = @import("kernel_impl.zig");
+///usingnamespace time_event;
+const time_event = kernel_impl.time_event;
+///usingnamespace check;
+const check = kernel_impl.check;
+
+////
+const zig = kernel_impl.zig;
+const t_stddef = zig.t_stddef;
+
+const SYSTIM = t_stddef.SYSTIM;
+const ItronError = t_stddef.ItronError;
+const traceLog = kernel_impl.traceLog;
+const checkContextTaskUnlock = check.checkContextTaskUnlock;
+const target_impl = kernel_impl.target_impl;
+const update_current_evttim = time_event.update_current_evttim;
+const checkContextUnlock = check.checkContextUnlock;
+const checkParameter = check.checkParameter;
+const TMIN_ADJTIM = zig.TMIN_ADJTIM;
+const TMAX_ADJTIM = zig.TMAX_ADJTIM;
+const check_adjtim = time_event.check_adjtim;
+const EVTTIM = time_event.EVTTIM;
+const BOUNDARY_MARGIN = time_event.BOUNDARY_MARGIN;
+const set_hrt_event = time_event.set_hrt_event;
+const HRTCNT = t_stddef.HRTCNT;
+const sil = kernel_impl.sil;
+const target_timer = kernel_impl.target_timer;
+////
 
 ///
 ///  システム時刻の設定［NGKI3563］
 ///
 pub fn set_tim(systim: SYSTIM) ItronError!void {
-    traceLog("setTimEnter", .{ systim });
-    errdefer |err| traceLog("setTimLeave", .{ err });
-    try checkContextTaskUnlock();               //［NGKI3564］［NGKI3565］
+    traceLog("setTimEnter", .{systim});
+    errdefer |err| traceLog("setTimLeave", .{err});
+    try checkContextTaskUnlock(); //［NGKI3564］［NGKI3565］
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
-        
-        update_current_evttim();                    //［ASPD1059］
-        systim_offset = systim -% monotonic_evttim; //［ASPD1060］
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
+
+        update_current_evttim(); //［ASPD1059］
+        time_event.systim_offset = systim -% time_event.monotonic_evttim; //［ASPD1060］
     }
-    traceLog("setTimLeave", .{ null });
+    traceLog("setTimLeave", .{null});
 }
 
 ///
 ///  システム時刻の参照［NGKI2349］
 ///
 pub fn get_tim(p_systim: *SYSTIM) ItronError!void {
-    traceLog("getTimEnter", .{ p_systim });
+    traceLog("getTimEnter", .{p_systim});
     errdefer |err| traceLog("getTimLeave", .{ err, p_systim });
-    try checkContextTaskUnlock();               //［NGKI2350］［NGKI2351］
+    try checkContextTaskUnlock(); //［NGKI2350］［NGKI2351］
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
-        
-        update_current_evttim();                        //［ASPD1057］
-        p_systim.* = systim_offset +% monotonic_evttim; //［ASPD1058］
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
+
+        update_current_evttim(); //［ASPD1057］
+        p_systim.* = time_event.systim_offset +% time_event.monotonic_evttim; //［ASPD1058］
     }
     traceLog("getTimLeave", .{ null, p_systim });
 }
@@ -85,43 +109,40 @@ pub fn get_tim(p_systim: *SYSTIM) ItronError!void {
 ///  システム時刻の調整［NGKI3581］
 ///
 pub fn adj_tim(adjtim: i32) ItronError!void {
-    traceLog("adjTimEnter", .{ adjtim });
-    errdefer |err| traceLog("adjTimLeave", .{ err });
-    try checkContextUnlock();                   //［NGKI3583］
+    traceLog("adjTimEnter", .{adjtim});
+    errdefer |err| traceLog("adjTimLeave", .{err});
+    try checkContextUnlock(); //［NGKI3583］
     try checkParameter(TMIN_ADJTIM <= adjtim and adjtim <= TMAX_ADJTIM);
-                                                //［NGKI3584］
+    //［NGKI3584］
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
-        update_current_evttim();                //［ASPD1051］
-        if (check_adjtim(adjtim)) {             //［ASPD1052］
+        update_current_evttim(); //［ASPD1051］
+        if (check_adjtim(adjtim)) { //［ASPD1052］
             return ItronError.ObjectStateError;
-        }
-        else {
-            var previous_evttim = current_evttim;
+        } else {
+            var previous_evttim = time_event.current_evttim;
 
-            if (adjtim > 0) {                   //［ASPD1053］
-                current_evttim +%= @intCast(EVTTIM, adjtim);
+            if (adjtim > 0) { //［ASPD1053］
+                time_event.current_evttim +%= @intCast(EVTTIM, adjtim);
+            } else {
+                time_event.current_evttim -%= @intCast(EVTTIM, -adjtim);
             }
-            else {
-                current_evttim -%= @intCast(EVTTIM, -adjtim);
-            }
-            boundary_evttim = current_evttim -% BOUNDARY_MARGIN;
-                                                //［ASPD1055］
-            if (adjtim > 0 and monotonic_evttim -% previous_evttim
-                                        < @intCast(EVTTIM, adjtim)) {
-                if (current_evttim < monotonic_evttim) {
-                    systim_offset +%= @as(SYSTIM, 1) << @bitSizeOf(EVTTIM);
+            time_event.boundary_evttim = time_event.current_evttim -% BOUNDARY_MARGIN;
+            //［ASPD1055］
+            if (adjtim > 0 and time_event.monotonic_evttim -% previous_evttim < @intCast(EVTTIM, adjtim)) {
+                if (time_event.current_evttim < time_event.monotonic_evttim) {
+                    time_event.systim_offset +%= @as(SYSTIM, 1) << @bitSizeOf(EVTTIM);
                 }
-                monotonic_evttim = current_evttim;  //［ASPD1054］
+                time_event.monotonic_evttim = time_event.current_evttim; //［ASPD1054］
             }
-            if (!in_signal_time) {
+            if (!time_event.in_signal_time) {
                 set_hrt_event();
             }
         }
     }
-    traceLog("adjTimLeave", .{ null });
+    traceLog("adjTimLeave", .{null});
 }
 
 ///
@@ -133,6 +154,6 @@ pub fn fch_hrt() HRTCNT {
     sil.LOC_INT(&silLock);
     var hrtcnt = target_timer.hrt.get_current();
     sil.UNL_INT(&silLock);
-    traceLog("fchHrtLeave", .{ hrtcnt });
+    traceLog("fchHrtLeave", .{hrtcnt});
     return hrtcnt;
 }

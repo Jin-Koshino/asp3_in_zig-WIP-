@@ -39,23 +39,44 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  CPU例外管理機能
 ///
-usingnamespace @import("kernel_impl.zig");
-usingnamespace task;
-usingnamespace check;
+const kernel_impl = @import("kernel_impl.zig");
+///usingnamespace task;
+const task = kernel_impl.task;
+///usingnamespace check;
+const check = kernel_impl.check;
+
+////
+const zig = kernel_impl.zig;
+const t_stddef = zig.t_stddef;
+
+const EXCNO = zig.EXCNO;
+const target_impl = kernel_impl.target_impl;
+const ATR = t_stddef.ATR;
+const EXCHDR = zig.EXCHDR;
+const cfg = kernel_impl.cfg;
+const traceLog = kernel_impl.traceLog;
+const startup = kernel_impl.startup;
+const T_DEXC = zig.T_DEXC;
+const ItronError = t_stddef.ItronError;
+
+const checkParameter = check.checkParameter;
+const checkValidAtr = check.checkValidAtr;
+const exco = kernel_impl.exco;
+
+const exportCheck = kernel_impl.exportCheck;
+////
 
 ///
 ///  CPU例外ハンドラ番号の範囲の判定
 ///
 pub fn validExcnoDefExc(excno: EXCNO) bool {
     if (@hasDecl(target_impl, "validExcnoDefExc")) {
-        return target_impl.validExcnoDefExc(excno);
-    }
-    else {
-        return target_impl.validExcno(excno);
+        return target_impl.mpcore_kernel_impl.core_kernel_impl.validExcnoDefExc(excno);
+    } else {
+        return target_impl.mpcore_kernel_impl.core_kernel_impl.validExcno(excno);
     }
 }
 
@@ -63,44 +84,39 @@ pub fn validExcnoDefExc(excno: EXCNO) bool {
 ///  ターゲット依存のCPU例外ハンドラ属性
 ///
 const TARGET_EXCATR =
-    if (@hasDecl(target_impl, "TARGET_EXCATR")) target_impl.TARGET_EXCATR
-    else 0;
+    if (@hasDecl(target_impl, "TARGET_EXCATR")) target_impl.TARGET_EXCATR else 0;
 
 ///
 ///  CPU例外ハンドラ初期化ブロック
 ///
 pub const EXCINIB =
-    if (@hasDecl(target_impl, "EXCINIB")) target_impl.EXCINIB
-    else struct {
-        excno: EXCNO,           // CPU例外ハンドラ番号
-        excatr: ATR,            // CPU例外ハンドラ属性
-        exchdr: EXCHDR,         // CPU例外ハンドラの先頭番地
-    };
+    if (@hasDecl(target_impl.mpcore_kernel_impl.core_kernel_impl, "EXCINIB")) target_impl.mpcore_kernel_impl.core_kernel_impl.EXCINIB else struct {
+    excno: EXCNO, // CPU例外ハンドラ番号
+    excatr: ATR, // CPU例外ハンドラ属性
+    exchdr: EXCHDR, // CPU例外ハンドラの先頭番地
+};
 
 ///
 ///  CPU例外ハンドラ初期化ブロックの取り込み
 ///
 pub const ExternExcIniB =
-    if (@hasDecl(target_impl, "ExternExcIniB")) target_impl.ExternExcIniB
-    else struct {
-        ///
-        ///  CPU例外ハンドラ初期化ブロック（スライス）
-        ///
-        pub extern const _kernel_excinib_table: []EXCINIB;
-     };
+    if (@hasDecl(target_impl.mpcore_kernel_impl.core_kernel_impl, "ExternExcIniB")) target_impl.mpcore_kernel_impl.core_kernel_impl.ExternExcIniB else struct {
+    ///
+    ///  CPU例外ハンドラ初期化ブロック（スライス）
+    ///
+    pub extern const _kernel_excinib_table: []EXCINIB;
+};
 
 ///
 ///  CPU例外管理機能の初期化
 ///
 pub fn initialize_exception() void {
-    if (@hasDecl(target_impl, "initialize_exception")) {
-        target_impl.initialize_exception();
-    }
-    else {
+    if (@hasDecl(target_impl.mpcore_kernel_impl.core_kernel_impl, "initialize_exception")) {
+        target_impl.mpcore_kernel_impl.core_kernel_impl.initialize_exception();
+    } else {
         // 標準的な初期化処理
         for (cfg._kernel_excinib_table) |*p_excinib| {
-            target_impl.define_exc(p_excinib.excno, p_excinib.excatr,
-                                   p_excinib.exchdr);
+            target_impl.define_exc(p_excinib.excno, p_excinib.excatr, p_excinib.exchdr);
         }
     }
 }
@@ -111,11 +127,10 @@ pub fn initialize_exception() void {
 ///  CPU例外ハンドラ中でenadspが変化することはないため，CPU例外が発生
 ///  した時のenadspを保存しておく必要はない．
 ///
-pub fn xsns_dpn(p_excinf: *c_void) bool {
-    traceLog("xSnsDpnEnter", .{ p_excinf });
-    var state = !(startup.kerflg and target_impl.exc_sense_intmask(p_excinf)
-                      and enadsp and p_runtsk != null);
-    traceLog("xSnsDpnLeave", .{ state });
+pub fn xsns_dpn(p_excinf: *anyopaque) bool {
+    traceLog("xSnsDpnEnter", .{p_excinf});
+    var state = !(startup.kerflg and target_impl.mpcore_kernel_impl.core_kernel_impl.exc_sense_intmask(p_excinf) and task.enadsp and task.p_runtsk != null);
+    traceLog("xSnsDpnLeave", .{state});
     return state;
 }
 
@@ -137,10 +152,13 @@ pub fn def_exc(excno: EXCNO, dexc: T_DEXC) ItronError!EXCINIB {
 
     // CPU例外ハンドラ初期化ブロックを返す
     return if (@hasDecl(target_impl, "buildExcIniB"))
-               target_impl.buildExcIniB(excno, dexc)
-           else EXCINIB{ .excno = excno,
-                         .excatr = dexc.excatr,
-                         .exchdr = dexc.exchdr, };
+        target_impl.buildExcIniB(excno, dexc)
+    else
+        EXCINIB{
+            .excno = excno,
+            .excatr = dexc.excatr,
+            .exchdr = dexc.exchdr,
+        };
 }
 
 ///
@@ -151,8 +169,8 @@ pub fn ExportExcIniB(excinib_table: []EXCINIB) type {
     exportCheck(@sizeOf(EXCINIB), "sizeof_EXCINIB");
     exportCheck(@sizeOf(EXCNO), "sizeof_EXCNO");
     exportCheck(@sizeOf(EXCHDR), "sizeof_EXCHDR");
-    exportCheck(@byteOffsetOf(EXCINIB, "excno"), "offsetof_EXCINIB_excno");
-    exportCheck(@byteOffsetOf(EXCINIB, "exchdr"), "offsetof_EXCINIB_exchdr");
+    exportCheck(@offsetOf(EXCINIB, "excno"), "offsetof_EXCINIB_excno");
+    exportCheck(@offsetOf(EXCINIB, "exchdr"), "offsetof_EXCINIB_exchdr");
 
     return struct {
         export const _kernel_excinib_table = excinib_table;

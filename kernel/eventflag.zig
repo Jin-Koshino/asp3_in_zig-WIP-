@@ -39,15 +39,67 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  イベントフラグ機能
 ///
-usingnamespace @import("kernel_impl.zig");
-usingnamespace task;
-usingnamespace wait;
-usingnamespace time_event;
-usingnamespace check;
+const kernel_impl = @import("kernel_impl.zig");
+///usingnamespace task;
+const task = kernel_impl.task;
+///usingnamespace wait;
+const wait = kernel_impl.wait;
+///usingnamespace time_event;
+const time_event = kernel_impl.time_event;
+///usingnamespace check;
+const check = kernel_impl.check;
+
+////
+const zig = kernel_impl.zig;
+const t_stddef = zig.t_stddef;
+
+const ATR = t_stddef.ATR;
+const FLGPTN = zig.FLGPTN;
+const checkWobjIniB = check.checkWobjIniB;
+const queue = kernel_impl.queue;
+const checkWobjCB = wait.checkWobjCB;
+const WINFO = wait.WINFO;
+const MODE = t_stddef.MODE;
+const checkWinfoWobj = wait.checkWinfoWobj;
+const ID = t_stddef.ID;
+const TMIN_FLGID = kernel_impl.TMIN_FLGID;
+const cfg = kernel_impl.cfg;
+const ItronError = t_stddef.ItronError;
+const checkId = check.checkId;
+const TWF_ORW = zig.TWF_ORW;
+const TA_CLR = zig.TA_CLR;
+const traceLog = kernel_impl.traceLog;
+const checkContextUnlock = check.checkContextUnlock;
+const target_impl = kernel_impl.target_impl;
+const getTCBFromQueue = task.getTCBFromQueue;
+const wait_complete = wait.wait_complete;
+const requestTaskDispatch = task.requestTaskDispatch;
+const checkContextTaskUnlock = check.checkContextTaskUnlock;
+const checkDispatch = check.checkDispatch;
+const checkParameter = check.checkParameter;
+const TWF_ANDW = zig.TWF_ANDW;
+
+const TA_WMUL = zig.TA_WMUL;
+const wobj_make_wait = wait.wobj_make_wait;
+const TS_WAITING_FLG = task.TS_WAITING_FLG;
+const TMO = t_stddef.TMO;
+const validTimeout = check.validTimeout;
+const TMO_POL = t_stddef.TMO_POL;
+const TMEVTB = time_event.TMEVTB;
+const wobj_make_wait_tmout = wait.wobj_make_wait_tmout;
+const init_wait_queue = wait.init_wait_queue;
+const taskDispatch = task.taskDispatch;
+const T_RFLG = zig.T_RFLG;
+const wait_tskid = wait.wait_tskid;
+const T_CFLG = zig.T_CFLG;
+const checkValidAtr = check.checkValidAtr;
+const TA_TPRI = zig.TA_TPRI;
+const TBIT_FLGPTN = zig.TBIT_FLGPTN;
+const option = kernel_impl.option;
+////
 
 ///
 ///  イベントフラグ初期化ブロック
@@ -57,13 +109,13 @@ usingnamespace check;
 ///  最初のフィールドが共通になっている．
 ///
 pub const FLGINIB = struct {
-    wobjatr: ATR,               // イベントフラグ属性
-    iflgptn: FLGPTN,            // イベントフラグのビットパターンの初期値
+    wobjatr: ATR, // イベントフラグ属性
+    iflgptn: FLGPTN, // イベントフラグのビットパターンの初期値
 };
 
 // イベントフラグ初期化ブロックのチェック
 comptime {
-    checkWobjIniB(FLGINIB);
+    wait.checkWobjIniB(FLGINIB);
 }
 
 ///
@@ -74,9 +126,9 @@ comptime {
 ///  最初の2つのフィールドが共通になっている．
 ///
 const FLGCB = struct {
-    wait_queue: queue.Queue,    // イベントフラグ待ちキュー
+    wait_queue: queue.Queue, // イベントフラグ待ちキュー
     p_wobjinib: *const FLGINIB, // 初期化ブロックへのポインタ
-    flgptn: FLGPTN,             // イベントフラグ現在パターン
+    flgptn: FLGPTN, // イベントフラグ現在パターン
 };
 
 // イベントフラグ管理ブロックのチェック
@@ -96,10 +148,10 @@ comptime {
 ///  る）．
 ///
 const WINFO_FLG = struct {
-    winfo: WINFO,               // 標準の待ち情報ブロック
-    p_wobjcb: *FLGCB,           // 待っているイベントフラグの管理ブロック
-    waiptn: FLGPTN,             // 待ちパターン／待ち解除時のパターン
-    wfmode: MODE,               // 待ちモード
+    winfo: WINFO, // 標準の待ち情報ブロック
+    p_wobjcb: *FLGCB, // 待っているイベントフラグの管理ブロック
+    waiptn: FLGPTN, // 待ちパターン／待ち解除時のパターン
+    wfmode: MODE, // 待ちモード
 };
 
 // イベントフラグ待ち情報ブロックのチェック
@@ -145,9 +197,7 @@ fn checkAndGetFlgCB(flgid: ID) ItronError!*FLGCB {
 ///  イベントフラグ管理ブロックからイベントフラグIDを取り出すための関数
 ///
 fn getFlgIdFromFlgCB(p_flgcb: *FLGCB) ID {
-    return @intCast(ID, (@ptrToInt(p_flgcb)
-                             - @ptrToInt(&cfg._kernel_flgcb_table))
-                        / @sizeOf(FLGCB)) + TMIN_FLGID;
+    return @intCast(ID, (@ptrToInt(p_flgcb) - @ptrToInt(&cfg._kernel_flgcb_table)) / @sizeOf(FLGCB)) + TMIN_FLGID;
 }
 
 ///
@@ -168,8 +218,7 @@ pub fn getFlgIdFromWinfo(p_winfo: *WINFO) ID {
 ///  イベントフラグ機能の初期化
 ///
 pub fn initialize_eventflag() void {
-    for (cfg._kernel_flgcb_table[0 .. cfg._kernel_flginib_table.len])
-                                                        |*p_flgcb, i| {
+    for (cfg._kernel_flgcb_table[0..cfg._kernel_flginib_table.len]) |*p_flgcb, i| {
         p_flgcb.wait_queue.initialize();
         p_flgcb.p_wobjinib = &cfg._kernel_flginib_table[i];
         p_flgcb.flgptn = p_flgcb.p_wobjinib.iflgptn;
@@ -179,10 +228,8 @@ pub fn initialize_eventflag() void {
 ///
 ///  イベントフラグ待ち解除条件のチェック
 ///
-fn check_flg_cond(p_flgcb: *FLGCB, waiptn: FLGPTN,
-                  wfmode: MODE, p_flgptn: *FLGPTN) bool {
-    if (if ((wfmode & TWF_ORW) != 0) (p_flgcb.flgptn & waiptn) != 0
-                                else (p_flgcb.flgptn & waiptn) == waiptn) {
+fn check_flg_cond(p_flgcb: *FLGCB, waiptn: FLGPTN, wfmode: MODE, p_flgptn: *FLGPTN) bool {
+    if (if ((wfmode & TWF_ORW) != 0) (p_flgcb.flgptn & waiptn) != 0 else (p_flgcb.flgptn & waiptn) == waiptn) {
         p_flgptn.* = p_flgcb.flgptn;
         if ((p_flgcb.p_wobjinib.wobjatr & TA_CLR) != 0) {
             p_flgcb.flgptn = 0;
@@ -197,12 +244,12 @@ fn check_flg_cond(p_flgcb: *FLGCB, waiptn: FLGPTN,
 ///
 pub fn set_flg(flgid: ID, setptn: FLGPTN) ItronError!void {
     traceLog("setFlgEnter", .{ flgid, setptn });
-    errdefer |err| traceLog("setFlgLeave", .{ err });
+    errdefer |err| traceLog("setFlgLeave", .{err});
     try checkContextUnlock();
     const p_flgcb = try checkAndGetFlgCB(flgid);
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         p_flgcb.flgptn |= setptn;
         var p_queue = p_flgcb.wait_queue.p_next;
@@ -210,8 +257,7 @@ pub fn set_flg(flgid: ID, setptn: FLGPTN) ItronError!void {
             const p_tcb = getTCBFromQueue(p_queue);
             const p_winfo_flg = getWinfoFlg(p_tcb.p_winfo);
             p_queue = p_queue.p_next;
-            if (check_flg_cond(p_flgcb, p_winfo_flg.waiptn,
-                               p_winfo_flg.wfmode, &p_winfo_flg.waiptn)) {
+            if (check_flg_cond(p_flgcb, p_winfo_flg.waiptn, p_winfo_flg.wfmode, &p_winfo_flg.waiptn)) {
                 p_tcb.task_queue.delete();
                 wait_complete(p_tcb);
                 if ((p_flgcb.p_wobjinib.wobjatr & TA_CLR) != 0) {
@@ -221,7 +267,7 @@ pub fn set_flg(flgid: ID, setptn: FLGPTN) ItronError!void {
         }
         requestTaskDispatch();
     }
-    traceLog("setFlgLeave", .{ null });
+    traceLog("setFlgLeave", .{null});
 }
 
 ///
@@ -229,23 +275,22 @@ pub fn set_flg(flgid: ID, setptn: FLGPTN) ItronError!void {
 ///
 pub fn clr_flg(flgid: ID, clrptn: FLGPTN) ItronError!void {
     traceLog("clrFlgEnter", .{ flgid, clrptn });
-    errdefer |err| traceLog("clrFlgLeave", .{ err });
+    errdefer |err| traceLog("clrFlgLeave", .{err});
     try checkContextTaskUnlock();
     const p_flgcb = try checkAndGetFlgCB(flgid);
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         p_flgcb.flgptn &= clrptn;
     }
-    traceLog("clrFlgLeave", .{ null });
+    traceLog("clrFlgLeave", .{null});
 }
 
 ///
 ///  イベントフラグ待ち
 ///
-pub fn wai_flg(flgid: ID, waiptn: FLGPTN,
-               wfmode: MODE, p_flgptn: *FLGPTN) ItronError!void {
+pub fn wai_flg(flgid: ID, waiptn: FLGPTN, wfmode: MODE, p_flgptn: *FLGPTN) ItronError!void {
     traceLog("waiFlgEnter", .{ flgid, waiptn, wfmode, p_flgptn });
     errdefer |err| traceLog("waiFlgLeave", .{ err, p_flgptn });
     try checkDispatch();
@@ -253,22 +298,19 @@ pub fn wai_flg(flgid: ID, waiptn: FLGPTN,
     try checkParameter(waiptn != 0);
     try checkParameter(wfmode == TWF_ORW or wfmode == TWF_ANDW);
     {
-        target_impl.lockCpuDsp();
-        defer target_impl.unlockCpuDsp();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpuDsp();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpuDsp();
 
-        if (p_runtsk.?.flags.raster) {
+        if (task.p_runtsk.?.flags.raster) {
             return ItronError.TerminationRequestRaised;
-        }
-        else if ((p_flgcb.p_wobjinib.wobjatr & TA_WMUL) == 0
-                     and !p_flgcb.wait_queue.isEmpty()) {
+        } else if ((p_flgcb.p_wobjinib.wobjatr & TA_WMUL) == 0 and !p_flgcb.wait_queue.isEmpty()) {
             return ItronError.IllegalUse;
-        }
-        else if (!check_flg_cond(p_flgcb, waiptn, wfmode, p_flgptn)) {
+        } else if (!check_flg_cond(p_flgcb, waiptn, wfmode, p_flgptn)) {
             var winfo_flg: WINFO_FLG = undefined;
             winfo_flg.waiptn = waiptn;
             winfo_flg.wfmode = wfmode;
             wobj_make_wait(p_flgcb, TS_WAITING_FLG, &winfo_flg);
-            target_impl.dispatch();
+            target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_flg.winfo.werror) |werror| {
                 return werror;
             }
@@ -281,8 +323,7 @@ pub fn wai_flg(flgid: ID, waiptn: FLGPTN,
 ///
 ///  イベントフラグ待ち（ポーリング）
 ///
-pub fn pol_flg(flgid: ID, waiptn: FLGPTN,
-               wfmode: MODE, p_flgptn: *FLGPTN) ItronError!void {
+pub fn pol_flg(flgid: ID, waiptn: FLGPTN, wfmode: MODE, p_flgptn: *FLGPTN) ItronError!void {
     traceLog("polFlgEnter", .{ flgid, waiptn, wfmode, p_flgptn });
     errdefer |err| traceLog("polFlgLeave", .{ err, p_flgptn });
     try checkContextTaskUnlock();
@@ -290,14 +331,12 @@ pub fn pol_flg(flgid: ID, waiptn: FLGPTN,
     try checkParameter(waiptn != 0);
     try checkParameter(wfmode == TWF_ORW or wfmode == TWF_ANDW);
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
-        if ((p_flgcb.p_wobjinib.wobjatr & TA_WMUL) == 0
-                and !p_flgcb.wait_queue.isEmpty()) {
+        if ((p_flgcb.p_wobjinib.wobjatr & TA_WMUL) == 0 and !p_flgcb.wait_queue.isEmpty()) {
             return ItronError.IllegalUse;
-        }
-        else if (!check_flg_cond(p_flgcb, waiptn, wfmode, p_flgptn)) {
+        } else if (!check_flg_cond(p_flgcb, waiptn, wfmode, p_flgptn)) {
             return ItronError.TimeoutError;
         }
     }
@@ -307,8 +346,7 @@ pub fn pol_flg(flgid: ID, waiptn: FLGPTN,
 ///
 ///  イベントフラグ待ち（タイムアウトあり）
 ///
-pub fn twai_flg(flgid: ID, waiptn: FLGPTN, wfmode: MODE,
-                p_flgptn: *FLGPTN, tmout: TMO) ItronError!void {
+pub fn twai_flg(flgid: ID, waiptn: FLGPTN, wfmode: MODE, p_flgptn: *FLGPTN, tmout: TMO) ItronError!void {
     traceLog("tWaiFlgEnter", .{ flgid, waiptn, wfmode, p_flgptn, tmout });
     errdefer |err| traceLog("tWaiFlgLeave", .{ err, p_flgptn });
     try checkDispatch();
@@ -317,29 +355,22 @@ pub fn twai_flg(flgid: ID, waiptn: FLGPTN, wfmode: MODE,
     try checkParameter(wfmode == TWF_ORW or wfmode == TWF_ANDW);
     try checkParameter(validTimeout(tmout));
     {
-        target_impl.lockCpuDsp();
-        defer target_impl.unlockCpuDsp();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpuDsp();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpuDsp();
 
-        if (p_runtsk.?.flags.raster) {
+        if (task.p_runtsk.?.flags.raster) {
             return ItronError.TerminationRequestRaised;
-        }
-        else if ((p_flgcb.p_wobjinib.wobjatr & TA_WMUL) == 0
-                     and !p_flgcb.wait_queue.isEmpty()) {
+        } else if ((p_flgcb.p_wobjinib.wobjatr & TA_WMUL) == 0 and !p_flgcb.wait_queue.isEmpty()) {
             return ItronError.IllegalUse;
-        }
-        else if (check_flg_cond(p_flgcb, waiptn, wfmode, p_flgptn)) {
-        }
-        else if (tmout == TMO_POL) {
+        } else if (check_flg_cond(p_flgcb, waiptn, wfmode, p_flgptn)) {} else if (tmout == TMO_POL) {
             return ItronError.TimeoutError;
-        }
-        else {
+        } else {
             var winfo_flg: WINFO_FLG = undefined;
             var tmevtb: TMEVTB = undefined;
             winfo_flg.waiptn = waiptn;
             winfo_flg.wfmode = wfmode;
-            wobj_make_wait_tmout(p_flgcb, TS_WAITING_FLG, &winfo_flg,
-                                 &tmevtb, tmout);
-            target_impl.dispatch();
+            wobj_make_wait_tmout(p_flgcb, TS_WAITING_FLG, &winfo_flg, &tmevtb, tmout);
+            target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_flg.winfo.werror) |werror| {
                 return werror;
             }
@@ -353,19 +384,19 @@ pub fn twai_flg(flgid: ID, waiptn: FLGPTN, wfmode: MODE,
 ///  イベントフラグの再初期化
 ///
 pub fn ini_flg(flgid: ID) ItronError!void {
-    traceLog("iniFlgEnter", .{ flgid });
-    errdefer |err| traceLog("iniFlgLeave", .{ err });
+    traceLog("iniFlgEnter", .{flgid});
+    errdefer |err| traceLog("iniFlgLeave", .{err});
     try checkContextTaskUnlock();
     const p_flgcb = try checkAndGetFlgCB(flgid);
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         init_wait_queue(&p_flgcb.wait_queue);
         p_flgcb.flgptn = p_flgcb.p_wobjinib.iflgptn;
         taskDispatch();
     }
-    traceLog("iniFlgLeave", .{ null });
+    traceLog("iniFlgLeave", .{null});
 }
 
 ///
@@ -377,8 +408,8 @@ pub fn ref_flg(flgid: ID, pk_rflg: *T_RFLG) ItronError!void {
     try checkContextTaskUnlock();
     const p_flgcb = try checkAndGetFlgCB(flgid);
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         pk_rflg.wtskid = wait_tskid(&p_flgcb.wait_queue);
         pk_rflg.flgptn = p_flgcb.flgptn;
@@ -392,11 +423,10 @@ pub fn ref_flg(flgid: ID, pk_rflg: *T_RFLG) ItronError!void {
 pub fn cre_flg(cflg: T_CFLG) ItronError!FLGINIB {
     // flgatrが無効の場合（E_RSATR）［NGKI1562］［NGKI1550］
     //（TA_TPRI，TA_WMUL，TA_CLR以外のビットがセットされている場合）
-    try checkValidAtr(cflg.flgatr, TA_TPRI|TA_WMUL|TA_CLR);
+    try checkValidAtr(cflg.flgatr, TA_TPRI | TA_WMUL | TA_CLR);
 
     // iflgptnがFLGPTNに格納できない場合（E_PAR）［NGKI3275］
-    try checkParameter((cflg.iflgptn
-                            & ~@as(FLGPTN, (1 << TBIT_FLGPTN) - 1)) == 0);
+    try checkParameter((cflg.iflgptn & ~@as(FLGPTN, (1 << TBIT_FLGPTN) - 1)) == 0);
 
     // イベントフラグ初期化ブロックを返す
     return FLGINIB{ .wobjatr = cflg.flgatr, .iflgptn = cflg.iflgptn };
@@ -408,13 +438,14 @@ pub fn cre_flg(cflg: T_CFLG) ItronError!FLGINIB {
 ///
 pub fn ExportFlgCfg(flginib_table: []FLGINIB) type {
     const tnum_flg = flginib_table.len;
+    defer _ = tnum_flg;
     return struct {
         pub export const _kernel_flginib_table = flginib_table;
 
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする
-        pub export var _kernel_flgcb_table:
-            [if (option.BIND_CFG == null or tnum_flg > 0) tnum_flg
-                 else 1]FLGCB = undefined;
+        pub export var _kernel_flgcb_table: [
+            if (option.BIND_CFG == null or tnum_flg > 0) tnum_flg else 1
+        ]FLGCB = undefined;
     };
 }

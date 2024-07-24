@@ -39,23 +39,102 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  優先度優先度データキュー機能
 ///
-usingnamespace @import("kernel_impl.zig");
-usingnamespace task;
-usingnamespace wait;
-usingnamespace time_event;
-usingnamespace check;
+const kernel_impl = @import("kernel_impl.zig");
+///usingnamespace task;
+const task = kernel_impl.task;
+///usingnamespace wait;
+const wait = kernel_impl.wait;
+///usingnamespace time_event;
+const time_event = kernel_impl.time_event;
+///usingnamespace check;
+const check = kernel_impl.check;
+
+////
+const zig = kernel_impl.zig;
+const t_stddef = zig.t_stddef;
+
+const ATR = t_stddef.ATR;
+const checkWobjIniB = check.checkWobjIniB;
+const queue = kernel_impl.queue;
+const checkWobjCB = wait.checkWobjCB;
+const WINFO = wait.WINFO;
+const checkWinfoWobj = wait.checkWinfoWobj;
+const ID = t_stddef.ID;
+const TMIN_DTQID = kernel_impl.TMIN_DTQID;
+const cfg = kernel_impl.cfg;
+const ItronError = t_stddef.ItronError;
+const checkId = check.checkId;
+const getTCBFromQueue = task.getTCBFromQueue;
+const wait_complete = wait.wait_complete;
+const traceLog = kernel_impl.traceLog;
+const checkDispatch = check.checkDispatch;
+const target_impl = kernel_impl.target_impl;
+
+const taskDispatch = task.taskDispatch;
+const wobj_make_wait = wait.wobj_make_wait;
+const TS_WAITING_SDTQ = task.TS_WAITING_SDTQ;
+const checkContextUnlock = check.checkContextUnlock;
+const requestTaskDispatch = task.requestTaskDispatch;
+const TMO = t_stddef.TMO;
+const checkParameter = check.checkParameter;
+const validTimeout = check.validTimeout;
+const TMO_POL = t_stddef.TMO_POL;
+const TMEVTB = time_event.TMEVTB;
+const wobj_make_wait_tmout = wait.wobj_make_wait_tmout;
+const checkIllegalUse = check.checkIllegalUse;
+const wobj_make_rwait = wait.wobj_make_rwait;
+const TS_WAITING_RDTQ = task.TS_WAITING_RDTQ;
+const checkContextTaskUnlock = check.checkContextTaskUnlock;
+const wobj_make_rwait_tmout = wait.wobj_make_rwait_tmout;
+const init_wait_queue = wait.init_wait_queue;
+const T_RDTQ = zig.T_RDTQ;
+const wait_tskid = wait.wait_tskid;
+const T_CDTQ = zig.T_CDTQ;
+const checkValidAtr = check.checkValidAtr;
+const TA_TPRI = zig.TA_TPRI;
+const checkNotSupported = check.checkNotSupported;
+const option = kernel_impl.option;
+const TMIN_MPFID = kernel_impl.TMIN_MPFID;
+const TS_WAITING_MPF = task.TS_WAITING_MPF;
+const ptrAlignCast = kernel_impl.ptrAlignCast;
+const T_RMPF = zig.T_RMPF;
+const T_CMPF = zig.T_CMPF;
+const TOPPERS_ROUND_SZ = zig.TOPPERS_ROUND_SZ;
+const exportCheck = kernel_impl.exportCheck;
+const TCB = task.TCB;
+const TMIN_MTXID = kernel_impl.TMIN_MTXID;
+const TA_CEILING = zig.TA_CEILING;
+const TaskPrio = task.TaskPrio;
+const isWaitingMtx = task.isWaitingMtx;
+const change_priority = task.change_priority;
+const wait_dequeue_tmevtb = wait.wait_dequeue_tmevtb;
+const make_non_wait = wait.make_non_wait;
+const assert = t_stddef.assert;
+
+const TS_WAITING_MTX = task.TS_WAITING_MTX;
+const T_RMTX = zig.T_RMTX;
+const getTskIdFromTCB = task.getTskIdFromTCB;
+const TSK_NONE = zig.TSK_NONE;
+const PRI = t_stddef.PRI;
+const TMIN_PDQID = kernel_impl.TMIN_PDQID;
+const TMIN_DPRI = zig.TMIN_DPRI;
+const TS_WAITING_SPDQ = task.TS_WAITING_SPDQ;
+const TS_WAITING_RPDQ = task.TS_WAITING_RPDQ;
+const T_RPDQ = zig.T_RPDQ;
+const T_CPDQ = zig.T_CPDQ;
+const TMAX_DPRI = zig.TMAX_DPRI;
+////
 
 ///
 ///  優先度データ管理ブロック
 ///
 const PDQMB = struct {
-    p_next: ?*PDQMB,    // 次のデータ
-    data: usize,        // データ本体
-    datapri: PRI,       // データ優先度
+    p_next: ?*PDQMB, // 次のデータ
+    data: usize, // データ本体
+    datapri: PRI, // データ優先度
 };
 
 ///
@@ -66,15 +145,15 @@ const PDQMB = struct {
 ///  最初のフィールドが共通になっている．
 ///
 pub const PDQINIB = struct {
-    wobjatr: ATR,               // 優先度データキュー属性
-    pdqcnt: c_uint,             // 優先度データキューの容量
-    maxdpri: PRI,               // データ優先度の最大値
-    p_pdqmb: ?[*]PDQMB,         // 優先度データキュー管理領域
+    wobjatr: ATR, // 優先度データキュー属性
+    pdqcnt: c_uint, // 優先度データキューの容量
+    maxdpri: PRI, // データ優先度の最大値
+    p_pdqmb: ?[*]PDQMB, // 優先度データキュー管理領域
 };
 
 // 優先度データキュー初期化ブロックのチェック
 comptime {
-    checkWobjIniB(PDQINIB);
+    wait.checkWobjIniB(PDQINIB);
 }
 
 ///
@@ -85,13 +164,13 @@ comptime {
 ///  最初の2つのフィールドが共通になっている．
 ///
 const PDQCB = struct {
-    swait_queue: queue.Queue,   // 優先度データキュー送信待ちキュー
+    swait_queue: queue.Queue, // 優先度データキュー送信待ちキュー
     p_wobjinib: *const PDQINIB, // 初期化ブロックへのポインタ
-    rwait_queue: queue.Queue,   // 優先度データキュー受信待ちキュー
-    count: c_uint,              // 優先度データキュー中のデータの数
-    p_head: ?*PDQMB,            // 最初のデータ
-    unused: c_uint,             // 未使用データ管理ブロックの先頭
-    p_freelist: ?*PDQMB,        // 未割当てデータ管理ブロックのリスト
+    rwait_queue: queue.Queue, // 優先度データキュー受信待ちキュー
+    count: c_uint, // 優先度データキュー中のデータの数
+    p_head: ?*PDQMB, // 最初のデータ
+    unused: c_uint, // 未使用データ管理ブロックの先頭
+    p_freelist: ?*PDQMB, // 未割当てデータ管理ブロックのリスト
 };
 
 // 優先度データキュー管理ブロックのチェック
@@ -107,17 +186,17 @@ comptime {
 ///  で，最初の2つのフィールドが共通になっている．
 ///
 const WINFO_SPDQ = struct {
-    winfo: WINFO,               // 標準の待ち情報ブロック
-    p_wobjcb: *PDQCB,           // 待っている優先度データキューの管理ブロック
-    data: usize,                // 送信データ
-    datapri: PRI,               // データ優先度
+    winfo: WINFO, // 標準の待ち情報ブロック
+    p_wobjcb: *PDQCB, // 待っている優先度データキューの管理ブロック
+    data: usize, // 送信データ
+    datapri: PRI, // データ優先度
 };
 
 const WINFO_RPDQ = struct {
-    winfo: WINFO,               // 標準の待ち情報ブロック
-    p_wobjcb: *PDQCB,           // 待っている優先度データキューの管理ブロック
-    data: usize,                // 受信データ
-    datapri: PRI,               // データ優先度
+    winfo: WINFO, // 標準の待ち情報ブロック
+    p_wobjcb: *PDQCB, // 待っている優先度データキューの管理ブロック
+    data: usize, // 受信データ
+    datapri: PRI, // データ優先度
 };
 
 // 優先度データキュー待ち情報ブロックのチェック
@@ -164,9 +243,7 @@ pub fn checkAndGetPdqCB(pdqid: ID) ItronError!*PDQCB {
 ///  優先度データキュー管理ブロックから優先度データキューIDを取り出すための関数
 ///
 fn getPdqIdFromPdqCB(p_pdqcb: *PDQCB) ID {
-    return @intCast(ID, (@ptrToInt(p_pdqcb)
-                             - @ptrToInt(&cfg._kernel_pdqcb_table))
-                        / @sizeOf(PDQCB)) + TMIN_PDQID;
+    return @intCast(ID, (@ptrToInt(p_pdqcb) - @ptrToInt(&cfg._kernel_pdqcb_table)) / @sizeOf(PDQCB)) + TMIN_PDQID;
 }
 
 ///
@@ -200,8 +277,7 @@ fn validDataPri(datapri: PRI, maxdpri: PRI) bool {
 ///  優先度データキュー機能の初期化
 ///
 pub fn initialize_pridataq() void {
-    for (cfg._kernel_pdqcb_table[0 .. cfg._kernel_pdqinib_table.len])
-                                                        |*p_pdqcb, i| {
+    for (cfg._kernel_pdqcb_table[0..cfg._kernel_pdqinib_table.len]) |*p_pdqcb, i| {
         p_pdqcb.swait_queue.initialize();
         p_pdqcb.p_wobjinib = &cfg._kernel_pdqinib_table[i];
         p_pdqcb.rwait_queue.initialize();
@@ -222,8 +298,7 @@ fn enqueuePridata(p_pdqcb: *PDQCB, data: usize, datapri: PRI) void {
     if (p_pdqcb.p_freelist) |p_freelist| {
         p_pdqmb = p_freelist;
         p_pdqcb.p_freelist = p_pdqmb.p_next;
-    }
-    else {
+    } else {
         p_pdqmb = &p_pdqcb.p_wobjinib.p_pdqmb.?[p_pdqcb.unused];
         p_pdqcb.unused += 1;
     }
@@ -236,8 +311,7 @@ fn enqueuePridata(p_pdqcb: *PDQCB, data: usize, datapri: PRI) void {
             p_pdqmb.p_next = p_next;
             break;
         }
-    }
-    else {
+    } else {
         p_pdqmb.p_next = null;
     }
     pp_prev_next.* = p_pdqmb;
@@ -270,12 +344,10 @@ fn sendPridata(p_pdqcb: *PDQCB, data: usize, datapri: PRI) bool {
         getWinfoRPdq(p_tcb.p_winfo).datapri = datapri;
         wait_complete(p_tcb);
         return true;
-    }
-    else if (p_pdqcb.count < p_pdqcb.p_wobjinib.pdqcnt) {
+    } else if (p_pdqcb.count < p_pdqcb.p_wobjinib.pdqcnt) {
         enqueuePridata(p_pdqcb, data, datapri);
         return true;
-    }
-    else {
+    } else {
         return false;
     }
 }
@@ -294,15 +366,13 @@ fn receivePridata(p_pdqcb: *PDQCB, p_data: *usize, p_datapri: *PRI) bool {
             wait_complete(p_tcb);
         }
         return true;
-    }
-    else if (!p_pdqcb.swait_queue.isEmpty()) {
+    } else if (!p_pdqcb.swait_queue.isEmpty()) {
         const p_tcb = getTCBFromQueue(p_pdqcb.swait_queue.deleteNext());
         p_data.* = getWinfoSPdq(p_tcb.p_winfo).data;
         p_datapri.* = getWinfoSPdq(p_tcb.p_winfo).datapri;
         wait_complete(p_tcb);
         return true;
-    }
-    else {
+    } else {
         return false;
     }
 }
@@ -312,32 +382,30 @@ fn receivePridata(p_pdqcb: *PDQCB, p_data: *usize, p_datapri: *PRI) bool {
 ///
 pub fn snd_pdq(pdqid: ID, data: usize, datapri: PRI) ItronError!void {
     traceLog("sndPdqEnter", .{ pdqid, data, datapri });
-    errdefer |err| traceLog("sndPdqLeave", .{ err });
+    errdefer |err| traceLog("sndPdqLeave", .{err});
     try checkDispatch();
     const p_pdqcb = try checkAndGetPdqCB(pdqid);
     try checkParameter(validDataPri(datapri, p_pdqcb.p_wobjinib.maxdpri));
     {
-        target_impl.lockCpuDsp();
-        defer target_impl.unlockCpuDsp();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpuDsp();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpuDsp();
 
-        if (p_runtsk.?.flags.raster) {
+        if (task.p_runtsk.?.flags.raster) {
             return ItronError.TerminationRequestRaised;
-        }
-        else if (sendPridata(p_pdqcb, data, datapri)) {
+        } else if (sendPridata(p_pdqcb, data, datapri)) {
             taskDispatch();
-        }
-        else {
+        } else {
             var winfo_spdq: WINFO_SPDQ = undefined;
             winfo_spdq.data = data;
             winfo_spdq.datapri = datapri;
             wobj_make_wait(p_pdqcb, TS_WAITING_SPDQ, &winfo_spdq);
-            target_impl.dispatch();
+            target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_spdq.winfo.werror) |werror| {
                 return werror;
             }
         }
     }
-    traceLog("sndPdqLeave", .{ null });
+    traceLog("sndPdqLeave", .{null});
 }
 
 ///
@@ -345,62 +413,56 @@ pub fn snd_pdq(pdqid: ID, data: usize, datapri: PRI) ItronError!void {
 ///
 pub fn psnd_pdq(pdqid: ID, data: usize, datapri: PRI) ItronError!void {
     traceLog("psndPdqEnter", .{ pdqid, data, datapri });
-    errdefer |err| traceLog("psndPdqLeave", .{ err });
+    errdefer |err| traceLog("psndPdqLeave", .{err});
     try checkContextUnlock();
     const p_pdqcb = try checkAndGetPdqCB(pdqid);
     try checkParameter(validDataPri(datapri, p_pdqcb.p_wobjinib.maxdpri));
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (sendPridata(p_pdqcb, data, datapri)) {
             requestTaskDispatch();
-        }
-        else {
+        } else {
             return ItronError.TimeoutError;
         }
     }
-    traceLog("psndPdqLeave", .{ null });
+    traceLog("psndPdqLeave", .{null});
 }
 
 ///
 ///  優先度データキューへの送信（タイムアウトあり）
 ///
-pub fn tsnd_pdq(pdqid: ID, data: usize, datapri: PRI,
-                tmout: TMO) ItronError!void {
+pub fn tsnd_pdq(pdqid: ID, data: usize, datapri: PRI, tmout: TMO) ItronError!void {
     traceLog("tSndPdqEnter", .{ pdqid, data, datapri, tmout });
-    errdefer |err| traceLog("tSndPdqLeave", .{ err });
+    errdefer |err| traceLog("tSndPdqLeave", .{err});
     try checkDispatch();
     const p_pdqcb = try checkAndGetPdqCB(pdqid);
     try checkParameter(validDataPri(datapri, p_pdqcb.p_wobjinib.maxdpri));
     try checkParameter(validTimeout(tmout));
     {
-        target_impl.lockCpuDsp();
-        defer target_impl.unlockCpuDsp();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpuDsp();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpuDsp();
 
-        if (p_runtsk.?.flags.raster) {
+        if (task.p_runtsk.?.flags.raster) {
             return ItronError.TerminationRequestRaised;
-        }
-        else if (sendPridata(p_pdqcb, data, datapri)) {
+        } else if (sendPridata(p_pdqcb, data, datapri)) {
             taskDispatch();
-        }
-        else if (tmout == TMO_POL) {
+        } else if (tmout == TMO_POL) {
             return ItronError.TimeoutError;
-        }
-        else {
+        } else {
             var winfo_spdq: WINFO_SPDQ = undefined;
             var tmevtb: TMEVTB = undefined;
             winfo_spdq.data = data;
             winfo_spdq.datapri = datapri;
-            wobj_make_wait_tmout(p_pdqcb, TS_WAITING_SPDQ, &winfo_spdq,
-                                 &tmevtb, tmout);
-            target_impl.dispatch();
+            wobj_make_wait_tmout(p_pdqcb, TS_WAITING_SPDQ, &winfo_spdq, &tmevtb, tmout);
+            target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_spdq.winfo.werror) |werror| {
                 return werror;
             }
         }
     }
-    traceLog("tSndPdqLeave", .{ null });
+    traceLog("tSndPdqLeave", .{null});
 }
 
 ///
@@ -412,19 +474,17 @@ pub fn rcv_pdq(pdqid: ID, p_data: *usize, p_datapri: *PRI) ItronError!void {
     try checkDispatch();
     const p_pdqcb = try checkAndGetPdqCB(pdqid);
     {
-        target_impl.lockCpuDsp();
-        defer target_impl.unlockCpuDsp();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpuDsp();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpuDsp();
 
-        if (p_runtsk.?.flags.raster) {
+        if (task.p_runtsk.?.flags.raster) {
             return ItronError.TerminationRequestRaised;
-        }
-        else if (receivePridata(p_pdqcb, p_data, p_datapri)) {
+        } else if (receivePridata(p_pdqcb, p_data, p_datapri)) {
             taskDispatch();
-        }
-        else {
+        } else {
             var winfo_rpdq: WINFO_RPDQ = undefined;
             wobj_make_rwait(p_pdqcb, TS_WAITING_RPDQ, &winfo_rpdq);
-            target_impl.dispatch();
+            target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_rpdq.winfo.werror) |werror| {
                 return werror;
             }
@@ -444,13 +504,12 @@ pub fn prcv_pdq(pdqid: ID, p_data: *usize, p_datapri: *PRI) ItronError!void {
     try checkContextTaskUnlock();
     const p_pdqcb = try checkAndGetPdqCB(pdqid);
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (receivePridata(p_pdqcb, p_data, p_datapri)) {
             taskDispatch();
-        }
-        else {
+        } else {
             return ItronError.TimeoutError;
         }
     }
@@ -460,32 +519,27 @@ pub fn prcv_pdq(pdqid: ID, p_data: *usize, p_datapri: *PRI) ItronError!void {
 ///
 ///  優先度データキューからの受信（タイムアウトあり）
 ///
-pub fn trcv_pdq(pdqid: ID, p_data: *usize, p_datapri: *PRI,
-                tmout: TMO) ItronError!void {
+pub fn trcv_pdq(pdqid: ID, p_data: *usize, p_datapri: *PRI, tmout: TMO) ItronError!void {
     traceLog("tRcvPdqEnter", .{ pdqid, p_data, p_datapri, tmout });
     errdefer |err| traceLog("tRcvPdqLeave", .{ err, p_data, p_datapri });
     try checkDispatch();
     const p_pdqcb = try checkAndGetPdqCB(pdqid);
     try checkParameter(validTimeout(tmout));
     {
-        target_impl.lockCpuDsp();
-        defer target_impl.unlockCpuDsp();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpuDsp();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpuDsp();
 
-        if (p_runtsk.?.flags.raster) {
+        if (task.p_runtsk.?.flags.raster) {
             return ItronError.TerminationRequestRaised;
-        }
-        else if (receivePridata(p_pdqcb, p_data, p_datapri)) {
+        } else if (receivePridata(p_pdqcb, p_data, p_datapri)) {
             taskDispatch();
-        }
-        else if (tmout == TMO_POL) {
+        } else if (tmout == TMO_POL) {
             return ItronError.TimeoutError;
-        }
-        else {
+        } else {
             var winfo_rpdq: WINFO_RPDQ = undefined;
             var tmevtb: TMEVTB = undefined;
-            wobj_make_rwait_tmout(p_pdqcb, TS_WAITING_RPDQ, &winfo_rpdq,
-                                  &tmevtb, tmout);
-            target_impl.dispatch();
+            wobj_make_rwait_tmout(p_pdqcb, TS_WAITING_RPDQ, &winfo_rpdq, &tmevtb, tmout);
+            target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_rpdq.winfo.werror) |werror| {
                 return werror;
             }
@@ -500,13 +554,13 @@ pub fn trcv_pdq(pdqid: ID, p_data: *usize, p_datapri: *PRI,
 ///  優先度データキューの再初期化
 ///
 pub fn ini_pdq(pdqid: ID) ItronError!void {
-    traceLog("iniPdqEnter", .{ pdqid });
-    errdefer |err| traceLog("iniPdqLeave", .{ err });
+    traceLog("iniPdqEnter", .{pdqid});
+    errdefer |err| traceLog("iniPdqLeave", .{err});
     try checkContextTaskUnlock();
     const p_pdqcb = try checkAndGetPdqCB(pdqid);
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         init_wait_queue(&p_pdqcb.swait_queue);
         init_wait_queue(&p_pdqcb.rwait_queue);
@@ -516,7 +570,7 @@ pub fn ini_pdq(pdqid: ID) ItronError!void {
         p_pdqcb.p_freelist = null;
         taskDispatch();
     }
-    traceLog("iniPdqLeave", .{ null });
+    traceLog("iniPdqLeave", .{null});
 }
 
 ///
@@ -528,8 +582,8 @@ pub fn ref_pdq(pdqid: ID, pk_rpdq: *T_RPDQ) ItronError!void {
     try checkContextTaskUnlock();
     const p_pdqcb = try checkAndGetPdqCB(pdqid);
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         pk_rpdq.stskid = wait_tskid(&p_pdqcb.swait_queue);
         pk_rpdq.rtskid = wait_tskid(&p_pdqcb.rwait_queue);
@@ -554,16 +608,17 @@ pub fn cre_pdq(comptime cpdq: T_CPDQ) ItronError!PDQINIB {
     try checkNotSupported(cpdq.pdqmb == null);
 
     // 優先度データキュー管理領域の確保
-    comptime const p_pdqmb = if (cpdq.pdqcnt == 0) null
-        else &struct {
-            var pdqmb: [cpdq.pdqcnt]PDQMB = undefined;
-        }.pdqmb;
+    const p_pdqmb = comptime if (cpdq.pdqcnt == 0) null else &struct {
+        var pdqmb: [cpdq.pdqcnt]PDQMB = undefined;
+    }.pdqmb;
 
     // 優先度データキュー初期化ブロックを返す
-    return PDQINIB{ .wobjatr = cpdq.pdqatr,
-                    .pdqcnt = cpdq.pdqcnt,
-                    .maxdpri = cpdq.maxdpri,
-                    .p_pdqmb = p_pdqmb, };
+    return PDQINIB{
+        .wobjatr = cpdq.pdqatr,
+        .pdqcnt = cpdq.pdqcnt,
+        .maxdpri = cpdq.maxdpri,
+        .p_pdqmb = p_pdqmb,
+    };
 }
 
 ///
@@ -577,8 +632,8 @@ pub fn ExportPdqCfg(pdqinib_table: []PDQINIB) type {
 
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする
-        pub export var _kernel_pdqcb_table:
-            [if (option.BIND_CFG == null or tnum_pdq > 0) tnum_pdq
-                 else 1]PDQCB = undefined;
+        pub export var _kernel_pdqcb_table: [
+            if (option.BIND_CFG == null or tnum_pdq > 0) tnum_pdq else 1
+        ]PDQCB = undefined;
     };
 }

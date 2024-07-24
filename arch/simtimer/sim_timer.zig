@@ -36,11 +36,27 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  タイマドライバシミュレータ
 ///
-usingnamespace @import("../../kernel/kernel_impl.zig");
+const kernel_impl = @import("../../kernel/kernel_impl.zig");
+
+////
+const zig = kernel_impl.zig;
+const t_stddef = zig.t_stddef;
+
+const target_impl = kernel_impl.target_impl;
+const HRTCNT = t_stddef.HRTCNT;
+const TSTEP_HRTCNT = zig.TSTEP_HRTCNT 
+const target_timer = kernel_impl.target_timer;
+const TCYC_HRTCNT = zig.TCYC_HRTCNT;
+const time_event = kernel_impl.time_event;
+const PRCTIM = t_stddef.PRCTIM;
+const overrun = kernel_impl.overrun;
+const TOPPERS_SUPPORT_OVRHDR = zig.TOPPERS_SUPPORT_OVRHDR;
+const ER = t_stddef.ER;
+const EXINF = t_stddef.EXINF;
+////
 
 ///
 ///  コンパイルオプションによるマクロ定義の取り込み
@@ -56,24 +72,27 @@ const HOOK_HRT_EVENT = @hasDecl(opt, "HOOK_HRT_EVENT");
 ///
 const SIMTIM_INIT_CURRENT =
     if (@hasDecl(target_impl, "SIMTIM_INIT_CURRENT"))
-         target_impl.SIMTIM_INIT_CURRENT
-    else 10;
+    target_impl.SIMTIM_INIT_CURRENT
+else
+    10;
 
 ///
 ///  高分解能タイマ割込みの受付オーバヘッド
 ///
 const SIMTIM_OVERHEAD_HRTINT =
     if (@hasDecl(target_impl, "SIMTIM_OVERHEAD_HRTINT"))
-         target_impl.SIMTIM_OVERHEAD_HRTINT
-    else 10;
+    target_impl.SIMTIM_OVERHEAD_HRTINT
+else
+    10;
 
 ///
 ///  オーバランタイマ割込みの受付オーバヘッド
 ///
 const SIMTIM_OVERHEAD_OVRINT =
     if (@hasDecl(target_impl, "SIMTIM_OVERHEAD_OVRINT"))
-         target_impl.SIMTIM_OVERHEAD_OVRINT
-    else 10;
+    target_impl.SIMTIM_OVERHEAD_OVRINT
+else
+    10;
 
 ///
 ///  テストのためのフックルーチン
@@ -91,10 +110,10 @@ const SIMTIM = u64;
 ///  タイマ割込みの発生時刻の設定状況
 ///
 const INT_EVENT = struct {
-    enable: bool,               // 発生時刻が設定されているか？
-    simtim: SIMTIM,             // 発生時刻
-    raise: fn() void,           // タイマ割込みの要求
-} ;
+    enable: bool, // 発生時刻が設定されているか？
+    simtim: SIMTIM, // 発生時刻
+    raise: fn () void, // タイマ割込みの要求
+};
 
 ///
 ///  現在のシミュレーション時刻
@@ -123,8 +142,8 @@ pub const hrt = struct {
     ///
     ///  高分解能タイマ割込みハンドラ登録のための定数
     ///
-    pub const INHNO_HRT  = target_timer.INHNO_HRT;
-    pub const INTNO_HRT  = target_timer.INTNO_HRT;
+    pub const INHNO_HRT = target_timer.INHNO_HRT;
+    pub const INTNO_HRT = target_timer.INTNO_HRT;
     pub const INTPRI_HRT = target_timer.INTPRI_HRT;
     pub const INTATR_HRT = target_timer.INTATR_HRT;
 
@@ -133,10 +152,8 @@ pub const hrt = struct {
     ///
     pub fn get_current() HRTCNT {
         if (TCYC_HRTCNT) |tcyc_hrtcnt| {
-            return @truncate(HRTCNT, truncate_simtim(current_simtim)
-                                         % tcyc_hrtcnt);
-        }
-        else {
+            return @truncate(HRTCNT, truncate_simtim(current_simtim) % tcyc_hrtcnt);
+        } else {
             return @truncate(HRTCNT, truncate_simtim(current_simtim));
         }
     }
@@ -186,10 +203,7 @@ pub const hrt = struct {
     ///  割込みタイミングに指定する最大値
     ///
     pub const HRTCNT_BOUND: ?comptime_int =
-        if (HRT_CONFIG1) 4000000002
-        else if (HRT_CONFIG2) 0x10000 * 9
-        else if (HRT_CONFIG3) null
-        else @compileError("");
+        if (HRT_CONFIG1) 4000000002 else if (HRT_CONFIG2) 0x10000 * 9 else if (HRT_CONFIG3) null else @compileError("");
 };
 
 ///
@@ -204,8 +218,8 @@ pub const ovrtimer = struct {
     ///
     ///  オーバランタイマ割込みハンドラ登録のための定数
     ///
-    pub const INHNO_OVRTIMER  = target_timer.INHNO_OVRTIMER;
-    pub const INTNO_OVRTIMER  = target_timer.INTNO_OVRTIMER;
+    pub const INHNO_OVRTIMER = target_timer.INHNO_OVRTIMER;
+    pub const INTNO_OVRTIMER = target_timer.INTNO_OVRTIMER;
     pub const INTPRI_OVRTIMER = target_timer.INTPRI_OVRTIMER;
     pub const INTATR_OVRTIMER = target_timer.INTATR_OVRTIMER;
 
@@ -217,8 +231,7 @@ pub const ovrtimer = struct {
             ovr_event.enable = false;
             select_event();
             target_timer.raise_ovrtimer_int();
-        }
-        else {
+        } else {
             ovr_event.enable = true;
             ovr_event.simtim = current_simtim + ovrtim;
             select_event();
@@ -237,8 +250,7 @@ pub const ovrtimer = struct {
 
         if (ovr_event.simtim <= current_simtim) {
             ovrtim = 0;
-        }
-        else {
+        } else {
             ovrtim = @intCast(PRCTIM, ovr_event.simtim - current_simtim);
         }
         ovr_event.enable = false;
@@ -253,8 +265,7 @@ pub const ovrtimer = struct {
     pub fn get_current() PRCTIM {
         if (ovr_event.simtim <= current_simtim) {
             return 0;
-        }
-        else {
+        } else {
             return @intCast(PRCTIM, ovr_event.simtim - current_simtim);
         }
     }
@@ -303,14 +314,10 @@ pub fn terminate() void {
 fn select_event() void {
     if (hrt_event.enable) {
         p_next_event = &hrt_event;
-    }
-    else {
+    } else {
         p_next_event = null;
     }
-    if (TOPPERS_SUPPORT_OVRHDR
-            and ovr_event.enable
-            and (p_next_event == null
-                     or ovr_event.simtim <= p_next_event.?.simtim)) {
+    if (TOPPERS_SUPPORT_OVRHDR and ovr_event.enable and (p_next_event == null or ovr_event.simtim <= p_next_event.?.simtim)) {
         p_next_event = &ovr_event;
     }
 }
@@ -319,8 +326,8 @@ fn select_event() void {
 ///  カーネルのアイドル処理
 ///
 fn custom_idle() void {
-    target_impl.lockCpu();
-    defer target_impl.unlockCpu();
+    target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+    defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
     if (p_next_event) |next_event| {
         current_simtim = next_event.simtim;
@@ -369,7 +376,7 @@ fn simtim_advance(time: c_uint) void {
         // ここで割込みを受け付ける．
         if (!locked) {
             _ = unl_cpu();
-            target_impl.delayForInterrupt();
+            target_impl.mpcore_kernel_impl.core_kernel_impl.delayForInterrupt();
             _ = loc_cpu();
         }
     }
@@ -412,11 +419,13 @@ pub const ExportDefs = struct {
     // タイマドライバシミュレータの起動処理
     export fn _kernel_target_timer_initialize(exinf: usize) void {
         initialize();
+        _ = exinf;
     }
 
     // タイマドライバシミュレータの停止処理
     export fn _kernel_target_timer_terminate(exinf: usize) void {
         terminate();
+        _ = exinf;
     }
 
     // 高分解能タイマ割込みハンドラ
@@ -443,7 +452,7 @@ pub const ExportDefs = struct {
         simtim_add(time);
     }
 
-    // シミュレートされた高分解能タイマ割込みの要求 
+    // シミュレートされた高分解能タイマ割込みの要求
     export fn _kernel_target_raise_hrt_int() void {
         target_timer.raise_hrt_int();
     }

@@ -5,7 +5,7 @@
 ///
 ///  チップ依存部（RZ/A1用）
 ///
-usingnamespace @import("../../arch/arm_gcc/rza1/chip_kernel.zig");
+const chip_kernel = @import("../../arch/arm_gcc/rza1/chip_kernel.zig");
 
 ///
 ///  高分解能タイマのタイマ周期

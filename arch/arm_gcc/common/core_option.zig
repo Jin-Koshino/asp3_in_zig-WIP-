@@ -1,7 +1,6 @@
 ///
 ///  コンフィギュレーションオプションのコア依存部（ARM用）
 ///
-
 ///
 ///  コアのハードウェア資源の定義
 ///
@@ -11,7 +10,11 @@ const arm = @import("arm.zig");
 ///  サンプルプログラム／テストプログラムのための定義
 ///
 pub const core_test = struct {
-    usingnamespace @import("../../../include/kernel.zig");
+    const zig = @import("../../../include/kernel.zig");
+
+    ////
+    const EXCNO_UNDEF = zig.publish.EXCNO_UNDEF;
+    ////
 
     ///
     /// ★未完成
@@ -30,9 +33,9 @@ pub const core_test = struct {
     ///  することで，未定義命令の次の命令から実行が継続する（ARMモード
     ///  で使うことを想定している）．
     ///
-    pub const CPUEXC1 = EXCNO_UNDEF;            // 未定義命令
+    pub const CPUEXC1 = EXCNO_UNDEF; // 未定義命令
     pub fn raiseCpuException() void {
-        asm volatile(".word 0xf0500090");
+        asm volatile (".word 0xf0500090");
     }
     pub fn prepareReturnCpuException() void {}
 };

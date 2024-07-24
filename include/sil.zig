@@ -38,11 +38,9 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  システムインタフェースレイヤ
 ///
-
 ///
 ///  コンフィギュレーションオプションの取り込み
 ///
@@ -58,14 +56,14 @@ const Endian = builtin.Endian;
 ///
 ///  ターゲット依存部
 ///
-const target = @import("../target/" ++ option.TARGET ++ "/target_sil.zig");
-
+///const target = @import("../target/" ++ option.TARGET ++ "/target_sil.zig");
+const target = @import("../target/ct11mpcore_gcc/target_sil.zig");
 ///
 ///  全割込みロック状態の制御
 ///
-pub const PRE_LOC = target.PRE_LOC;
-pub const LOC_INT = target.LOC_INT;
-pub const UNL_INT = target.UNL_INT;
+pub const PRE_LOC = target.core_sil.PRE_LOC;
+pub const LOC_INT = target.core_sil.LOC_INT;
+pub const UNL_INT = target.core_sil.UNL_INT;
 
 ///
 ///  微少時間待ち
@@ -75,7 +73,6 @@ pub const dly_nse = target.dly_nse;
 ///
 ///  メモリ空間アクセス関数
 ///
-
 ///
 ///  指定された型の単位の読出し／書込み
 ///
@@ -93,8 +90,7 @@ fn writeMemory(comptime T: type, mem: *T, data: T) void {
 pub fn reb_mem(mem: *const u8) u8 {
     if (@hasDecl(target, "reb_mem")) {
         return target.reb_mem(mem);
-    }
-    else {
+    } else {
         return readMemory(u8, mem);
     }
 }
@@ -102,8 +98,7 @@ pub fn reb_mem(mem: *const u8) u8 {
 pub fn wrb_mem(mem: *u8, data: u8) void {
     if (@hasDecl(target, "wrb_mem")) {
         target.wrb_mem(mem, data);
-    }
-    else {
+    } else {
         writeMemory(u8, mem, data);
     }
 }
@@ -114,8 +109,7 @@ pub fn wrb_mem(mem: *u8, data: u8) void {
 pub fn reh_mem(mem: *const u16) u16 {
     if (@hasDecl(target, "reh_mem")) {
         return target.reh_mem(mem);
-    }
-    else {
+    } else {
         return readMemory(u16, mem);
     }
 }
@@ -123,8 +117,7 @@ pub fn reh_mem(mem: *const u16) u16 {
 pub fn wrh_mem(mem: *u16, data: u16) void {
     if (@hasDecl(target, "wrh_mem")) {
         target.wrh_mem(mem, data);
-    }
-    else {
+    } else {
         writeMemory(u16, mem, data);
     }
 }
@@ -132,8 +125,7 @@ pub fn wrh_mem(mem: *u16, data: u16) void {
 pub fn reh_bem(mem: *const u16) u16 {
     if (@hasDecl(target, "reh_bem")) {
         return target.reh_bem(mem);
-    }
-    else {
+    } else {
         return switch (endian) {
             Endian.Big => readMemory(u16, mem),
             Endian.Little => @byteSwap(u16, readMemory(u16, mem)),
@@ -144,8 +136,7 @@ pub fn reh_bem(mem: *const u16) u16 {
 pub fn wrh_bem(mem: *u16, data: u16) void {
     if (@hasDecl(target, "wrh_bem")) {
         target.wrh_bem(mem, data);
-    }
-    else {
+    } else {
         switch (endian) {
             Endian.Big => writeMemory(u16, mem, data),
             Endian.Little => writeMemory(u16, mem, @byteSwap(u16, data)),
@@ -156,8 +147,7 @@ pub fn wrh_bem(mem: *u16, data: u16) void {
 pub fn reh_lem(mem: *const u16) u16 {
     if (@hasDecl(target, "reh_lem")) {
         return target.reh_lem(mem);
-    }
-    else {
+    } else {
         return switch (endian) {
             Endian.Big => @byteSwap(u16, readMemory(u16, mem)),
             Endian.Little => readMemory(u16, mem),
@@ -168,8 +158,7 @@ pub fn reh_lem(mem: *const u16) u16 {
 pub fn wrh_lem(mem: *u16, data: u16) void {
     if (@hasDecl(target, "wrh_lem")) {
         target.wrh_lem(mem, data);
-    }
-    else {
+    } else {
         switch (endian) {
             Endian.Big => writeMemory(u16, mem, @byteSwap(u16, data)),
             Endian.Little => writeMemory(u16, mem, data),
@@ -183,8 +172,7 @@ pub fn wrh_lem(mem: *u16, data: u16) void {
 pub fn rew_mem(mem: *const u32) u32 {
     if (@hasDecl(target, "rew_mem")) {
         return target.rew_mem(mem);
-    }
-    else {
+    } else {
         return readMemory(u32, mem);
     }
 }
@@ -192,8 +180,7 @@ pub fn rew_mem(mem: *const u32) u32 {
 pub fn wrw_mem(mem: *u32, data: u32) void {
     if (@hasDecl(target, "wrw_mem")) {
         target.wrw_mem(mem, data);
-    }
-    else {
+    } else {
         writeMemory(u32, mem, data);
     }
 }
@@ -201,8 +188,7 @@ pub fn wrw_mem(mem: *u32, data: u32) void {
 pub fn rew_bem(mem: *const u32) u32 {
     if (@hasDecl(target, "rew_bem")) {
         return target.rew_bem(mem);
-    }
-    else {
+    } else {
         return switch (endian) {
             Endian.Big => readMemory(u32, mem),
             Endian.Little => @byteSwap(u32, readMemory(u32, mem)),
@@ -213,8 +199,7 @@ pub fn rew_bem(mem: *const u32) u32 {
 pub fn wrw_bem(mem: *u32, data: u32) void {
     if (@hasDecl(target, "wrw_bem")) {
         target.wrw_bem(mem, data);
-    }
-    else {
+    } else {
         switch (endian) {
             Endian.Big => writeMemory(u32, mem, data),
             Endian.Little => writeMemory(u32, mem, @byteSwap(u32, data)),
@@ -225,8 +210,7 @@ pub fn wrw_bem(mem: *u32, data: u32) void {
 pub fn rew_lem(mem: *const u32) u32 {
     if (@hasDecl(target, "rew_lem")) {
         return target.rew_lem(mem);
-    }
-    else {
+    } else {
         return switch (endian) {
             Endian.Big => @byteSwap(u32, readMemory(u32, mem)),
             Endian.Little => readMemory(u32, mem),
@@ -237,8 +221,7 @@ pub fn rew_lem(mem: *const u32) u32 {
 pub fn wrw_lem(mem: *u32, data: u32) void {
     if (@hasDecl(target, "wrw_lem")) {
         target.wrw_lem(mem, data);
-    }
-    else {
+    } else {
         switch (endian) {
             Endian.Big => writeMemory(u32, mem, @byteSwap(u32, data)),
             Endian.Little => writeMemory(u32, mem, data),
@@ -252,10 +235,9 @@ pub fn wrw_lem(mem: *u32, data: u32) void {
 pub fn swrb_mem(mem: *u8, data: u8) void {
     if (@hasDecl(target, "swrb_mem")) {
         target.swrb_mem(mem, data);
-    }
-    else {
+    } else {
         wrb_mem(mem, data);
-        target.write_sync();
+        target.core_sil.write_sync();
     }
 }
 
@@ -265,30 +247,27 @@ pub fn swrb_mem(mem: *u8, data: u8) void {
 pub fn swrh_mem(mem: *u16, data: u16) void {
     if (@hasDecl(target, "swrh_mem")) {
         target.swrh_mem(mem, data);
-    }
-    else {
+    } else {
         wrh_mem(mem, data);
-        target.write_sync();
+        target.core_sil.write_sync();
     }
 }
 
 pub fn swrh_bem(mem: *u16, data: u16) void {
     if (@hasDecl(target, "swrh_bem")) {
         target.swrh_bem(mem, data);
-    }
-    else {
+    } else {
         wrh_bem(mem, data);
-        target.write_sync();
+        target.core_sil.write_sync();
     }
 }
 
 pub fn swrh_lem(mem: *u16, data: u16) void {
     if (@hasDecl(target, "swrh_lem")) {
         target.swrh_lem(mem, data);
-    }
-    else {
+    } else {
         wrh_lem(mem, data);
-        target.write_sync();
+        target.core_sil.write_sync();
     }
 }
 
@@ -298,29 +277,26 @@ pub fn swrh_lem(mem: *u16, data: u16) void {
 pub fn swrw_mem(mem: *u32, data: u32) void {
     if (@hasDecl(target, "swrw_mem")) {
         target.swrw_mem(mem, data);
-    }
-    else {
+    } else {
         wrw_mem(mem, data);
-        target.write_sync();
+        target.core_sil.write_sync();
     }
 }
 
 pub fn swrw_bem(mem: *u32, data: u32) void {
     if (@hasDecl(target, "swrw_bem")) {
         target.swrw_bem(mem, data);
-    }
-    else {
+    } else {
         wrw_bem(mem, data);
-        target.write_sync();
+        target.core_sil.write_sync();
     }
 }
 
 pub fn swrw_lem(mem: *u32, data: u32) void {
     if (@hasDecl(target, "swrw_lem")) {
         target.swrw_lem(mem, data);
-    }
-    else {
+    } else {
         wrw_lem(mem, data);
-        target.write_sync();
+        target.core_sil.write_sync();
     }
 }

@@ -37,12 +37,11 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  タイマドライバ
 ///  （CT11MPCore＋タイマドライバシミュレータ用）
 ///
-usingnamespace @import("../../kernel/kernel_impl.zig");
+const kernel_impl = @import("../../kernel/kernel_impl.zig");
 
 ///
 ///  ターゲットのハードウェア資源の定義
@@ -53,31 +52,31 @@ const mpcore = @import("../../arch/arm_gcc/common/mpcore.zig");
 ///
 ///  高分解能タイマ割込みハンドラ登録のための定数
 ///
-pub const INHNO_HRT  = mpcore.IRQNO_TMR;                // 割込みハンドラ番号
-pub const INTNO_HRT  = mpcore.IRQNO_TMR;                // 割込み番号
-pub const INTPRI_HRT = TMAX_INTPRI - 1;                 // 割込み優先度
-pub const INTATR_HRT = TA_NULL;                         // 割込み属性
+pub const INHNO_HRT = mpcore.IRQNO_TMR; // 割込みハンドラ番号
+pub const INTNO_HRT = mpcore.IRQNO_TMR; // 割込み番号
+pub const INTPRI_HRT = TMAX_INTPRI - 1; // 割込み優先度
+pub const INTATR_HRT = TA_NULL; // 割込み属性
 
 ///
 ///  オーバランタイマ割込みハンドラ登録のための定数
 ///
 pub const INHNO_OVRTIMER = ct11mpcore.EB_IRQNO_TIMER23; // 割込みハンドラ番号
 pub const INTNO_OVRTIMER = ct11mpcore.EB_IRQNO_TIMER23; // 割込み番号
-pub const INTPRI_OVRTIMER = INTPRI_HRT;                 // 割込み優先度
-pub const INTATR_OVRTIMER = TA_EDGE;                    // 割込み属性
+pub const INTPRI_OVRTIMER = INTPRI_HRT; // 割込み優先度
+pub const INTATR_OVRTIMER = TA_EDGE; // 割込み属性
 
 ///
 ///  シミュレートされた高分解能タイマ割込みの要求 
 ///
 pub fn raise_hrt_int() void {
-    target_impl.raiseInt(INTNO_HRT);
+    target_impl.mpcore_kernel_impl.gic_kernel_impl.raiseInt(INTNO_HRT);
 }
 
 ///
 ///  シミュレートされたオーバランタイマ割込みの要求
 ///
 pub fn raise_ovrtimer_int() void {
-    target_impl.raiseInt(INTNO_OVRTIMER);
+    target_impl.mpcore_kernel_impl.gic_kernel_impl.raiseInt(INTNO_OVRTIMER);
 }
 
 ///
@@ -88,7 +87,7 @@ pub fn raise_ovrtimer_int() void {
 ///  認）ため，クリアしない．
 ///
 pub fn clear_ovrtimer_int() void {
-//  target_impl.clearInt(INTNO_OVRTIMER);
+    //  target_impl.mpcore_kernel_impl.gic_kernel_impl.clearInt(INTNO_OVRTIMER);
 }
 
 ///

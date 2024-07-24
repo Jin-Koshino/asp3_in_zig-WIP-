@@ -835,9 +835,9 @@ $zigcfg = GenFile.new($outputFileName)
 $zigcfg.append(<<EOS)
 // #{$outputFileName}
 
-usingnamespace @import("../" ++ SRCDIR ++ "/kernel/kernel_cfg.zig");
+const kernel_cfg = @import("../../kernel/kernel_cfg.zig");
 
-usingnamespace @cImport({
+const c = @cImport({
     @cDefine("UINT_C(val)", "val");
 EOS
 
@@ -851,10 +851,131 @@ $cfgFileInfo.each do |cfgInfo|
 end
 $zigcfg.add2("});");
 
+# kernel_cfg内識別子の再定義（Zig0.9.0~）
+$apiNames = []
+
+$cfgFileInfo.each do |cfgInfo|
+  if cfgInfo.has_key?(:APINAME)
+    case cfgInfo[:APINAME]
+    when "CRE_TSK"
+      $apiNames.push('CTSK')
+    when "CRE_SEM"
+      $apiNames.push('CSEM')
+    when "CRE_FLG"
+      $apiNames.push('CFLG')
+    when "CRE_DTQ"
+      $apiNames.push('CDTQ')   
+    when "CRE_PDQ"
+      $apiNames.push('CPDQ')
+    when "CRE_MTX"
+      $apiNames.push('CMTX')
+    when "CRE_MPF"
+      $apiNames.push('CMPF')
+    when "CRE_CYC"
+      $apiNames.push('CCYC')
+    when "CRE_ALM"
+      $apiNames.push('CALM')
+    when "CFG_INT"
+      $apiNames.push('CINT')
+    when "CRE_ISR"
+      $apiNames.push('CISR')
+    when "DEF_INH"
+      $apiNames.push('DINH')
+    when "DEF_EXC"
+      $apiNames.push('DEXC')
+    when "DEF_ICS"
+      $apiNames.push('DICS')
+    when "ATT_INI"
+      $apiNames.push('AINI')
+    when "ATT_TER"
+      $apiNames.push('ATER')
+    end
+  end
+end
+$apiNames = $apiNames.uniq
+$apiNames.each do |name|
+  $zigcfg.add("const #{name} = kernel_cfg.#{name};")
+end
+
+$requireTA_ACT = false
+$requireTA_NULL = false
+$requiretTerminateRoutine_start = false
+$cfgFileInfo.each do |cfgInfo|
+  if cfgInfo.has_key?(:APINAME)
+    case cfgInfo[:APINAME]
+    when "CRE_TSK"
+      $requireTA_ACT = true
+      $zigcfg.add("const #{cfgInfo["task"]} = c.#{cfgInfo["task"]};")
+    when "CRE_SEM"
+      $requireTA_NULL = true
+
+    when "CRE_FLG"
+      
+    when "CRE_DTQ"
+
+    when "CRE_PDQ"
+
+    when "CRE_MTX"
+
+    when "CRE_MPF"
+      
+    when "CRE_CYC"
+      
+    when "CRE_ALM"
+      
+    when "CFG_INT"
+      $requireTA_NULL = true
+
+    when "CRE_ISR"
+      $requireTA_NULL = true
+      $zigcfg.add("const ct11mpcore = @import(\"../../target/ct11mpcore_gcc/ct11mpcore.zig\");")
+      $zigcfg.add("const #{cfgInfo["intno"]} = ct11mpcore.#{cfgInfo["intno"]};")
+      $zigcfg.add("const #{cfgInfo["isr"]} = c.#{cfgInfo["isr"]};")
+
+    when "DEF_INH"
+      
+    when "DEF_EXC"
+      
+    when "DEF_ICS"
+      
+    when "ATT_INI"
+      $requireTA_NULL = true
+      $zigcfg.add("const #{cfgInfo["inirtn"]} = c.#{cfgInfo["inirtn"]};")
+
+    when "ATT_TER"
+      $requireTA_NULL = true
+      $requiretTerminateRoutine_start = true
+    else
+      error_exit("`#{cfgInfo[:APINAME]}' is not supported")
+    end
+  end
+end
+
+if $requiretTerminateRoutine_start == true
+  $zigcfg.add("const tTerminateRoutine_start = c.tTerminateRoutine_start;")
+end
+
+if $requireTA_NULL == true
+  $zigcfg.add("const zig = kernel_cfg.zig;")
+  $zigcfg.add("const t_stddef = zig.t_stddef;")
+  if $requireTA_ACT == true
+    $zigcfg.add("const TA_ACT = zig.TA_ACT;")
+  end
+  $zigcfg.add("const TA_NULL = t_stddef.TA_NULL;")
+else
+  if $requireTA_ACT == true
+    $zigcfg.add("const zig = kernel_cfg.zig;")
+    $zigcfg.add("const TA_ACT = zig.TA_ACT;")
+  end
+end
+$zigcfg.add("const CfgData = kernel_cfg.CfgData;")
+$zigcfg.add
+
 # 拡張情報の対応記述の生成（Zigの不具合対応）
 $exinfTables.each do |exinfTable, _|
+  $zigcfg.add("const #{exinfTable} = c.#{exinfTable};")
   $zigcfg.add("const p_#{exinfTable}_tab = " \
-				"importSymbol([100]#{exinfTable}, \"#{exinfTable}_tab\");")
+				"kernel_cfg.importSymbol([100]#{exinfTable}, \"#{exinfTable}_tab\");")
 end
 $zigcfg.add
 # 通知ハンドラに対する拡張情報の対応記述の生成（Zigの不具合対応）

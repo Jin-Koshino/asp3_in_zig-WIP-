@@ -37,20 +37,56 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  オーバランハンドラ機能
 ///
-usingnamespace @import("kernel_impl.zig");
-usingnamespace task;
-usingnamespace check;
+const kernel_impl = @import("kernel_impl.zig");
+///usingnamespace task;
+const task = kernel_impl.task;
+///usingnamespace check;
+const check = kernel_impl.check;
+
+////
+const zig = kernel_impl.zig;
+const t_stddef = zig.t_stddef;
+
+const ATR = t_stddef.ATR;
+const OVRHDR = zig.OVRHDR;
+const TOPPERS_SUPPORT_OVRHDR = zig.TOPPERS_SUPPORT_OVRHDR;
+
+const target_timer = kernel_impl.target_timer;
+const ID = t_stddef.ID;
+const PRCTIM = t_stddef.PRCTIM;
+const ItronError = t_stddef.ItronError;
+const TCB = task.TCB;
+const traceLog = kernel_impl.traceLog;
+const checkNotSupported = check.checkNotSupported;
+const checkContextUnlock = check.checkContextUnlock;
+const checkObjectState = check.checkObjectState;
+const cfg = check.cfg;
+const TSK_SELF = zig.TSK_SELF;
+const target_impl = kernel_impl.target_impl;
+const checkAndGetTCB = task.checkAndGetTCB;
+const checkParameter = check.checkParameter;
+const TMAX_OVRTIM = zig.TMAX_OVRTIM;
+const T_ROVR = zig.T_ROVR;
+const checkContextTaskUnlock = check.checkContextTaskUnlock;
+const TOVR_STP = zig.TOVR_STP;
+const TOVR_STA = zig.TOVR_STA;
+const assert = t_stddef.assert;
+const getTskIdFromTCB = task.getTskIdFromTCB;
+const T_DOVR = zig.T_DOVR;
+const checkValidAtr = check.checkValidAtr;
+const TA_NULL = t_stddef.TA_NULL;
+const exportCheck = kernel_impl.exportCheck;
+////
 
 ///
 ///  オーバランハンドラ初期化ブロック
 ///
 pub const OVRINIB = struct {
-    ovratr: ATR,                // オーバランハンドラ属性
-    ovrhdr: ?OVRHDR,            // オーバランハンドラの起動番地
+    ovratr: ATR, // オーバランハンドラ属性
+    ovrhdr: ?OVRHDR, // オーバランハンドラの起動番地
 };
 
 ///
@@ -68,8 +104,8 @@ pub const ExternOvrIniB = struct {
 ///
 pub fn overrun_start() void {
     if (comptime TOPPERS_SUPPORT_OVRHDR) {
-        if (p_runtsk.?.flags.staovr) {
-            target_timer.ovrtimer.start(p_runtsk.?.leftotm);
+        if (task.p_runtsk.?.flags.staovr) {
+            target_timer.ovrtimer.start(task.p_runtsk.?.leftotm);
         }
     }
 }
@@ -79,8 +115,8 @@ pub fn overrun_start() void {
 ///
 pub fn overrun_stop() void {
     if (comptime TOPPERS_SUPPORT_OVRHDR) {
-        if (p_runtsk != null and p_runtsk.?.flags.staovr) {
-            p_runtsk.?.leftotm = target_timer.ovrtimer.stop();
+        if (task.p_runtsk != null and task.p_runtsk.?.flags.staovr) {
+            task.p_runtsk.?.leftotm = target_timer.ovrtimer.stop();
         }
     }
 }
@@ -92,22 +128,21 @@ pub fn sta_ovr(tskid: ID, ovrtim: PRCTIM) ItronError!void {
     var p_tcb: *TCB = undefined;
 
     traceLog("staOvrEnter", .{ tskid, ovrtim });
-    errdefer |err| traceLog("staOvrLeave", .{ err });
+    errdefer |err| traceLog("staOvrLeave", .{err});
     comptime try checkNotSupported(TOPPERS_SUPPORT_OVRHDR);
     try checkContextUnlock();
     try checkObjectState(cfg._kernel_ovrinib.ovrhdr != null);
-    if (tskid == TSK_SELF and !target_impl.senseContext()) {
-        p_tcb = p_runtsk.?;
-    }
-    else {
+    if (tskid == TSK_SELF and !target_impl.mpcore_kernel_impl.core_kernel_impl.senseContext()) {
+        p_tcb = task.p_runtsk.?;
+    } else {
         p_tcb = try checkAndGetTCB(tskid);
     }
     try checkParameter(0 < ovrtim and ovrtim <= TMAX_OVRTIM);
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
-        if (!target_impl.senseContext() and p_tcb == p_runtsk) {
+        if (!target_impl.mpcore_kernel_impl.core_kernel_impl.senseContext() and p_tcb == task.p_runtsk) {
             if (p_tcb.flags.staovr) {
                 _ = target_timer.ovrtimer.stop();
             }
@@ -116,7 +151,7 @@ pub fn sta_ovr(tskid: ID, ovrtim: PRCTIM) ItronError!void {
         p_tcb.flags.staovr = true;
         p_tcb.leftotm = ovrtim;
     }
-    traceLog("staOvrLeave", .{ null });
+    traceLog("staOvrLeave", .{null});
 }
 
 ///
@@ -125,29 +160,28 @@ pub fn sta_ovr(tskid: ID, ovrtim: PRCTIM) ItronError!void {
 pub fn stp_ovr(tskid: ID) ItronError!void {
     var p_tcb: *TCB = undefined;
 
-    traceLog("stpOvrEnter", .{ tskid });
-    errdefer |err| traceLog("stpOvrLeave", .{ err });
+    traceLog("stpOvrEnter", .{tskid});
+    errdefer |err| traceLog("stpOvrLeave", .{err});
     comptime try checkNotSupported(TOPPERS_SUPPORT_OVRHDR);
     try checkContextUnlock();
     try checkObjectState(cfg._kernel_ovrinib.ovrhdr != null);
-    if (tskid == TSK_SELF and !target_impl.senseContext()) {
-        p_tcb = p_runtsk.?;
-    }
-    else {
+    if (tskid == TSK_SELF and !target_impl.mpcore_kernel_impl.core_kernel_impl.senseContext()) {
+        p_tcb = task.p_runtsk.?;
+    } else {
         p_tcb = try checkAndGetTCB(tskid);
     }
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
-        if (!target_impl.senseContext() and p_tcb == p_runtsk) {
+        if (!target_impl.mpcore_kernel_impl.core_kernel_impl.senseContext() and p_tcb == task.p_runtsk) {
             if (p_tcb.flags.staovr) {
                 _ = target_timer.ovrtimer.stop();
             }
         }
         p_tcb.flags.staovr = false;
     }
-    traceLog("stpOvrLeave", .{ null });
+    traceLog("stpOvrLeave", .{null});
 }
 
 ///
@@ -162,25 +196,22 @@ pub fn ref_ovr(tskid: ID, pk_rovr: *T_ROVR) ItronError!void {
     try checkContextTaskUnlock();
     try checkObjectState(cfg._kernel_ovrinib.ovrhdr != null);
     if (tskid == TSK_SELF) {
-        p_tcb = p_runtsk.?;
-    }
-    else {
+        p_tcb = task.p_runtsk.?;
+    } else {
         p_tcb = try checkAndGetTCB(tskid);
     }
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (p_tcb.flags.staovr) {
             pk_rovr.ovrstat = TOVR_STA;
-            if (p_tcb == p_runtsk) {
+            if (p_tcb == task.p_runtsk) {
                 pk_rovr.leftotm = target_timer.ovrtimer.get_current();
-            }
-            else {
+            } else {
                 pk_rovr.leftotm = p_tcb.leftotm;
             }
-        }
-        else {
+        } else {
             pk_rovr.ovrstat = TOVR_STP;
         }
     }
@@ -192,25 +223,22 @@ pub fn ref_ovr(tskid: ID, pk_rovr: *T_ROVR) ItronError!void {
 ///
 pub fn call_ovrhdr() void {
     if (comptime TOPPERS_SUPPORT_OVRHDR) {
-        assert(target_impl.senseContext());
-        assert(!target_impl.senseLock());
+        assert(target_impl.mpcore_kernel_impl.core_kernel_impl.senseContext());
+        assert(!target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock());
         assert(cfg._kernel_ovrinib.ovrhdr != null);
 
-        target_impl.lockCpu();
-        if (p_runtsk != null and p_runtsk.?.flags.staovr
-                             and p_runtsk.?.leftotm == 0) {
-            p_runtsk.?.flags.staovr = false;
-            target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        if (task.p_runtsk != null and task.p_runtsk.?.flags.staovr and task.p_runtsk.?.leftotm == 0) {
+            task.p_runtsk.?.flags.staovr = false;
+            target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
-            traceLog("overrunEnter", .{ p_runtsk.? });
-            cfg._kernel_ovrinib.ovrhdr.?(getTskIdFromTCB(p_runtsk.?),
-                                         p_runtsk.?.p_tinib.exinf);
-            traceLog("overrunLeave", .{ p_runtsk.? });
-        }
-        else {
+            traceLog("overrunEnter", .{task.p_runtsk.?});
+            cfg._kernel_ovrinib.ovrhdr.?(getTskIdFromTCB(task.p_runtsk.?), task.p_runtsk.?.p_tinib.exinf);
+            traceLog("overrunLeave", .{task.p_runtsk.?});
+        } else {
             // このルーチンが呼び出される前に，オーバランハンドラの起
             // 動がキャンセルされた場合
-            target_impl.unlockCpu();
+            target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
         }
     }
 }
@@ -223,7 +251,10 @@ pub fn defineOverrun(dovr: T_DOVR) ItronError!OVRINIB {
     //（TA_NULLでない場合）
     try checkValidAtr(dovr.ovratr, TA_NULL);
 
-    return OVRINIB{ .ovratr = dovr.ovratr, .ovrhdr = dovr.ovrhdr, };
+    return OVRINIB{
+        .ovratr = dovr.ovratr,
+        .ovrhdr = dovr.ovrhdr,
+    };
 }
 
 ///
@@ -232,11 +263,13 @@ pub fn defineOverrun(dovr: T_DOVR) ItronError!OVRINIB {
 pub fn ExportOvrIniB(_ovrinib: ?OVRINIB) type {
     // チェック処理用の定義の生成
     exportCheck(@sizeOf(OVRHDR), "sizeof_OVRHDR");
-    exportCheck(@byteOffsetOf(OVRINIB, "ovrhdr"), "offsetof_OVRINIB_ovrhdr");
+    exportCheck(@offsetOf(OVRINIB, "ovrhdr"), "offsetof_OVRINIB_ovrhdr");
 
     return struct {
         export const _kernel_ovrinib =
-            if (_ovrinib) |ovrinib| ovrinib
-            else OVRINIB{ .ovratr = TA_NULL, .ovrhdr = null, };
+            if (_ovrinib) |ovrinib| ovrinib else OVRINIB{
+            .ovratr = TA_NULL,
+            .ovrhdr = null,
+        };
     };
 }

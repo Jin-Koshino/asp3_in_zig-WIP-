@@ -36,11 +36,9 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  コンフィギュレーションオプション
 ///
-
 ///
 ///  コンパイルオプションによるマクロ定義の取り込み
 ///
@@ -56,22 +54,22 @@ const TOPPERS_ENABLE_TRACE = @hasDecl(opt, "TOPPERS_ENABLE_TRACE");
 ///  トレースログ機能
 ///
 pub const log = if (TOPPERS_ENABLE_TRACE)
-        @import("../arch/tracelog/trace_option.zig")
-    else struct {
+    @import("../arch/tracelog/trace_option.zig")
+else
+    struct {
         pub const TraceExportDefs = struct {};
     };
 
 ///
 ///  ターゲット依存部
 ///
-pub const target = @import("../target/" ++ TARGET ++ "/target_option.zig");
+pub const target = @import("../target/ct11mpcore_gcc/target_option.zig");
 
 ///
 ///  ネームスペースnsにnameが定義されていればその値を返し，そうでない
 ///  場合はデフォルト値を返す関数
 ///
-pub fn decl(comptime T: type, comptime ns: type,
-            comptime name: []const u8, comptime default_value: T) T {
+pub fn decl(comptime T: type, comptime ns: type, comptime name: []const u8, comptime default_value: T) T {
     return if (@hasDecl(ns, name)) @field(ns, name) else default_value;
 }
 

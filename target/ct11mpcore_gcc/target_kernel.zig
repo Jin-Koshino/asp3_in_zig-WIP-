@@ -37,31 +37,32 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  kernel.zigのターゲット依存部（CT11MPCore用）
 ///
-
 ///
 ///  コア依存部
 ///
-usingnamespace @import("../../arch/arm_gcc/common/core_kernel.zig");
+const core_kernel = @import("../../arch/arm_gcc/common/core_kernel.zig");
+
+////
+const core_publish = core_kernel.core_publish;
+////
 
 ///
 ///  サポートできる機能の定義
 ///
-pub const TOPPERS_SUPPORT_ENA_INT = true;       // ena_int
-pub const TOPPERS_SUPPORT_DIS_INT = true;       // dis_int
-pub const TOPPERS_SUPPORT_CLR_INT = true;       // clr_int
-pub const TOPPERS_SUPPORT_RAS_INT = true;       // ras_int
-pub const TOPPERS_SUPPORT_PRB_INT = true;       // prb_int
+pub const TOPPERS_SUPPORT_ENA_INT = true; // ena_int
+pub const TOPPERS_SUPPORT_DIS_INT = true; // dis_int
+pub const TOPPERS_SUPPORT_CLR_INT = true; // clr_int
+pub const TOPPERS_SUPPORT_RAS_INT = true; // ras_int
+pub const TOPPERS_SUPPORT_PRB_INT = true; // prb_int
 pub const TOPPERS_SUPPORT_OVRHDR = true;
 
 ///
 ///  高分解能タイマのタイマ周期
 ///
 ///  TCYC_HRTCNTは定義しない．
-
 ///
 ///  高分解能タイマのカウント値の進み幅
 ///
@@ -70,8 +71,8 @@ pub const TSTEP_HRTCNT = 1;
 ///
 ///  割込み優先度の範囲
 ///
-pub const TMIN_INTPRI = -15;    // 割込み優先度の最小値（最高値）
-pub const TMAX_INTPRI = -1;     // 割込み優先度の最大値（最低値）
+pub const TMIN_INTPRI = -15; // 割込み優先度の最小値（最高値）
+pub const TMAX_INTPRI = -1; // 割込み優先度の最大値（最低値）
 
 ///
 ///  アプリケーションに直接見せる定義

@@ -37,15 +37,105 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  タスクの状態参照機能
 ///
-usingnamespace @import("kernel_impl.zig");
-usingnamespace task;
-usingnamespace wait;
-usingnamespace time_event;
-usingnamespace check;
+const kernel_impl = @import("kernel_impl.zig");
+///usingnamespace task;
+const task = kernel_impl.task;
+///usingnamespace wait;
+const wait = kernel_impl.wait;
+///usingnamespace time_event;
+const time_event = kernel_impl.time_event;
+///usingnamespace check;
+const check = kernel_impl.check;
+
+////
+const zig = kernel_impl.zig;
+const t_stddef = zig.t_stddef;
+
+const ATR = t_stddef.ATR;
+const checkWobjIniB = check.checkWobjIniB;
+const queue = kernel_impl.queue;
+const checkWobjCB = wait.checkWobjCB;
+const WINFO = wait.WINFO;
+const checkWinfoWobj = wait.checkWinfoWobj;
+const ID = t_stddef.ID;
+const TMIN_DTQID = kernel_impl.TMIN_DTQID;
+const cfg = kernel_impl.cfg;
+const ItronError = t_stddef.ItronError;
+const checkId = check.checkId;
+const getTCBFromQueue = task.getTCBFromQueue;
+const wait_complete = wait.wait_complete;
+const traceLog = kernel_impl.traceLog;
+const checkDispatch = check.checkDispatch;
+const target_impl = kernel_impl.target_impl;
+
+const taskDispatch = task.taskDispatch;
+const wobj_make_wait = wait.wobj_make_wait;
+const TS_WAITING_SDTQ = task.TS_WAITING_SDTQ;
+const checkContextUnlock = check.checkContextUnlock;
+const requestTaskDispatch = task.requestTaskDispatch;
+const TMO = t_stddef.TMO;
+const checkParameter = check.checkParameter;
+const validTimeout = check.validTimeout;
+const TMO_POL = t_stddef.TMO_POL;
+const TMEVTB = time_event.TMEVTB;
+const wobj_make_wait_tmout = wait.wobj_make_wait_tmout;
+const checkIllegalUse = check.checkIllegalUse;
+const wobj_make_rwait = wait.wobj_make_rwait;
+const TS_WAITING_RDTQ = task.TS_WAITING_RDTQ;
+const checkContextTaskUnlock = check.checkContextTaskUnlock;
+const wobj_make_rwait_tmout = wait.wobj_make_rwait_tmout;
+const init_wait_queue = wait.init_wait_queue;
+const T_RDTQ = zig.T_RDTQ;
+const wait_tskid = wait.wait_tskid;
+const T_CDTQ = zig.T_CDTQ;
+const checkValidAtr = check.checkValidAtr;
+const TA_TPRI = zig.TA_TPRI;
+const checkNotSupported = check.checkNotSupported;
+const option = kernel_impl.option;
+const TCB = task.TCB;
+const T_RTSK = zig.T_RTSK;
+const TS_WAITING_MASK = task.TS_WAITING_MASK;
+const TS_WAITING_SLP = task.TS_WAITING_SLP;
+const TTW_SLP = zig.TTW_SLP;
+const TS_WAITING_DLY = task.TS_WAITING_DLY;
+const TTW_DLY = zig.TTW_DLY;
+const TS_WAITING_SEM = task.TS_WAITING_SEM;
+const TTW_SEM = zig.TTW_SEM;
+const semaphore = kernel_impl.semaphore;
+const TS_WAITING_FLG = task.TS_WAITING_FLG;
+const TTW_FLG = zig.TTW_FLG;
+const eventflag = kernel_impl.eventflag;
+const TTW_SDTQ = zig.TTW_SDTQ;
+const dataqueue = kernel_impl.dataqueue;
+const TTW_RDTQ = zig.TTW_RDTQ;
+const TS_WAITING_SPDQ = task.TS_WAITING_SPDQ;
+const TTW_SPDQ = zig.TTW_SPDQ;
+const pridataq = kernel_impl.pridataq;
+const TS_WAITING_RPDQ = task.TS_WAITING_RPDQ;
+const TTW_RPDQ = zig.TTW_RPDQ;
+const TS_WAITING_MTX = task.TS_WAITING_MTX;
+const mutex = kernel_impl.mutex;
+const TS_WAITING_MPF = task.TS_WAITING_MPF;
+const TTW_MPF = zig.TTW_MPF;
+const mempfix = kernel_impl.mempfix;
+const TSK_SELF = zig.TSK_SELF;
+const checkAndGetTCB = task.checkAndGetTCB;
+const isDormant = task.isDormant;
+const TTS_DMT = zig.TTS_DMT;
+const isWaiting = task.isWaiting;
+const isSuspended = task.isSuspended;
+const TTS_WAS = zig.TTS_WAS;
+const TTS_WAI = zig.TTS_WAI;
+const tmevt_lefttim = time_event.tmevt_lefttim;
+const TMO_FEVR = t_stddef.TMO_FEVR;
+const TTS_SUS = zig.TTS_SUS;
+const TTS_RUN = zig.TTS_RUN;
+const TTS_RDY = zig.TTS_RDY;
+const externalTaskPrio = task.externalTaskPrio;
+////
 
 ///
 ///  待ち要因と待ち対象のオブジェクトのIDの取出し［NGKI1229］［NGKI1231］
@@ -101,29 +191,26 @@ pub fn ref_tsk(tskid: ID, pk_rtsk: *T_RTSK) ItronError!void {
 
     traceLog("refTskEnter", .{ tskid, pk_rtsk });
     errdefer |err| traceLog("refTskLeave", .{ err, pk_rtsk });
-    try checkContextTaskUnlock();               //［NGKI1218］［NGKI1219］
+    try checkContextTaskUnlock(); //［NGKI1218］［NGKI1219］
     if (tskid == TSK_SELF) {
-        p_tcb = p_runtsk.?;                     //［NGKI1248］
-    }
-    else {
-        p_tcb = try checkAndGetTCB(tskid);      //［NGKI1220］
+        p_tcb = task.p_runtsk.?; //［NGKI1248］
+    } else {
+        p_tcb = try checkAndGetTCB(tskid); //［NGKI1220］
     }
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         var tstat = p_tcb.tstat;
         if (isDormant(tstat)) {
             // 対象タスクが休止状態の場合［NGKI1225］
             pk_rtsk.tskstat = TTS_DMT;
-        }
-        else {
+        } else {
             // タスク状態の取出し［NGKI1225］
             if (isWaiting(tstat)) {
                 if (isSuspended(tstat)) {
                     pk_rtsk.tskstat = TTS_WAS;
-                }
-                else {
+                } else {
                     pk_rtsk.tskstat = TTS_WAI;
                 }
 
@@ -133,18 +220,15 @@ pub fn ref_tsk(tskid: ID, pk_rtsk: *T_RTSK) ItronError!void {
                 // タイムアウトするまでの時間の取出し
                 if (p_tcb.p_winfo.p_tmevtb) |p_tmevtb| {
                     pk_rtsk.lefttmo = @intCast(TMO, tmevt_lefttim(p_tmevtb));
-                }                               //［NGKI1233］［NGKI1235］
+                } //［NGKI1233］［NGKI1235］
                 else {
                     pk_rtsk.lefttmo = TMO_FEVR; //［NGKI1234］
                 }
-            }
-            else if (isSuspended(tstat)) {
+            } else if (isSuspended(tstat)) {
                 pk_rtsk.tskstat = TTS_SUS;
-            }
-            else if (p_tcb == p_runtsk) {
+            } else if (p_tcb == task.p_runtsk) {
                 pk_rtsk.tskstat = TTS_RUN;
-            }
-            else {
+            } else {
                 pk_rtsk.tskstat = TTS_RDY;
             }
 

@@ -1,7 +1,6 @@
 ///
 ///  sil.zigのコア依存部（ARM用）
 ///
-
 ///
 ///  用いるライブラリ
 ///
@@ -15,8 +14,7 @@ fn disint() u32 {
     const fiq_irq = cpsr & arm.CPSR_INT_MASK;
     if (comptime arm.isEnabled(arm.Feature.has_v6)) {
         arm.disable_fiq_irq();
-    }
-    else {
+    } else {
         cpsr |= arm.CPSR_FIQ_IRQ_BIT;
         arm.set_cpsr(cpsr);
     }
@@ -56,24 +54,21 @@ pub const write_sync = arm.data_sync_barrier;
 ///
 ///  微少時間待ち
 ///
-pub fn core_dly_nse(dlytim: usize, comptime dly_tim1: usize,
-                                   comptime dly_tim2: usize) void {
-    asm volatile(
+pub fn core_dly_nse(dlytim: usize, comptime dly_tim1: usize, comptime dly_tim2: usize) void {
+    asm volatile (
         \\ // dlytimはr0に入っている
         \\  mov r1, #0
         \\  mcr p15, 0, r1, c7, c5, 6   // 分岐予測全体の無効化
         ++ "\n" ++
-        arm.asm_inst_sync_barrier("r3")
+            arm.asm_inst_sync_barrier("r3") ++ "\n" ++
+            \\  subs r0, r0, %[dly_tim1]
+            \\  bxls lr
+            \\ .Lcore_dly_nse1:
+            \\  mcr p15, 0, r1, c7, c5, 6   // 分岐予測全体の無効化
         ++ "\n" ++
-        \\  subs r0, r0, %[dly_tim1]
-        \\  bxls lr
-        \\ .Lcore_dly_nse1:
-        \\  mcr p15, 0, r1, c7, c5, 6   // 分岐予測全体の無効化
-        ++ "\n" ++
-        arm.asm_inst_sync_barrier("r3")
-        ++ "\n" ++
-        \\  subs r0, r0, %[dly_tim2]
-        \\  bhi .Lcore_dly_nse1
+            arm.asm_inst_sync_barrier("r3") ++ "\n" ++
+            \\  subs r0, r0, %[dly_tim2]
+            \\  bhi .Lcore_dly_nse1
         :
         : [dlytim] "{r0}" (dlytim),
           [dly_tim1] "i" (dly_tim1),

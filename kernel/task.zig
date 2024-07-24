@@ -39,14 +39,60 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  タスク管理モジュール
 ///
-usingnamespace @import("kernel_impl.zig");
-usingnamespace wait;
-usingnamespace time_event;
-usingnamespace check;
+const kernel_impl = @import("kernel_impl.zig");
+///usingnamespace wait;
+const wait = kernel_impl.wait;
+///usingnamespace time_event;
+const time_event = kernel_impl.time_event;
+///usingnamespace check;
+const check = kernel_impl.check;
+
+////
+const zig = kernel_impl.zig;
+const t_stddef = zig.t_stddef;
+
+const decl = kernel_impl.decl;
+const ATR = t_stddef.ATR;
+const target_impl = kernel_impl.target_impl;
+const PRI = t_stddef.PRI;
+const TMIN_TPRI = zig.TMIN_TPRI;
+const TMAX_TPRI = zig.TMAX_TPRI;
+const prio_bitmap = kernel_impl.prio_bitmap;
+const TNUM_TPRI = kernel_impl.TNUM_TPRI;
+
+const queue = kernel_impl.queue;
+const TOPPERS_SUPPORT_OVRHDR = zig.TOPPERS_SUPPORT_OVRHDR;
+const WINFO = wait.WINFO;
+const mutex = kernel_impl.mutex;
+const PRCTIM = t_stddef.PRCTIM;
+const ID = t_stddef.ID;
+const TMIN_TSKID = kernel_impl.TMIN_TSKID;
+const ItronError = t_stddef.ItronError;
+const checkId = check.checkId;
+const cfg = kernel_impl.cfg;
+const TA_ACT = zig.TA_ACT;
+const assert = t_stddef.assert;
+const traceLog = kernel_impl.traceLog;
+const wobj_change_priority = wait.wobj_change_priority;
+const WINFO_WOBJ = wait.WINFO_WOBJ;
+const wait_dequeue_wobj = wait.wait_dequeue_wobj;
+const wait_dequeue_tmevtb = wait.wait_dequeue_tmevtb;
+const T_CTSK = zig.T_CTSK;
+const checkValidAtr = check.checkValidAtr;
+const TA_NOACTQUE = zig.TA_NOACTQUE;
+const checkParameter = check.checkParameter;
+const TOPPERS_ROUND_SZ = zig.TOPPERS_ROUND_SZ;
+const exportCheck = kernel_impl.exportCheck;
+const TSK_NONE = zig.TSK_NONE;
+const checkBit = check.checkBit;
+const TMEVTB = time_event.TMEVTB;
+const validTMEVTB = time_event.validTMEVTB;
+const wait_tmout = wait.wait_tmout;
+const wait_tmout_ok = wait.wait_tmout_ok;
+////
 
 ///
 ///  ターゲット依存のタスク属性
@@ -112,22 +158,22 @@ pub fn externalTaskPrio(prio: TaskPrio) PRI {
 ///  待ちキューにつながるものは10または11，それ以外の待ちキューにつな
 ///  がるものは01とする．
 ///
-pub const TS_DORMANT      = 0x00;           // 休止状態
-pub const TS_RUNNABLE     = 0x01;           // 実行できる状態
-pub const TS_SUSPENDED    = 0x02;           // 強制待ち状態
+pub const TS_DORMANT = 0x00; // 休止状態
+pub const TS_RUNNABLE = 0x01; // 実行できる状態
+pub const TS_SUSPENDED = 0x02; // 強制待ち状態
 
-pub const TS_WAITING_SLP  = (0x01 << 2);    // 起床待ち
-pub const TS_WAITING_DLY  = (0x02 << 2);    // 時間経過待ち
-pub const TS_WAITING_RDTQ = (0x08 << 2);    // データキューからの受信待ち
-pub const TS_WAITING_RPDQ = (0x09 << 2);    // 優先度データキューからの受信待ち
-pub const TS_WAITING_SEM  = (0x10 << 2);    // セマフォ資源の獲得待ち
-pub const TS_WAITING_FLG  = (0x11 << 2);    // イベントフラグ待ち
-pub const TS_WAITING_SDTQ = (0x12 << 2);    // データキューへの送信待ち
-pub const TS_WAITING_SPDQ = (0x13 << 2);    // 優先度データキューへの送信待ち
-pub const TS_WAITING_MTX  = (0x14 << 2);    // ミューテックスのロック待ち
-pub const TS_WAITING_MPF  = (0x15 << 2);    // 固定長メモリブロックの獲得待ち
+pub const TS_WAITING_SLP = (0x01 << 2); // 起床待ち
+pub const TS_WAITING_DLY = (0x02 << 2); // 時間経過待ち
+pub const TS_WAITING_RDTQ = (0x08 << 2); // データキューからの受信待ち
+pub const TS_WAITING_RPDQ = (0x09 << 2); // 優先度データキューからの受信待ち
+pub const TS_WAITING_SEM = (0x10 << 2); // セマフォ資源の獲得待ち
+pub const TS_WAITING_FLG = (0x11 << 2); // イベントフラグ待ち
+pub const TS_WAITING_SDTQ = (0x12 << 2); // データキューへの送信待ち
+pub const TS_WAITING_SPDQ = (0x13 << 2); // 優先度データキューへの送信待ち
+pub const TS_WAITING_MTX = (0x14 << 2); // ミューテックスのロック待ち
+pub const TS_WAITING_MPF = (0x15 << 2); // 固定長メモリブロックの獲得待ち
 
-pub const TS_WAITING_MASK = (0x1f << 2);    // 待ち状態の判別用マスク
+pub const TS_WAITING_MASK = (0x1f << 2); // 待ち状態の判別用マスク
 
 ///
 ///  タスク状態判別関数
@@ -187,16 +233,17 @@ pub fn isWaitingWobjCB(tstat: u8) bool {
 ///  についても同様に扱う．
 ///
 pub const TINIB = struct {
-    tskatr: ATR,                // タスク属性
-    exinf: EXINF,               // タスクの拡張情報
-    task: TASK,                 // タスクの起動番地
-    ipri: c_uint,               // タスクの起動時優先度（内部表現）
-    tskinictxb:                 // タスク初期化コンテキストブロック
-        if (@hasDecl(target_impl, "TSKINICTXB"))
-            target_impl.TSKINICTXB
-        else struct {
-            stksz: usize,       // スタック領域のサイズ（丸めた値）
-            stk: [*]u8,         // スタック領域
+    tskatr: kernel_impl.zig.t_stddef.ATR, // タスク属性
+    exinf: t_stddef.EXINF, // タスクの拡張情報
+    task: zig.TASK, // タスクの起動番地
+    ipri: c_uint, // タスクの起動時優先度（内部表現）
+    tskinictxb: // タスク初期化コンテキストブロック
+    if (@hasDecl(target_impl, "TSKINICTXB"))
+        target_impl.mpcore_kernel_impl.core_kernel_impl.TSKINICTXB
+    else
+        struct {
+            stksz: usize, // スタック領域のサイズ（丸めた値）
+            stk: [*]u8, // スタック領域
         },
 };
 
@@ -222,26 +269,26 @@ pub const TINIB = struct {
 ///         tskctxb
 ///
 pub const TCB = struct {
-    task_queue: queue.Queue,    // タスクキュー
-    p_tinib: *const TINIB,      // 初期化ブロックへのポインタ
+    task_queue: queue.Queue, // タスクキュー
+    p_tinib: *const TINIB, // 初期化ブロックへのポインタ
 
-    tstat: u8,                  // タスク状態（内部表現）
-    bprio: TaskPrio,            // ベース優先度（内部表現）
-    prio: TaskPrio,             // 現在の優先度（内部表現）
+    tstat: u8, // タスク状態（内部表現）
+    bprio: TaskPrio, // ベース優先度（内部表現）
+    prio: TaskPrio, // 現在の優先度（内部表現）
     flags: packed struct {
-        actque: u1,             // 起動要求キューイング
-        wupque: u1,             // 起床要求キューイング
-        raster: bool,           // タスク終了要求状態
-        enater: bool,           // タスク終了許可状態
+        actque: u1, // 起動要求キューイング
+        wupque: u1, // 起床要求キューイング
+        raster: bool, // タスク終了要求状態
+        enater: bool, // タスク終了許可状態
         staovr: if (TOPPERS_SUPPORT_OVRHDR) bool else void,
-                                // オーバランハンドラ動作状態
+        // オーバランハンドラ動作状態
     },
-    p_winfo: *WINFO,            // 待ち情報ブロックへのポインタ
-    p_lastmtx: ?*mutex.MTXCB,   // 最後にロックしたミューテックス */
+    p_winfo: *WINFO, // 待ち情報ブロックへのポインタ
+    p_lastmtx: ?*mutex.MTXCB, // 最後にロックしたミューテックス */
     leftotm: if (TOPPERS_SUPPORT_OVRHDR) PRCTIM else void,
-                                // 残りプロセッサ時間
-    tskctxb: target_impl.TSKCTXB,
-};                              // タスクコンテキストブロック
+    // 残りプロセッサ時間
+    tskctxb: target_impl.mpcore_kernel_impl.core_kernel_impl.TSKCTXB,
+}; // タスクコンテキストブロック
 
 ///
 ///  実行状態のタスク
@@ -361,8 +408,7 @@ pub fn getTIniB(tskid: ID) *const TINIB {
 ///  TCBからタスクIDを取り出すための関数
 ///
 pub fn getTskIdFromTCB(p_tcb: *TCB) ID {
-    return @intCast(ID, (@ptrToInt(p_tcb) - @ptrToInt(&cfg._kernel_tcb_table))
-                        / @sizeOf(TCB)) + TMIN_TSKID;
+    return @intCast(ID, (@ptrToInt(p_tcb) - @ptrToInt(&cfg._kernel_tcb_table)) / @sizeOf(TCB)) + TMIN_TSKID;
 }
 
 ///
@@ -375,9 +421,9 @@ pub fn getTCBFromQueue(p_entry: *queue.Queue) *TCB {
 ///
 ///  ミューテックス機能のためのフックルーチン
 ///
-pub var mtxhook_check_ceilpri: ?fn(p_tcb: *TCB, bprio: TaskPrio) bool = null;
-pub var mtxhook_scan_ceilmtx: ?fn(p_tcb: *TCB) bool = null;
-pub var mtxhook_release_all: ?fn(p_tcb: *TCB) void = null;
+pub var mtxhook_check_ceilpri: ?fn (p_tcb: *TCB, bprio: TaskPrio) bool = null;
+pub var mtxhook_scan_ceilmtx: ?fn (p_tcb: *TCB) bool = null;
+pub var mtxhook_release_all: ?fn (p_tcb: *TCB) void = null;
 
 ///
 ///  タスク管理モジュールの初期化
@@ -393,7 +439,7 @@ pub fn initialize_task() void {
     }
     ready_primap.initialize();
 
-    for (cfg._kernel_torder_table[0 .. cfg._kernel_tinib_table.len]) |tskid| {
+    for (cfg._kernel_torder_table[0..cfg._kernel_tinib_table.len]) |tskid| {
         const p_tcb = &cfg._kernel_tcb_table[indexTsk(tskid)];
         p_tcb.p_tinib = &cfg._kernel_tinib_table[indexTsk(tskid)];
         p_tcb.flags.actque = 0;
@@ -450,11 +496,9 @@ pub fn make_non_runnable(p_tcb: *TCB) void {
         ready_primap.clear(prio);
         if (p_schedtsk == p_tcb) {
             assert(dspflg);
-            p_schedtsk = if (ready_primap.isEmpty()) null
-                else searchSchedtsk();
+            p_schedtsk = if (ready_primap.isEmpty()) null else searchSchedtsk();
         }
-    }
-    else {
+    } else {
         if (p_schedtsk == p_tcb) {
             assert(dspflg);
             p_schedtsk = getTCBFromQueue(p_queue.p_next);
@@ -490,7 +534,7 @@ fn make_dormant(p_tcb: *TCB) void {
     if (TOPPERS_SUPPORT_OVRHDR) {
         p_tcb.flags.staovr = false;
     }
-    traceLog("taskStateChange", .{ p_tcb });
+    traceLog("taskStateChange", .{p_tcb});
 }
 
 ///
@@ -499,9 +543,9 @@ fn make_dormant(p_tcb: *TCB) void {
 ///  p_tcbで指定されるタスクの状態を休止状態から実行できる状態とする．
 ///
 pub fn make_active(p_tcb: *TCB) void {
-    target_impl.activateContext(p_tcb);
+    target_impl.mpcore_kernel_impl.core_kernel_impl.activateContext(p_tcb);
     p_tcb.tstat = TS_RUNNABLE;
-    traceLog("taskStateChange", .{ p_tcb });
+    traceLog("taskStateChange", .{p_tcb});
     make_runnable(p_tcb);
 }
 
@@ -527,8 +571,7 @@ pub fn change_priority(p_tcb: *TCB, newprio: TaskPrio, mtxmode: bool) void {
         }
         if (mtxmode) {
             ready_queue[newprio].insertNext(&p_tcb.task_queue);
-        }
-        else {
+        } else {
             ready_queue[newprio].insertPrev(&p_tcb.task_queue);
         }
         ready_primap.set(newprio);
@@ -538,20 +581,17 @@ pub fn change_priority(p_tcb: *TCB, newprio: TaskPrio, mtxmode: bool) void {
                 if (newprio >= oldprio) {
                     p_schedtsk = searchSchedtsk();
                 }
-            }
-            else {
+            } else {
                 if (newprio <= p_schedtsk.?.prio) {
                     p_schedtsk = getTCBFromQueue(ready_queue[newprio].p_next);
                 }
             }
         }
-    }
-    else {
+    } else {
         if (isWaitingWobjCB(p_tcb.tstat)) {
             // タスクが，同期・通信オブジェクトの管理ブロックの共通部
             // 分（WOBJCB）の待ちキューにつながれている場合
-            wobj_change_priority(@fieldParentPtr(WINFO_WOBJ, "winfo",
-                                             p_tcb.p_winfo).p_wobjcb, p_tcb);
+            wobj_change_priority(@fieldParentPtr(WINFO_WOBJ, "winfo", p_tcb.p_winfo).p_wobjcb, p_tcb);
         }
     }
 }
@@ -585,8 +625,7 @@ pub fn rotate_ready_queue(prio: TaskPrio) void {
 pub fn task_terminate(p_tcb: *TCB) void {
     if (isRunnable(p_tcb.tstat)) {
         make_non_runnable(p_tcb);
-    }
-    else if (isWaiting(p_tcb.tstat)) {
+    } else if (isWaiting(p_tcb.tstat)) {
         wait_dequeue_wobj(p_tcb);
         wait_dequeue_tmevtb(p_tcb);
     }
@@ -608,17 +647,16 @@ pub fn task_terminate(p_tcb: *TCB) void {
 ///
 pub fn taskDispatch() void {
     if (p_runtsk != p_schedtsk) {
-        target_impl.dispatch();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
     }
 }
 
 pub fn requestTaskDispatch() void {
     if (p_runtsk != p_schedtsk) {
-        if (!target_impl.senseContext()) {
-            target_impl.dispatch();
-        }
-        else {
-            target_impl.requestDispatchRetint();
+        if (!target_impl.mpcore_kernel_impl.core_kernel_impl.senseContext()) {
+            target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
+        } else {
+            target_impl.mpcore_kernel_impl.core_kernel_impl.requestDispatchRetint();
         }
     }
 }
@@ -630,7 +668,7 @@ pub fn cre_tsk(comptime ctsk: T_CTSK) ItronError!TINIB {
     // tskatrが無効の場合（E_RSATR）［NGKI1028］［NGKI3526］［ASPS0009］
     // ［NGKI1016］
     //（TA_ACT，TA_NOACTQUE，TARGET_TSKATR以外のビットがセットされている場合）
-    try checkValidAtr(ctsk.tskatr, TA_ACT|TA_NOACTQUE | TARGET_TSKATR);
+    try checkValidAtr(ctsk.tskatr, TA_ACT | TA_NOACTQUE | TARGET_TSKATR);
 
     // itskpriが有効範囲外の場合（E_PAR）［NGKI1034］
     //（TMIN_TPRI <= itskpri && itskpri <= TMAX_TPRIでない場合）
@@ -653,20 +691,24 @@ pub fn cre_tsk(comptime ctsk: T_CTSK) ItronError!TINIB {
     // この記述では，タスク毎に別々のスタック領域が割り当てられる保証
     // がない．コンパイラのバージョンが上がると，誤動作する可能性があ
     // る．
-    comptime const stksz = TOPPERS_ROUND_SZ(ctsk.stksz, STACK_ALIGN);
-    comptime const stk = if (ctsk.stk) |stk| stk
-        else &struct {
-            var stack: [stksz]u8 align(STACK_ALIGN) = undefined;
-        }.stack;
+    const stksz = comptime TOPPERS_ROUND_SZ(ctsk.stksz, STACK_ALIGN);
+    const stk = comptime if (ctsk.stk) |stk| stk else &struct {
+        var stack: [stksz]u8 align(STACK_ALIGN) = undefined;
+    }.stack;
 
     // タスク初期化ブロックを返す
-    return TINIB{ .tskatr = ctsk.tskatr,
-                  .exinf = ctsk.exinf,
-                  .task = ctsk.task,
-                  .ipri = internalTaskPrio(ctsk.itskpri),
-                  .tskinictxb = if (@hasDecl(target_impl, "TSKINICTXB"))
-                         target_impl.genTskIniCtxB(stksz, stk)
-                     else .{ .stksz = stksz, .stk = stk, }, };
+    return TINIB{
+        .tskatr = ctsk.tskatr,
+        .exinf = ctsk.exinf,
+        .task = ctsk.task,
+        .ipri = internalTaskPrio(ctsk.itskpri),
+        .tskinictxb = if (@hasDecl(target_impl, "TSKINICTXB"))
+            target_impl.genTskIniCtxB(stksz, stk)
+        else .{
+            .stksz = stksz,
+            .stk = stk,
+        },
+    };
 }
 
 ///
@@ -675,16 +717,14 @@ pub fn cre_tsk(comptime ctsk: T_CTSK) ItronError!TINIB {
 pub fn ExportTskCfg(tinib_table: []TINIB, torder_table: []ID) type {
     // チェック処理用の定義の生成
     exportCheck(@sizeOf(TINIB), "sizeof_TINIB");
-    exportCheck(@sizeOf(TASK), "sizeof_TASK");
-    exportCheck(@byteOffsetOf(TINIB, "task"), "offsetof_TINIB_task");
-    exportCheck(@byteOffsetOf(TINIB, "tskinictxb")
-                    + @byteOffsetOf(@TypeOf(tinib_table[0].tskinictxb), "stk"),
-                "offsetof_TINIB_stk");
+    exportCheck(@sizeOf(zig.TASK), "sizeof_TASK");
+    exportCheck(@offsetOf(TINIB, "task"), "offsetof_TINIB_task");
+    exportCheck(@offsetOf(TINIB, "tskinictxb") + @offsetOf(@TypeOf(tinib_table[0].tskinictxb), "stk"), "offsetof_TINIB_stk");
 
     const tnum_tsk = tinib_table.len;
     return struct {
         pub export const _kernel_tinib_table = tinib_table;
-        pub export const _kernel_torder_table = torder_table[0 .. tnum_tsk].*;
+        pub export const _kernel_torder_table = torder_table[0..tnum_tsk].*;
         pub export var _kernel_tcb_table: [tnum_tsk]TCB = undefined;
     };
 }
@@ -697,8 +737,7 @@ pub fn getTskId(info: usize) usize {
 
     if (@intToPtr(?*TCB, info)) |p_tcb| {
         tskid = getTskIdFromTCB(p_tcb);
-    }
-    else {
+    } else {
         tskid = TSK_NONE;
     }
     return @intCast(usize, tskid);
@@ -710,20 +749,16 @@ pub fn getTskStat(info: usize) usize {
     const tstat = @intCast(u8, info);
     if (isDormant(tstat)) {
         tstatstr = "DORMANT";
-    }
-    else {
+    } else {
         if (isSuspended(tstat)) {
             if (isWaiting(tstat)) {
                 tstatstr = "WAITING-SUSPENDED";
-            }
-            else {
+            } else {
                 tstatstr = "SUSPENDED";
             }
-        }
-        else if (isWaiting(tstat)) {
+        } else if (isWaiting(tstat)) {
             tstatstr = "WAITING";
-        }
-        else {
+        } else {
             tstatstr = "RUNNABLE";
         }
     }
@@ -733,13 +768,11 @@ pub fn getTskStat(info: usize) usize {
 ///
 ///  カーネルの整合性検査のための関数
 ///
-
 ///
 ///  TCBへのポインタのチェック
 ///
 pub fn validTCB(p_tcb: *TCB) bool {
-    if ((@ptrToInt(p_tcb) - @ptrToInt(&cfg._kernel_tcb_table))
-            % @sizeOf(TCB) != 0) {
+    if ((@ptrToInt(p_tcb) - @ptrToInt(&cfg._kernel_tcb_table)) % @sizeOf(TCB) != 0) {
         return false;
     }
     const tskid = getTskIdFromTCB(p_tcb);
@@ -752,11 +785,8 @@ pub fn validTCB(p_tcb: *TCB) bool {
 pub fn onStack(addr: usize, size: usize, p_tinib: *const TINIB) bool {
     if (@hasDecl(target_impl, "onStack")) {
         return target_impl.onStack(addr, size, p_tinib);
-    }
-    else {
-        return @ptrToInt(p_tinib.tskinictxb.stk) <= addr
-            and addr + size <= @ptrToInt(&p_tinib.tskinictxb.stk
-                                             [p_tinib.tskinictxb.stksz]);
+    } else {
+        return @ptrToInt(p_tinib.tskinictxb.stk) <= addr and addr + size <= @ptrToInt(&p_tinib.tskinictxb.stk[p_tinib.tskinictxb.stksz]);
     }
 }
 
@@ -766,8 +796,7 @@ pub fn onStack(addr: usize, size: usize, p_tinib: *const TINIB) bool {
 pub fn validTSKCTXB(p_tcb: *TCB) bool {
     if (@hasDecl(target_impl, "validTSKCTXB")) {
         return target_impl.validTSKCTXB(&p_tcb.tskctxb, p_tcb);
-    }
-    else {
+    } else {
         // spがアラインしているかをチェック
         if ((@ptrToInt(p_tcb.tskctxb.sp) & (CHECK_STACK_ALIGN - 1)) != 0) {
             return false;
@@ -789,8 +818,7 @@ fn bitSched() ItronError!void {
     if (dspflg) {
         if (ready_primap.isEmpty()) {
             try checkBit(p_schedtsk == null);
-        }
-        else {
+        } else {
             try checkBit(p_schedtsk == searchSchedtsk());
         }
     }
@@ -802,8 +830,7 @@ fn bitSched() ItronError!void {
     for (ready_queue) |*p_queue, prio| {
         if (p_queue.isEmpty()) {
             try checkBit(!ready_primap.isSet(@intCast(TaskPrio, prio)));
-        }
-        else {
+        } else {
             try checkBit(ready_primap.isSet(@intCast(TaskPrio, prio)));
         }
 
@@ -830,14 +857,11 @@ fn bitTCB(p_tcb: *TCB) ItronError!void {
     // tstatの整合性検査
     if (isDormant(tstat)) {
         try checkBit(tstat == TS_DORMANT);
-    }
-    else if (isWaiting(tstat)) {
+    } else if (isWaiting(tstat)) {
         try checkBit((tstat & ~@as(u8, TS_WAITING_MASK | TS_SUSPENDED)) == 0);
-    }
-    else if (isSuspended(tstat)) {
+    } else if (isSuspended(tstat)) {
         try checkBit(tstat == TS_SUSPENDED);
-    }
-    else {
+    } else {
         try checkBit(tstat == TS_RUNNABLE);
     }
 
@@ -873,13 +897,11 @@ fn bitTCB(p_tcb: *TCB) ItronError!void {
     if (isWaiting(tstat)) {
         var winfo_size: usize = undefined;
         if (p_tcb.p_winfo.p_tmevtb) |p_tmevtb| {
-            try checkBit(onStack(@ptrToInt(p_tmevtb),
-                                 @sizeOf(TMEVTB), p_tinib));
+            try checkBit(onStack(@ptrToInt(p_tmevtb), @sizeOf(TMEVTB), p_tinib));
             try checkBit(validTMEVTB(p_tmevtb));
             if ((tstat & TS_WAITING_MASK) != TS_WAITING_DLY) {
                 try checkBit(p_tmevtb.callback == wait_tmout);
-            }
-            else {
+            } else {
                 try checkBit(p_tmevtb.callback == wait_tmout_ok);
             }
             try checkBit(p_tmevtb.arg == @ptrToInt(p_tcb));
@@ -903,8 +925,8 @@ fn bitTCB(p_tcb: *TCB) ItronError!void {
             },
             // ★未完成
             else => {
-//                return ItronError.SystemError;
-            }
+                //                return ItronError.SystemError;
+            },
         }
 
         try checkBit(onStack(@ptrToInt(p_tcb.p_winfo), winfo_size, p_tinib));
@@ -929,7 +951,7 @@ pub fn bitTask() ItronError!void {
     try bitSched();
 
     // タスク毎の整合性検査
-    for (cfg._kernel_tcb_table[0 .. cfg._kernel_tinib_table.len]) |*p_tcb| {
+    for (cfg._kernel_tcb_table[0..cfg._kernel_tinib_table.len]) |*p_tcb| {
         try bitTCB(p_tcb);
     }
 }

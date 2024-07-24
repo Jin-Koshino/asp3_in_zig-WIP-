@@ -37,12 +37,10 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  kernel.zigのターゲット依存部
 ///  （CT11MPCore＋タイマドライバシミュレータ用）
 ///
-
 ///
 ///  コンパイルオプションによるマクロ定義の取り込み
 ///
@@ -54,22 +52,21 @@ const HRT_CONFIG3 = @hasDecl(opt, "HRT_CONFIG3");
 ///
 ///  コアで共通な定義
 ///
-usingnamespace @import("../../arch/arm_gcc/common/core_kernel.zig");
+const core_kernel = @import("../../arch/arm_gcc/common/core_kernel.zig");
 
 ///
 ///  サポートできる機能の定義
 ///
-pub const TOPPERS_SUPPORT_ENA_INT = true;       // ena_int
-pub const TOPPERS_SUPPORT_DIS_INT = true;       // dis_int
-pub const TOPPERS_SUPPORT_CLR_INT = true;       // clr_int
-pub const TOPPERS_SUPPORT_RAS_INT = true;       // ras_int
-pub const TOPPERS_SUPPORT_PRB_INT = true;       // prb_int
+pub const TOPPERS_SUPPORT_ENA_INT = true; // ena_int
+pub const TOPPERS_SUPPORT_DIS_INT = true; // dis_int
+pub const TOPPERS_SUPPORT_CLR_INT = true; // clr_int
+pub const TOPPERS_SUPPORT_RAS_INT = true; // ras_int
+pub const TOPPERS_SUPPORT_PRB_INT = true; // prb_int
 pub const TOPPERS_SUPPORT_OVRHDR = true;
 
 ///
 ///  高分解能タイマに関するパラメータ
 ///
-
 ///
 ///  1μ秒毎にカウントアップする32ビットタイマ
 ///
@@ -101,16 +98,13 @@ const hrt_config3 = struct {
     pub const TSTEP_HRTCNT = 1;
 };
 
-pub usingnamespace if (HRT_CONFIG1) hrt_config1
-              else if (HRT_CONFIG2) hrt_config2
-              else if (HRT_CONFIG3) hrt_config3
-              else @compileError("");
+pub usingnamespace if (HRT_CONFIG1) hrt_config1 else if (HRT_CONFIG2) hrt_config2 else if (HRT_CONFIG3) hrt_config3 else @compileError("");
 
 ///
 ///  割込み優先度の範囲
 ///
-pub const TMIN_INTPRI = -15;    // 割込み優先度の最小値（最高値）
-pub const TMAX_INTPRI = -1;     // 割込み優先度の最大値（最低値）
+pub const TMIN_INTPRI = -15; // 割込み優先度の最小値（最高値）
+pub const TMAX_INTPRI = -1; // 割込み優先度の最大値（最低値）
 
 ///
 ///  アプリケーションに直接見せる定義

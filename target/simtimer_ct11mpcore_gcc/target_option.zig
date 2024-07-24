@@ -3,4 +3,4 @@
 ///  （CT11MPCore＋タイマドライバシミュレータ用）
 ///
 
-pub usingnamespace @import("../ct11mpcore_gcc/target_option.zig");
+pub const target_option = @import("../ct11mpcore_gcc/target_option.zig");

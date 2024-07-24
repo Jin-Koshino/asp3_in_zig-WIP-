@@ -39,11 +39,24 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///		エラーチェック用関数
 ///
-usingnamespace @import("kernel_impl.zig");
+const kernel_impl = @import("kernel_impl.zig");
+
+////
+const zig = kernel_impl.zig;
+const t_stddef = zig.t_stddef;
+
+const RELTIM = t_stddef.RELTIM;
+const TMAX_RELTIM = t_stddef.TMAX_RELTIM;
+const TMO = t_stddef.TMO;
+const TMO_FEVR = t_stddef.TMO_FEVR;
+const ItronError = t_stddef.ItronError;
+const target_impl = kernel_impl.target_impl;
+const task = kernel_impl.task;
+const ATR = t_stddef.ATR;
+////
 
 ///
 ///  相対時間の範囲の判定
@@ -63,7 +76,7 @@ pub fn validTimeout(tmout: TMO) bool {
 ///  呼出しコンテキストのチェック（ContextError）
 ///
 pub fn checkContextTask() ItronError!void {
-    if (target_impl.senseContext()) {
+    if (target_impl.mpcore_kernel_impl.core_kernel_impl.senseContext()) {
         return ItronError.ContextError;
     }
 }
@@ -72,7 +85,7 @@ pub fn checkContextTask() ItronError!void {
 ///  CPUロック状態のチェック（ContextError）
 ///
 pub fn checkContextUnlock() ItronError!void {
-    if (target_impl.senseLock()) {
+    if (target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock()) {
         return ItronError.ContextError;
     }
 }
@@ -81,7 +94,7 @@ pub fn checkContextUnlock() ItronError!void {
 ///  呼出しコンテキストとCPUロック状態のチェック（ContextError）
 ///
 pub fn checkContextTaskUnlock() ItronError!void {
-    if (target_impl.senseContext() or target_impl.senseLock()) {
+    if (target_impl.mpcore_kernel_impl.core_kernel_impl.senseContext() or target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock()) {
         return ItronError.ContextError;
     }
 }
@@ -90,7 +103,7 @@ pub fn checkContextTaskUnlock() ItronError!void {
 ///  ディスパッチ保留状態でないかのチェック（ContextError）
 ///
 pub fn checkDispatch() ItronError!void {
-    if (target_impl.senseContext() or target_impl.senseLock() or !task.dspflg) {
+    if (target_impl.mpcore_kernel_impl.core_kernel_impl.senseContext() or target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock() or !task.dspflg) {
         return ItronError.ContextError;
     }
 }

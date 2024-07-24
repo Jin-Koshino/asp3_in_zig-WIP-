@@ -12,7 +12,7 @@ const abort = option.target.abort;
 ///
 ///  チップ依存部（Zynq7000用）
 ///
-pub usingnamespace @import("../../arch/arm_gcc/zynq7000/chip_kernel_impl.zig");
+pub const chip_kernel_impl = @import("../../arch/arm_gcc/zynq7000/chip_kernel_impl.zig");
 
 ///
 ///  用いるライブラリ

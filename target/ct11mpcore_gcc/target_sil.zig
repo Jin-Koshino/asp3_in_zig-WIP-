@@ -1,7 +1,6 @@
 ///
 ///  sil.zigのターゲット依存部（CT11MPCore用）
 ///
-
 ///
 ///  微少時間待ちのための定義
 ///
@@ -11,7 +10,11 @@ const DLY_TIM2 = 2;
 ///
 ///  コア依存部
 ///
-pub usingnamespace @import("../../arch/arm_gcc/common/core_sil.zig");
+pub const core_sil = @import("../../arch/arm_gcc/common/core_sil.zig");
+
+////
+const core_dly_nse = core_sil.core_dly_nse;
+////
 
 ///
 ///  微少時間待ち

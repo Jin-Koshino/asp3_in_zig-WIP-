@@ -1,7 +1,19 @@
 ///
 ///  タイマドライバ（CT11MPCore用）
 ///
-usingnamespace @import("../../kernel/kernel_impl.zig");
+const kernel_impl = @import("../../kernel/kernel_impl.zig");
+const option = kernel_impl.option;
+const sil = kernel_impl.sil;
+const overrun = kernel_impl.overrun;
+
+////
+const zig = kernel_impl.zig;
+const t_stddef = zig.t_stddef;
+
+const TMAX_INTPRI = zig.TMAX_INTPRI;
+const TA_NULL = t_stddef.TA_NULL;
+const EXINF = t_stddef.EXINF;
+////
 
 ///
 ///  コンフィギュレーションの定義の取り込み
@@ -19,6 +31,10 @@ const EB_IRQNO_TIMER01 = option.target.EB_IRQNO_TIMER01;
 ///  を実現する．
 ///
 const mpcore_timer = @import("../../arch/arm_gcc/common/mpcore_timer.zig");
+
+////
+const PRCTIM = mpcore_timer.PRCTIM;
+////
 
 ///
 ///  高分解能タイマドライバのインスタンシエート
@@ -49,23 +65,23 @@ fn SP804_RIS(base: usize) *u32 {
 fn SP804_MIS(base: usize) *u32 {
     return @intToPtr(*u32, base + 0x14);
 }
-fn SP804_BGLR(base: usize)*u32 {
+fn SP804_BGLR(base: usize) *u32 {
     return @intToPtr(*u32, base + 0x18);
 }
 
 ///
 ///  制御レジスタ（SP804_CR）の設定値
 ///
-const SP804_DISABLE       = 0x00;       // タイマディスエーブル
-const SP804_ENABLE        = 0x80;       // タイマイネーブル
-const SP804_INT_ENABLE    = 0x20;       // タイマ割込みイネーブル
-const SP804_MODE_FREERUN  = 0x00;       // フリーランニングモード
-const SP804_MODE_PERIODIC = 0x40;       // 周期モード
-const SP804_MODE_ONESHOT  = 0x01;       // ワンショットモード
-const SP804_SIZE_32       = 0x02;       // 32ビット
-const SP804_PRESCALE_1    = 0x00;       // プリスケーラ ×1
-const SP804_PRESCALE_16   = 0x04;       // プリスケーラ ×16
-const SP804_PRESCALE_256  = 0x08;       // プリスケーラ ×256
+const SP804_DISABLE = 0x00; // タイマディスエーブル
+const SP804_ENABLE = 0x80; // タイマイネーブル
+const SP804_INT_ENABLE = 0x20; // タイマ割込みイネーブル
+const SP804_MODE_FREERUN = 0x00; // フリーランニングモード
+const SP804_MODE_PERIODIC = 0x40; // 周期モード
+const SP804_MODE_ONESHOT = 0x01; // ワンショットモード
+const SP804_SIZE_32 = 0x02; // 32ビット
+const SP804_PRESCALE_1 = 0x00; // プリスケーラ ×1
+const SP804_PRESCALE_16 = 0x04; // プリスケーラ ×16
+const SP804_PRESCALE_256 = 0x08; // プリスケーラ ×256
 
 ///
 ///  オーバランタイマドライバ
@@ -74,19 +90,18 @@ pub const ovrtimer = struct {
     ///
     ///  オーバランタイマドライバで使用するタイマに関する指定
     ///
-    const TIMER_BASE  = EB_TIMER0_BASE;
+    const TIMER_BASE = EB_TIMER0_BASE;
     const TIMER_IRQNO = EB_IRQNO_TIMER01;
 
-    const SP804_CONFIG = SP804_INT_ENABLE | SP804_MODE_ONESHOT
-                       | SP804_SIZE_32 | SP804_PRESCALE_1;
+    const SP804_CONFIG = SP804_INT_ENABLE | SP804_MODE_ONESHOT | SP804_SIZE_32 | SP804_PRESCALE_1;
 
     ///
     ///  オーバランタイマ割込みハンドラ登録のための定数
     ///
-    pub const INHNO_OVRTIMER  = TIMER_IRQNO;    // 割込みハンドラ番号
-    pub const INTNO_OVRTIMER  = TIMER_IRQNO;    // 割込み番号
-    pub const INTPRI_OVRTIMER = TMAX_INTPRI;    // 割込み優先度
-    pub const INTATR_OVRTIMER = TA_NULL;        // 割込み属性
+    pub const INHNO_OVRTIMER = TIMER_IRQNO; // 割込みハンドラ番号
+    pub const INTNO_OVRTIMER = TIMER_IRQNO; // 割込み番号
+    pub const INTPRI_OVRTIMER = TMAX_INTPRI; // 割込み優先度
+    pub const INTATR_OVRTIMER = TA_NULL; // 割込み属性
 
     ///
     ///  オーバランタイマの初期化処理
@@ -113,8 +128,7 @@ pub const ovrtimer = struct {
     pub fn start(ovrtim: PRCTIM) void {
         if (TOPPERS_USE_QEMU and ovrtim == 0) {
             sil.wrw_mem(SP804_LR(TIMER_BASE), 1);
-        }
-        else {
+        } else {
             sil.wrw_mem(SP804_LR(TIMER_BASE), @as(u32, ovrtim));
         }
         sil.wrw_mem(SP804_CR(TIMER_BASE), SP804_ENABLE | SP804_CONFIG);
@@ -141,7 +155,7 @@ pub const ovrtimer = struct {
     ///
     pub fn handler() void {
         sil.wrw_mem(SP804_ICR(TIMER_BASE), 0);
-        overrun.call_ovrhdr();      // オーバランハンドラの起動処理
+        overrun.call_ovrhdr(); // オーバランハンドラの起動処理
     }
 };
 
@@ -155,11 +169,13 @@ pub const ExportDefs = struct {
     // 高分解能タイマの起動処理
     export fn _kernel_target_hrt_initialize(exinf: EXINF) void {
         hrt.initialize();
+        _ = exinf;
     }
 
     // 高分解能タイマの停止処理
     export fn _kernel_target_hrt_terminate(exinf: EXINF) void {
         hrt.terminate();
+        _ = exinf;
     }
 
     // 高分解能タイマ割込みハンドラ
@@ -170,11 +186,13 @@ pub const ExportDefs = struct {
     // オーバランタイマの初期化処理
     export fn _kernel_target_ovrtimer_initialize(exinf: EXINF) void {
         ovrtimer.initialize();
+        _ = exinf;
     }
 
     // オーバランタイマの停止処理
     export fn _kernel_target_ovrtimer_terminate(exinf: EXINF) void {
         ovrtimer.terminate();
+        _ = exinf;
     }
 
     // オーバランタイマ割込みハンドラ

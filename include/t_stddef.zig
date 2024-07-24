@@ -39,7 +39,6 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  TOPPERS共通定義ファイル
 ///
@@ -49,6 +48,7 @@
 ///  タ型，定数，関数の定義などを含む．
 ///
 const std = @import("std");
+const builtin = @import("builtin");
 
 ///
 ///  コンフィギュレーションオプションの取り込み
@@ -59,8 +59,8 @@ const isTrue = option.isTrue;
 ///
 ///  ターゲット依存部
 ///
-const target = @import("../target/" ++ option.TARGET ++ "/target_stddef.zig");
-
+///const target = @import("../target/" ++ option.TARGET ++ "/target_stddef.zig");
+const target = @import("../target/ct11mpcore_gcc/target_stddef.zig");
 ///
 ///  ターゲット依存の定義の取り込み
 ///
@@ -70,41 +70,47 @@ const USE_64BIT_HRTCNT = isTrue(target, "USE_64BIT_HRTCNT");
 ///
 ///  システムログ機能
 ///
-usingnamespace @import("t_syslog.zig");
+const t_syslog = @import("t_syslog.zig");
+
+////
+const arg = t_syslog.arg;
+const syslog = t_syslog.syslog;
+const LOG_EMERG = t_syslog.LOG_EMERG;
+////
 
 ///
 ///  共通データ型
 ///
-pub const FN = c_int;               // 機能コード
-pub const ER = c_int;               // エラーコード
-pub const ID = c_int;               // オブジェクトのID番号
-pub const ATR = c_uint;             // オブジェクトの属性
-pub const STAT = c_uint;            // オブジェクトの状態
-pub const MODE = c_uint;            // サービスコールの動作モード
-pub const PRI = c_int;              // 優先度
-pub const TMO = u32;                // タイムアウト指定
-pub const EXINF = ?*const c_void;   // 拡張情報（★Zigの制限に対応）
-pub const RELTIM = u32;             // 相対時間［NGKI0550］
+pub const FN = c_int; // 機能コード
+pub const ER = c_int; // エラーコード
+pub const ID = c_int; // オブジェクトのID番号
+pub const ATR = c_uint; // オブジェクトの属性
+pub const STAT = c_uint; // オブジェクトの状態
+pub const MODE = c_uint; // サービスコールの動作モード
+pub const PRI = c_int; // 優先度
+pub const TMO = u32; // タイムアウト指定
+pub const EXINF = ?*const anyopaque; // 拡張情報（★Zigの制限に対応）
+pub const RELTIM = u32; // 相対時間［NGKI0550］
 pub const SYSTIM = if (USE_64BIT_SYSTIM) u64 else u32;
-                                    // システム時刻［NGKI0548］
-pub const PRCTIM = u32;             // プロセッサ時間［NGKI0573］
+// システム時刻［NGKI0548］
+pub const PRCTIM = u32; // プロセッサ時間［NGKI0573］
 pub const HRTCNT = if (USE_64BIT_HRTCNT) u64 else u32;
-                                    // 高分解能タイマのカウント値
-pub const FP = fn() callconv(.C) void;
-                                    // プログラムの起動番地
+// 高分解能タイマのカウント値
+pub const FP = fn () callconv(.C) void;
+// プログラムの起動番地
 
-pub const ER_BOOL = c_int;          // エラーコードまたは真偽値
-pub const ER_ID = c_int;            // エラーコードまたはID番号
-pub const ER_UINT = c_int;          // エラーコードまたは符号無し整数
+pub const ER_BOOL = c_int; // エラーコードまたは真偽値
+pub const ER_ID = c_int; // エラーコードまたはID番号
+pub const ER_UINT = c_int; // エラーコードまたは符号無し整数
 
-pub const MB_T = usize;             // 管理領域を確保するためのデータ型
+pub const MB_T = usize; // 管理領域を確保するためのデータ型
 
-pub const ACPTN = u32;              // アクセス許可パターン
-pub const ACVCT = struct {          // アクセス許可ベクタ
-    acptn1: ACPTN,                  // 通常操作1のアクセス許可パターン
-    acptn2: ACPTN,                  // 通常操作2のアクセス許可パターン
-    acptn3: ACPTN,                  // 管理操作のアクセス許可パターン
-    acptn4: ACPTN,                  // 参照操作のアクセス許可パターン
+pub const ACPTN = u32; // アクセス許可パターン
+pub const ACVCT = struct { // アクセス許可ベクタ
+    acptn1: ACPTN, // 通常操作1のアクセス許可パターン
+    acptn2: ACPTN, // 通常操作2のアクセス許可パターン
+    acptn3: ACPTN, // 管理操作のアクセス許可パターン
+    acptn4: ACPTN, // 参照操作のアクセス許可パターン
 };
 
 ///
@@ -117,17 +123,12 @@ pub fn castToExinf(exinf: anytype) EXINF {
     return switch (@typeInfo(@TypeOf(exinf))) {
         .Null => null,
         .Bool => @intToPtr(EXINF, @boolToInt(exinf)),
-        .Int => |int|
-            @intToPtr(EXINF, if (int.signedness == .signed) sintToUsize(exinf)
-                             else exinf),
-        .ComptimeInt =>
-            @intToPtr(EXINF, if (exinf < 0) sintToUsize(exinf) else exinf),
+        .Int => |int| @intToPtr(EXINF, if (int.signedness == .signed) sintToUsize(exinf) else exinf),
+        .ComptimeInt => @intToPtr(EXINF, if (exinf < 0) sintToUsize(exinf) else exinf),
         .Enum => @intToPtr(EXINF, @enumToInt(arg)),
-        .Pointer => |pointer|
-            @ptrCast(EXINF, if (pointer.size == .Slice) exinf.ptr else exinf),
+        .Pointer => |pointer| @ptrCast(EXINF, if (pointer.size == .Slice) exinf.ptr else exinf),
         .Array => @ptrCast(EXINF, &exinf),
-        .Optional =>
-            if (exinf) |_exinf| castToExinf(_exinf) else @intToPtr(EXINF, 0),
+        .Optional => if (exinf) |_exinf| castToExinf(_exinf) else @intToPtr(EXINF, 0),
         else => @compileError("unsupported data type for castToExinf."),
     };
 }
@@ -138,18 +139,17 @@ pub fn castToExinf(exinf: anytype) EXINF {
 pub fn exinfToPtr(comptime T: type, exinf: EXINF) T {
     if (@typeInfo(T) == .Pointer) {
         return @intToPtr(T, @ptrToInt(exinf));
-    }
-    else {
+    } else {
         @compileError("unsupported data type for exinfToPtr.");
     }
 }
 pub fn exinfToInt(comptime T: type, exinf: EXINF) T {
     if (@typeInfo(T) == .Int) {
         return @intCast(T, if (@typeInfo(T).Int.signedness == .signed)
-                            @bitCast(isize, @ptrToInt(exinf))
-                            else @ptrToInt(exinf));
-    }
-    else {
+            @bitCast(isize, @ptrToInt(exinf))
+        else
+            @ptrToInt(exinf));
+    } else {
         @compileError("unsupported data type for exinfToInt.");
     }
 }
@@ -157,7 +157,7 @@ pub fn exinfToInt(comptime T: type, exinf: EXINF) T {
 ///
 ///  サービスコールにおけるエラー
 ///
-pub const ItronError = error {
+pub const ItronError = error{
     SystemError,
     NotSupported,
     ReservedFunction,
@@ -187,21 +187,20 @@ pub const ItronError = error {
 ///
 ///  オブジェクト属性
 ///
-pub const TA_NULL = 0;          // オブジェクト属性を指定しない
+pub const TA_NULL = 0; // オブジェクト属性を指定しない
 
 ///
 ///  タイムアウト指定
 ///
-pub const TMO_POL  = 0;                         // ポーリング
-pub const TMO_FEVR = std.math.maxInt(TMO);      // 永久待ち
-pub const TMO_NBLK = std.math.maxInt(TMO) - 1;  // ノンブロッキング
+pub const TMO_POL = 0; // ポーリング
+pub const TMO_FEVR = std.math.maxInt(TMO); // 永久待ち
+pub const TMO_NBLK = std.math.maxInt(TMO) - 1; // ノンブロッキング
 
 ///
 ///  エラーコード生成・分解マクロ
 ///
 pub fn ERCD(mercd: ER, sercd: ER) ER {
-    return @intCast(ER, (@bitCast(c_uint, sercd) << 8)
-                        | @intCast(u8, @bitCast(c_uint, mercd)));
+    return @intCast(ER, (@bitCast(c_uint, sercd) << 8) | @intCast(u8, @bitCast(c_uint, mercd)));
 }
 pub fn MERCD(ercd: ER) ER {
     return @intCast(ER, @truncate(i8, ercd));
@@ -213,25 +212,24 @@ pub fn SERCD(ercd: ER) ER {
 ///
 ///  アクセス許可パターン
 ///
-pub const TACP_KERNEL = @as(ACPTN, 0);  // カーネルドメインだけにアクセスを許可
+pub const TACP_KERNEL = @as(ACPTN, 0); // カーネルドメインだけにアクセスを許可
 pub const TACP_SHARED = ~@as(ACPTN, 0); // すべてのドメインからアクセスを許可
 
 // アクセス許可パターン生成マクロ
-pub fn TACP(domid: ID) ACPTN {          // domidだけにアクセスを許可
+pub fn TACP(domid: ID) ACPTN { // domidだけにアクセスを許可
     return @as(ACPTN, 1) << @intCast(u5, domid - 1);
 }
 
 ///
 ///  相対時間（RELTIM）に指定できる最大値［NGKI0551］
 ///
-pub const TMAX_RELTIM = 4000000000;     // 66分40秒まで指定可
+pub const TMAX_RELTIM = 4000000000; // 66分40秒まで指定可
 
 ///
 ///  assert（デバッグ用）
 ///
 noinline fn assert_fail() noreturn {
-    syslog(LOG_EMERG, "assertion failed at %x.\x07",
-                      .{ @returnAddress() - 4 });
+    syslog(LOG_EMERG, "assertion failed at %x.\x07", .{@returnAddress() - 4});
     target.assert_abort();
 }
 
@@ -245,11 +243,10 @@ pub fn assert(ok: bool) void {
 ///
 ///  panic（デバッグ用）
 ///
-pub noinline fn panic(message: []const u8,
-             stack_trace: ?*std.builtin.StackTrace) noreturn {
-    syslog(LOG_EMERG, "panic: %s at %x.\x07",
-                      .{ message, @returnAddress() - 4 });
+pub noinline fn panic(message: []const u8, stack_trace: ?*builtin.StackTrace) noreturn {
+    syslog(LOG_EMERG, "panic: %s at %x.\x07", .{ message, @returnAddress() - 4 });
     target.assert_abort();
+    _ = stack_trace;
 }
 
 ///
@@ -261,5 +258,5 @@ pub fn warn(comptime fmt: []const u8, args: anytype) void {
     buffer.reset();
     buffer.writer().print(fmt, args) catch {};
     buffer.buffer[buffer.pos] = 0;
-    syslog(LOG_EMERG, "%s", .{ buffer.buffer });
+    syslog(LOG_EMERG, "%s", .{buffer.buffer});
 }

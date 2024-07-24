@@ -39,21 +39,71 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  データキュー機能
 ///
-usingnamespace @import("kernel_impl.zig");
-usingnamespace task;
-usingnamespace wait;
-usingnamespace time_event;
-usingnamespace check;
+const kernel_impl = @import("kernel_impl.zig");
+///usingnamespace task;
+const task = kernel_impl.task;
+///usingnamespace wait;
+const wait = kernel_impl.wait;
+///usingnamespace time_event;
+const time_event = kernel_impl.time_event;
+///usingnamespace check;
+const check = kernel_impl.check;
+
+////
+const zig = kernel_impl.zig;
+const t_stddef = zig.t_stddef;
+
+const ATR = t_stddef.ATR;
+const checkWobjIniB = check.checkWobjIniB;
+const queue = kernel_impl.queue;
+const checkWobjCB = wait.checkWobjCB;
+const WINFO = wait.WINFO;
+const checkWinfoWobj = wait.checkWinfoWobj;
+const ID = t_stddef.ID;
+const TMIN_DTQID = kernel_impl.TMIN_DTQID;
+const cfg = kernel_impl.cfg;
+const ItronError = t_stddef.ItronError;
+const checkId = check.checkId;
+const getTCBFromQueue = task.getTCBFromQueue;
+const wait_complete = wait.wait_complete;
+const traceLog = kernel_impl.traceLog;
+const checkDispatch = check.checkDispatch;
+const target_impl = kernel_impl.target_impl;
+
+const taskDispatch = task.taskDispatch;
+const wobj_make_wait = wait.wobj_make_wait;
+const TS_WAITING_SDTQ = task.TS_WAITING_SDTQ;
+const checkContextUnlock = check.checkContextUnlock;
+const requestTaskDispatch = task.requestTaskDispatch;
+const TMO = t_stddef.TMO;
+const checkParameter = check.checkParameter;
+const validTimeout = check.validTimeout;
+const TMO_POL = t_stddef.TMO_POL;
+const TMEVTB = time_event.TMEVTB;
+const wobj_make_wait_tmout = wait.wobj_make_wait_tmout;
+const checkIllegalUse = check.checkIllegalUse;
+const wobj_make_rwait = wait.wobj_make_rwait;
+const TS_WAITING_RDTQ = task.TS_WAITING_RDTQ;
+const checkContextTaskUnlock = check.checkContextTaskUnlock;
+const wobj_make_rwait_tmout = wait.wobj_make_rwait_tmout;
+const init_wait_queue = wait.init_wait_queue;
+const T_RDTQ = zig.T_RDTQ;
+const wait_tskid = wait.wait_tskid;
+const T_CDTQ = zig.T_CDTQ;
+const checkValidAtr = check.checkValidAtr;
+const TA_TPRI = zig.TA_TPRI;
+const checkNotSupported = check.checkNotSupported;
+const option = kernel_impl.option;
+////
 
 ///
 ///  データ管理ブロック
 ///
 const DTQMB = struct {
-    data: usize,        // データ本体
+    data: usize, // データ本体
 };
 
 ///
@@ -64,14 +114,14 @@ const DTQMB = struct {
 ///  最初のフィールドが共通になっている．
 ///
 pub const DTQINIB = struct {
-    wobjatr: ATR,               // データキュー属性
-    dtqcnt: c_uint,             // データキューの容量
-    p_dtqmb: ?[*]DTQMB,         // データキュー管理領域
+    wobjatr: ATR, // データキュー属性
+    dtqcnt: c_uint, // データキューの容量
+    p_dtqmb: ?[*]DTQMB, // データキュー管理領域
 };
 
 // データキュー初期化ブロックのチェック
 comptime {
-    checkWobjIniB(DTQINIB);
+    wait.checkWobjIniB(DTQINIB);
 }
 
 ///
@@ -82,12 +132,12 @@ comptime {
 ///  最初の2つのフィールドが共通になっている．
 ///
 const DTQCB = struct {
-    swait_queue: queue.Queue,   // データキュー送信待ちキュー
+    swait_queue: queue.Queue, // データキュー送信待ちキュー
     p_wobjinib: *const DTQINIB, // 初期化ブロックへのポインタ
-    rwait_queue: queue.Queue,   // データキュー受信待ちキュー
-    count: c_uint,              // データキュー中のデータの数
-    head: c_uint,               // 最初のデータの格納場所
-    tail: c_uint,               // 最後のデータの格納場所の次
+    rwait_queue: queue.Queue, // データキュー受信待ちキュー
+    count: c_uint, // データキュー中のデータの数
+    head: c_uint, // 最初のデータの格納場所
+    tail: c_uint, // 最後のデータの格納場所の次
 };
 
 // データキュー管理ブロックのチェック
@@ -103,15 +153,15 @@ comptime {
 ///  で，最初の2つのフィールドが共通になっている．
 ///
 const WINFO_SDTQ = struct {
-    winfo: WINFO,               // 標準の待ち情報ブロック
-    p_wobjcb: *DTQCB,           // 待っているデータキューの管理ブロック
-    data: usize,                // 送信データ
+    winfo: WINFO, // 標準の待ち情報ブロック
+    p_wobjcb: *DTQCB, // 待っているデータキューの管理ブロック
+    data: usize, // 送信データ
 };
 
 const WINFO_RDTQ = struct {
-    winfo: WINFO,               // 標準の待ち情報ブロック
-    p_wobjcb: *DTQCB,           // 待っているデータキューの管理ブロック
-    data: usize,                // 受信データ
+    winfo: WINFO, // 標準の待ち情報ブロック
+    p_wobjcb: *DTQCB, // 待っているデータキューの管理ブロック
+    data: usize, // 受信データ
 };
 
 // データキュー待ち情報ブロックのチェック
@@ -158,9 +208,7 @@ fn checkAndGetDtqCB(dtqid: ID) ItronError!*DTQCB {
 ///  データキュー管理ブロックからデータキューIDを取り出すための関数
 ///
 pub fn getDtqIdFromDtqCB(p_dtqcb: *DTQCB) ID {
-    return @intCast(ID, (@ptrToInt(p_dtqcb)
-                             - @ptrToInt(&cfg._kernel_dtqcb_table))
-                        / @sizeOf(DTQCB)) + TMIN_DTQID;
+    return @intCast(ID, (@ptrToInt(p_dtqcb) - @ptrToInt(&cfg._kernel_dtqcb_table)) / @sizeOf(DTQCB)) + TMIN_DTQID;
 }
 
 ///
@@ -187,8 +235,7 @@ pub fn getDtqIdFromWinfoRDtq(p_winfo: *WINFO) ID {
 ///  データキュー機能の初期化
 ///
 pub fn initialize_dataqueue() void {
-    for (cfg._kernel_dtqcb_table[0 .. cfg._kernel_dtqinib_table.len])
-                                                        |*p_dtqcb, i| {
+    for (cfg._kernel_dtqcb_table[0..cfg._kernel_dtqinib_table.len]) |*p_dtqcb, i| {
         p_dtqcb.swait_queue.initialize();
         p_dtqcb.p_wobjinib = &cfg._kernel_dtqinib_table[i];
         p_dtqcb.rwait_queue.initialize();
@@ -221,8 +268,7 @@ fn forceEnqueueData(p_dtqcb: *DTQCB, data: usize) void {
     }
     if (p_dtqcb.count < p_dtqcb.p_wobjinib.dtqcnt) {
         p_dtqcb.count += 1;
-    }
-    else {
+    } else {
         p_dtqcb.head = p_dtqcb.tail;
     }
 }
@@ -248,12 +294,10 @@ fn sendData(p_dtqcb: *DTQCB, data: usize) bool {
         getWinfoRDtq(p_tcb.p_winfo).data = data;
         wait_complete(p_tcb);
         return true;
-    }
-    else if (p_dtqcb.count < p_dtqcb.p_wobjinib.dtqcnt) {
+    } else if (p_dtqcb.count < p_dtqcb.p_wobjinib.dtqcnt) {
         enqueueData(p_dtqcb, data);
         return true;
-    }
-    else {
+    } else {
         return false;
     }
 }
@@ -262,13 +306,11 @@ fn sendData(p_dtqcb: *DTQCB, data: usize) bool {
 ///  データキューへのデータ強制送信
 ///
 fn forceSendData(p_dtqcb: *DTQCB, data: usize) void {
-
     if (!p_dtqcb.rwait_queue.isEmpty()) {
         const p_tcb = getTCBFromQueue(p_dtqcb.rwait_queue.deleteNext());
         getWinfoRDtq(p_tcb.p_winfo).data = data;
         wait_complete(p_tcb);
-    }
-    else {
+    } else {
         forceEnqueueData(p_dtqcb, data);
     }
 }
@@ -286,14 +328,12 @@ fn receiveData(p_dtqcb: *DTQCB, p_data: *usize) bool {
             wait_complete(p_tcb);
         }
         return true;
-    }
-    else if (!p_dtqcb.swait_queue.isEmpty()) {
+    } else if (!p_dtqcb.swait_queue.isEmpty()) {
         const p_tcb = getTCBFromQueue(p_dtqcb.swait_queue.deleteNext());
         p_data.* = getWinfoSDtq(p_tcb.p_winfo).data;
         wait_complete(p_tcb);
         return true;
-    }
-    else {
+    } else {
         return false;
     }
 }
@@ -303,30 +343,28 @@ fn receiveData(p_dtqcb: *DTQCB, p_data: *usize) bool {
 ///
 pub fn snd_dtq(dtqid: ID, data: usize) ItronError!void {
     traceLog("sndDtqEnter", .{ dtqid, data });
-    errdefer |err| traceLog("sndDtqLeave", .{ err });
+    errdefer |err| traceLog("sndDtqLeave", .{err});
     try checkDispatch();
     const p_dtqcb = try checkAndGetDtqCB(dtqid);
     {
-        target_impl.lockCpuDsp();
-        defer target_impl.unlockCpuDsp();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpuDsp();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpuDsp();
 
-        if (p_runtsk.?.flags.raster) {
+        if (task.p_runtsk.?.flags.raster) {
             return ItronError.TerminationRequestRaised;
-        }
-        else if (sendData(p_dtqcb, data)) {
+        } else if (sendData(p_dtqcb, data)) {
             taskDispatch();
-        }
-        else {
+        } else {
             var winfo_sdtq: WINFO_SDTQ = undefined;
             winfo_sdtq.data = data;
             wobj_make_wait(p_dtqcb, TS_WAITING_SDTQ, &winfo_sdtq);
-            target_impl.dispatch();
+            target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_sdtq.winfo.werror) |werror| {
                 return werror;
             }
         }
     }
-    traceLog("sndDtqLeave", .{ null });
+    traceLog("sndDtqLeave", .{null});
 }
 
 ///
@@ -334,21 +372,20 @@ pub fn snd_dtq(dtqid: ID, data: usize) ItronError!void {
 ///
 pub fn psnd_dtq(dtqid: ID, data: usize) ItronError!void {
     traceLog("pSndDtqEnter", .{ dtqid, data });
-    errdefer |err| traceLog("pSndDtqLeave", .{ err });
+    errdefer |err| traceLog("pSndDtqLeave", .{err});
     try checkContextUnlock();
     const p_dtqcb = try checkAndGetDtqCB(dtqid);
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (sendData(p_dtqcb, data)) {
             requestTaskDispatch();
-        }
-        else {
+        } else {
             return ItronError.TimeoutError;
         }
     }
-    traceLog("pSndDtqLeave", .{ null });
+    traceLog("pSndDtqLeave", .{null});
 }
 
 ///
@@ -356,36 +393,32 @@ pub fn psnd_dtq(dtqid: ID, data: usize) ItronError!void {
 ///
 pub fn tsnd_dtq(dtqid: ID, data: usize, tmout: TMO) ItronError!void {
     traceLog("tSndDtqEnter", .{ dtqid, data, tmout });
-    errdefer |err| traceLog("tSndDtqLeave", .{ err });
+    errdefer |err| traceLog("tSndDtqLeave", .{err});
     try checkDispatch();
     const p_dtqcb = try checkAndGetDtqCB(dtqid);
     try checkParameter(validTimeout(tmout));
     {
-        target_impl.lockCpuDsp();
-        defer target_impl.unlockCpuDsp();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpuDsp();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpuDsp();
 
-        if (p_runtsk.?.flags.raster) {
+        if (task.p_runtsk.?.flags.raster) {
             return ItronError.TerminationRequestRaised;
-        }
-        else if (sendData(p_dtqcb, data)) {
+        } else if (sendData(p_dtqcb, data)) {
             taskDispatch();
-        }
-        else if (tmout == TMO_POL) {
+        } else if (tmout == TMO_POL) {
             return ItronError.TimeoutError;
-        }
-        else {
+        } else {
             var winfo_sdtq: WINFO_SDTQ = undefined;
             var tmevtb: TMEVTB = undefined;
             winfo_sdtq.data = data;
-            wobj_make_wait_tmout(p_dtqcb, TS_WAITING_SDTQ, &winfo_sdtq,
-                                 &tmevtb, tmout);
-            target_impl.dispatch();
+            wobj_make_wait_tmout(p_dtqcb, TS_WAITING_SDTQ, &winfo_sdtq, &tmevtb, tmout);
+            target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_sdtq.winfo.werror) |werror| {
                 return werror;
             }
         }
     }
-    traceLog("tSndDtqLeave", .{ null });
+    traceLog("tSndDtqLeave", .{null});
 }
 
 ///
@@ -393,18 +426,18 @@ pub fn tsnd_dtq(dtqid: ID, data: usize, tmout: TMO) ItronError!void {
 ///
 pub fn fsnd_dtq(dtqid: ID, data: usize) ItronError!void {
     traceLog("fSndDtqEnter", .{ dtqid, data });
-    errdefer |err| traceLog("fSndDtqLeave", .{ err });
+    errdefer |err| traceLog("fSndDtqLeave", .{err});
     try checkContextUnlock();
     const p_dtqcb = try checkAndGetDtqCB(dtqid);
     try checkIllegalUse(p_dtqcb.p_wobjinib.dtqcnt > 0);
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         forceSendData(p_dtqcb, data);
         requestTaskDispatch();
     }
-    traceLog("fSndDtqLeave", .{ null });
+    traceLog("fSndDtqLeave", .{null});
 }
 
 ///
@@ -416,19 +449,17 @@ pub fn rcv_dtq(dtqid: ID, p_data: *usize) ItronError!void {
     try checkDispatch();
     const p_dtqcb = try checkAndGetDtqCB(dtqid);
     {
-        target_impl.lockCpuDsp();
-        defer target_impl.unlockCpuDsp();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpuDsp();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpuDsp();
 
-        if (p_runtsk.?.flags.raster) {
+        if (task.p_runtsk.?.flags.raster) {
             return ItronError.TerminationRequestRaised;
-        }
-        else if (receiveData(p_dtqcb, p_data)) {
+        } else if (receiveData(p_dtqcb, p_data)) {
             taskDispatch();
-        }
-        else {
+        } else {
             var winfo_rdtq: WINFO_RDTQ = undefined;
             wobj_make_rwait(p_dtqcb, TS_WAITING_RDTQ, &winfo_rdtq);
-            target_impl.dispatch();
+            target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_rdtq.winfo.werror) |werror| {
                 return werror;
             }
@@ -447,13 +478,12 @@ pub fn prcv_dtq(dtqid: ID, p_data: *usize) ItronError!void {
     try checkContextTaskUnlock();
     const p_dtqcb = try checkAndGetDtqCB(dtqid);
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (receiveData(p_dtqcb, p_data)) {
             taskDispatch();
-        }
-        else {
+        } else {
             return ItronError.TimeoutError;
         }
     }
@@ -470,24 +500,20 @@ pub fn trcv_dtq(dtqid: ID, p_data: *usize, tmout: TMO) ItronError!void {
     const p_dtqcb = try checkAndGetDtqCB(dtqid);
     try checkParameter(validTimeout(tmout));
     {
-        target_impl.lockCpuDsp();
-        defer target_impl.unlockCpuDsp();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpuDsp();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpuDsp();
 
-        if (p_runtsk.?.flags.raster) {
+        if (task.p_runtsk.?.flags.raster) {
             return ItronError.TerminationRequestRaised;
-        }
-        else if (receiveData(p_dtqcb, p_data)) {
+        } else if (receiveData(p_dtqcb, p_data)) {
             taskDispatch();
-        }
-        else if (tmout == TMO_POL) {
+        } else if (tmout == TMO_POL) {
             return ItronError.TimeoutError;
-        }
-        else {
+        } else {
             var winfo_rdtq: WINFO_RDTQ = undefined;
             var tmevtb: TMEVTB = undefined;
-            wobj_make_rwait_tmout(p_dtqcb, TS_WAITING_RDTQ, &winfo_rdtq,
-                                  &tmevtb, tmout);
-            target_impl.dispatch();
+            wobj_make_rwait_tmout(p_dtqcb, TS_WAITING_RDTQ, &winfo_rdtq, &tmevtb, tmout);
+            target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_rdtq.winfo.werror) |werror| {
                 return werror;
             }
@@ -501,13 +527,13 @@ pub fn trcv_dtq(dtqid: ID, p_data: *usize, tmout: TMO) ItronError!void {
 ///  データキューの再初期化
 ///
 pub fn ini_dtq(dtqid: ID) ItronError!void {
-    traceLog("iniDtqEnter", .{ dtqid });
-    errdefer |err| traceLog("iniDtqLeave", .{ err });
+    traceLog("iniDtqEnter", .{dtqid});
+    errdefer |err| traceLog("iniDtqLeave", .{err});
     try checkContextTaskUnlock();
     const p_dtqcb = try checkAndGetDtqCB(dtqid);
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         init_wait_queue(&p_dtqcb.swait_queue);
         init_wait_queue(&p_dtqcb.rwait_queue);
@@ -516,7 +542,7 @@ pub fn ini_dtq(dtqid: ID) ItronError!void {
         p_dtqcb.tail = 0;
         taskDispatch();
     }
-    traceLog("iniDtqLeave", .{ null });
+    traceLog("iniDtqLeave", .{null});
 }
 
 ///
@@ -528,8 +554,8 @@ pub fn ref_dtq(dtqid: ID, pk_rdtq: *T_RDTQ) ItronError!void {
     try checkContextTaskUnlock();
     const p_dtqcb = try checkAndGetDtqCB(dtqid);
     {
-        target_impl.lockCpu();
-        defer target_impl.unlockCpu();
+        target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
+        defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         pk_rdtq.stskid = wait_tskid(&p_dtqcb.swait_queue);
         pk_rdtq.rtskid = wait_tskid(&p_dtqcb.rwait_queue);
@@ -550,15 +576,16 @@ pub fn cre_dtq(comptime cdtq: T_CDTQ) ItronError!DTQINIB {
     try checkNotSupported(cdtq.dtqmb == null);
 
     // データキュー管理領域の確保
-    comptime const p_dtqmb = if (cdtq.dtqcnt == 0) null
-        else &struct {
-            var dtqmb: [cdtq.dtqcnt]DTQMB = undefined;
-        }.dtqmb;
+    const p_dtqmb = comptime if (cdtq.dtqcnt == 0) null else &struct {
+        var dtqmb: [cdtq.dtqcnt]DTQMB = undefined;
+    }.dtqmb;
 
     // データキュー初期化ブロックを返す
-    return DTQINIB{ .wobjatr = cdtq.dtqatr,
-                    .dtqcnt = cdtq.dtqcnt,
-                    .p_dtqmb = p_dtqmb, };
+    return DTQINIB{
+        .wobjatr = cdtq.dtqatr,
+        .dtqcnt = cdtq.dtqcnt,
+        .p_dtqmb = p_dtqmb,
+    };
 }
 
 ///
@@ -567,13 +594,14 @@ pub fn cre_dtq(comptime cdtq: T_CDTQ) ItronError!DTQINIB {
 ///
 pub fn ExportDtqCfg(dtqinib_table: []DTQINIB) type {
     const tnum_dtq = dtqinib_table.len;
+    defer _ = tnum_dtq;
     return struct {
         pub export const _kernel_dtqinib_table = dtqinib_table;
 
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする
-        pub export var _kernel_dtqcb_table:
-            [if (option.BIND_CFG == null or tnum_dtq > 0) tnum_dtq
-                 else 1]DTQCB = undefined;
+        pub export var _kernel_dtqcb_table: [
+            if (option.BIND_CFG == null or tnum_dtq > 0) tnum_dtq else 1
+        ]DTQCB = undefined;
     };
 }

@@ -1,7 +1,12 @@
 ///
 ///  カーネルのターゲット依存部（CT11MPCore用）
 ///
-usingnamespace @import("../../kernel/kernel_impl.zig");
+const kernel_impl = @import("../../kernel/kernel_impl.zig");
+
+////
+const option = kernel_impl.option;
+const sil = kernel_impl.sil;
+////
 
 ///
 ///  コンフィギュレーションオプションの取り込み
@@ -19,7 +24,15 @@ pub const DEFAULT_ISTKSZ = 0x2000;
 ///
 ///  MPCore依存部
 ///
-pub usingnamespace @import("../../arch/arm_gcc/common/mpcore_kernel_impl.zig");
+pub const mpcore_kernel_impl = @import("../../arch/arm_gcc/common/mpcore_kernel_impl.zig");
+
+////
+const ARM_MMU_CONFIG = mpcore_kernel_impl.core_kernel_impl.ARM_MMU_CONFIG;
+const mpcore_initialize = mpcore_kernel_impl.mpcore_initialize;
+const mpcore_terminate = mpcore_kernel_impl.mpcore_terminate;
+const arm_fpu_initialize = mpcore_kernel_impl.arm_fpu_initialize;
+const CoreExportDefs = mpcore_kernel_impl.core_kernel_impl.CoreExportDefs;
+////
 
 ///
 ///  ターゲットのハードウェア資源の定義
@@ -42,61 +55,51 @@ const arm = @import("../../arch/arm_gcc/common/arm.zig");
 ///
 ///  (*) Private Memory Regionの先頭番地は，ボードの設定で変更できる．
 ///
-
 ///
 ///  MMUへの設定属性（第1レベルディスクリプタ）
 ///
-pub const MMU_ATTR_RAM    = arm.MMU_DSCR1_SHARED | arm.MMU_DSCR1_TEX001
-                          | arm.V6_MMU_DSCR1_AP011 | arm.MMU_DSCR1_CB11;
-pub const MMU_ATTR_IODEV  = arm.MMU_DSCR1_SHARED | arm.MMU_DSCR1_TEX000
-                          | arm.V6_MMU_DSCR1_AP011 | arm.MMU_DSCR1_CB01
-                          | arm.V6_MMU_DSCR1_NOEXEC;
-pub const MMU_ATTR_VECTOR = arm.MMU_DSCR1_TEX001 | arm.V6_MMU_DSCR1_AP011
-                          | arm.MMU_DSCR1_CB11;
+pub const MMU_ATTR_RAM = arm.MMU_DSCR1_SHARED | arm.MMU_DSCR1_TEX001 | arm.V6_MMU_DSCR1_AP011 | arm.MMU_DSCR1_CB11;
+pub const MMU_ATTR_IODEV = arm.MMU_DSCR1_SHARED | arm.MMU_DSCR1_TEX000 | arm.V6_MMU_DSCR1_AP011 | arm.MMU_DSCR1_CB01 | arm.V6_MMU_DSCR1_NOEXEC;
+pub const MMU_ATTR_VECTOR = arm.MMU_DSCR1_TEX001 | arm.V6_MMU_DSCR1_AP011 | arm.MMU_DSCR1_CB11;
 
 ///
 ///  メモリ領域の先頭番地とサイズ
 ///
 pub const SDRAM_ADDR = 0x00100000;
-pub const SDRAM_SIZE = 0x0ff00000;      // 255MB
+pub const SDRAM_SIZE = 0x0ff00000; // 255MB
 pub const SDRAM_ATTR = MMU_ATTR_RAM;
 
 pub const SRAM_ADDR = 0x48000000;
-pub const SRAM_ATTR = MMU_ATTR_RAM;     // 16MB
+pub const SRAM_ATTR = MMU_ATTR_RAM; // 16MB
 pub const SRAM_SIZE = 0x04000000;
 
 ///
 ///  デバイスレジスタ領域の先頭番地とサイズ
 ///
 pub const EB_ADDR = ct11mpcore.EB_BASE;
-pub const EB_SIZE = 0x00100000;     // 1MB
+pub const EB_SIZE = 0x00100000; // 1MB
 pub const EB_ATTR = MMU_ATTR_IODEV;
 
 pub const PMR_ADDR = MPCORE_PMR_BASE;
-pub const PMR_SIZE = 0x00100000;        // 1MB
+pub const PMR_SIZE = 0x00100000; // 1MB
 pub const PMR_ATTR = MMU_ATTR_IODEV;
 
 ///
 ///  ベクタテーブルを置くメモリ領域
 ///
 pub const VECTOR_ADDR = 0x01000000;
-pub const VECTOR_SIZE = 0x00100000;     // 1MB
+pub const VECTOR_SIZE = 0x00100000; // 1MB
 pub const VECTOR_ATTR = MMU_ATTR_VECTOR;
 
 ///
 ///  MMUの設定情報（メモリエリアの情報）
 ///
-pub const arm_memory_area = [_]ARM_MMU_CONFIG {
-    .{ .vaddr = 0x00000000, .paddr = VECTOR_ADDR,
-       .size = VECTOR_SIZE, .attr = VECTOR_ATTR },
-    .{ .vaddr = SRAM_ADDR, .paddr = SRAM_ADDR,
-       .size = SRAM_SIZE, .attr = SRAM_ATTR },
-    .{ .vaddr = EB_ADDR, .paddr = EB_ADDR,
-       .size = EB_SIZE, .attr = EB_ATTR },
-    .{ .vaddr = PMR_ADDR, .paddr = PMR_ADDR,
-       .size = PMR_SIZE, .attr = PMR_ATTR },
-    .{ .vaddr = SDRAM_ADDR, .paddr = SDRAM_ADDR,
-       .size = SDRAM_SIZE, .attr = SDRAM_ATTR },
+pub const arm_memory_area = [_]ARM_MMU_CONFIG{
+    .{ .vaddr = 0x00000000, .paddr = VECTOR_ADDR, .size = VECTOR_SIZE, .attr = VECTOR_ATTR },
+    .{ .vaddr = SRAM_ADDR, .paddr = SRAM_ADDR, .size = SRAM_SIZE, .attr = SRAM_ATTR },
+    .{ .vaddr = EB_ADDR, .paddr = EB_ADDR, .size = EB_SIZE, .attr = EB_ATTR },
+    .{ .vaddr = PMR_ADDR, .paddr = PMR_ADDR, .size = PMR_SIZE, .attr = PMR_ATTR },
+    .{ .vaddr = SDRAM_ADDR, .paddr = SDRAM_ADDR, .size = SDRAM_SIZE, .attr = SDRAM_ATTR },
 };
 
 ///
@@ -121,13 +124,13 @@ pub fn initialize() void {
     reg &= ~@as(u32, ct11mpcore.EB_PLD_CTRL1_INTMODE_MASK);
     reg |= ct11mpcore.EB_PLD_CTRL1_INTMODE_NEW_NODCC;
     sil.wrw_mem(ct11mpcore.EB_PLD_CTRL1, reg);
-    sil.wrw_mem(ct11mpcore.EB_LOCK, ct11mpcore.EB_LOCK_LOCK);   // ロック
+    sil.wrw_mem(ct11mpcore.EB_LOCK, ct11mpcore.EB_LOCK_LOCK); // ロック
 
     // UARTを初期化
     if (!TOPPERS_OMIT_TECS) {
         tPutLogSIOPort_initialize();
     }
-}    
+}
 
 ///
 ///  ターゲット依存の終了処理
@@ -137,7 +140,10 @@ extern fn software_term_hook() void;
 pub fn exit() noreturn {
     // software_term_hookの呼び出し
     // 最適化の抑止のために，インラインアセンブラを使っている．
-    if (asm("" : [_]"=r"(-> u32) : [_]"0"(software_term_hook)) != 0) {
+    if (asm (""
+        : [_] "=r" (-> u32),
+        : [_] "0" (software_term_hook),
+    ) != 0) {
         software_term_hook();
     }
 

@@ -1,7 +1,6 @@
 ///
 ///  カーネルのターゲット依存部（GR-PEACH用）
 ///
-
 ///
 ///  コンフィギュレーションオプションの取り込み
 ///
@@ -13,7 +12,7 @@ const TOPPERS_RZA1H = isTrue(option.target, "TOPPERS_RZA1H");
 ///
 ///  チップ依存部（RZ/A1用）
 ///
-pub usingnamespace @import("../../arch/arm_gcc/rza1/chip_kernel_impl.zig");
+pub const chip_kernel_impl = @import("../../arch/arm_gcc/rza1/chip_kernel_impl.zig");
 
 ///
 ///  ターゲットのハードウェア資源の定義
@@ -40,28 +39,20 @@ const pl310 = @import("../../arch/arm_gcc/common/pl310.zig");
 ///  0x3fe00000 - 0x3fffffff：I/O領域（2MB），予約領域を含む
 ///  0xe8000000 - 0xffffffff：I/O領域（384MB），予約領域を含む
 ///
-
 ///
 ///  MMUへの設定属性（第1レベルディスクリプタ）
 ///
-pub const MMU_ATTR_RAM   = arm.MMU_DSCR1_SHARED | arm.MMU_DSCR1_TEX001
-                         | arm.V6_MMU_DSCR1_AP011 | arm.MMU_DSCR1_CB11;
-pub const MMU_ATTR_IODEV = arm.MMU_DSCR1_SHARED | arm.MMU_DSCR1_TEX000
-                         | arm.V6_MMU_DSCR1_AP011 | arm.MMU_DSCR1_CB01
-                         | arm.V6_MMU_DSCR1_NOEXEC;
+pub const MMU_ATTR_RAM = arm.MMU_DSCR1_SHARED | arm.MMU_DSCR1_TEX001 | arm.V6_MMU_DSCR1_AP011 | arm.MMU_DSCR1_CB11;
+pub const MMU_ATTR_IODEV = arm.MMU_DSCR1_SHARED | arm.MMU_DSCR1_TEX000 | arm.V6_MMU_DSCR1_AP011 | arm.MMU_DSCR1_CB01 | arm.V6_MMU_DSCR1_NOEXEC;
 
 ///
 ///  MMUの設定情報（メモリエリアの情報）
 ///
-pub const arm_memory_area = [_]ARM_MMU_CONFIG {
-    .{ .vaddr = rza1.SPI_ADDR, .paddr = rza1.SPI_ADDR,
-       .size = rza1.SPI_SIZE, .attr = MMU_ATTR_RAM },
-    .{ .vaddr = rza1.SRAM_ADDR, .paddr = rza1.SRAM_ADDR,
-       .size = rza1.SRAM_SIZE, .attr = MMU_ATTR_RAM },
-    .{ .vaddr = rza1.IO1_ADDR, .paddr = rza1.IO1_ADDR,
-       .size = rza1.IO1_SIZE, .attr = MMU_ATTR_IODEV },
-    .{ .vaddr = rza1.IO2_ADDR, .paddr = rza1.IO2_ADDR,
-       .size = rza1.IO2_SIZE, .attr = MMU_ATTR_IODEV },
+pub const arm_memory_area = [_]ARM_MMU_CONFIG{
+    .{ .vaddr = rza1.SPI_ADDR, .paddr = rza1.SPI_ADDR, .size = rza1.SPI_SIZE, .attr = MMU_ATTR_RAM },
+    .{ .vaddr = rza1.SRAM_ADDR, .paddr = rza1.SRAM_ADDR, .size = rza1.SRAM_SIZE, .attr = MMU_ATTR_RAM },
+    .{ .vaddr = rza1.IO1_ADDR, .paddr = rza1.IO1_ADDR, .size = rza1.IO1_SIZE, .attr = MMU_ATTR_IODEV },
+    .{ .vaddr = rza1.IO2_ADDR, .paddr = rza1.IO2_ADDR, .size = rza1.IO2_SIZE, .attr = MMU_ATTR_IODEV },
 };
 
 ///
@@ -70,47 +61,47 @@ pub const arm_memory_area = [_]ARM_MMU_CONFIG {
 fn lowpower_initialize() void {
     // スタンバイモード時に端子状態を維持する．CoreSight動作
     sil.wrb_mem(rza1.RZA1_STBCR2, 0x6a);
-    _ = sil.reb_mem(rza1.RZA1_STBCR2);      // ダミーリード
+    _ = sil.reb_mem(rza1.RZA1_STBCR2); // ダミーリード
 
     // IEBus, irDA, LIN0, LIN1, MTU2, RSCAN2, ASC, PWM動作
     sil.wrb_mem(rza1.RZA1_STBCR3, 0x00);
-    _ = sil.reb_mem(rza1.RZA1_STBCR3);      // ダミーリード
+    _ = sil.reb_mem(rza1.RZA1_STBCR3); // ダミーリード
 
     // SCIF0, SCIF1, SCIF2, SCIF3, SCIF4, SCIF5, SCIF6, SCIF7動作
     sil.wrb_mem(rza1.RZA1_STBCR4, 0x00);
-    _ = sil.reb_mem(rza1.RZA1_STBCR4);      // ダミーリード
+    _ = sil.reb_mem(rza1.RZA1_STBCR4); // ダミーリード
 
     // SCIM0, SCIM1, SDG0, SDG1, SDG2, SDG3, OSTM0, OSTM1動作
     sil.wrb_mem(rza1.RZA1_STBCR5, 0x00);
-    _ = sil.reb_mem(rza1.RZA1_STBCR5);      // ダミーリード
+    _ = sil.reb_mem(rza1.RZA1_STBCR5); // ダミーリード
 
     // A/D, CEU, DISCOM0, DISCOM1, DRC0, DRC1, JCU, RTClock動作
     sil.wrb_mem(rza1.RZA1_STBCR6, 0x00);
-    _ = sil.reb_mem(rza1.RZA1_STBCR6);      // ダミーリード
+    _ = sil.reb_mem(rza1.RZA1_STBCR6); // ダミーリード
 
     // DVDEC0, DVDEC1, ETHER, FLCTL, USB0, USB1動作
     sil.wrb_mem(rza1.RZA1_STBCR7, 0x24);
-    _ = sil.reb_mem(rza1.RZA1_STBCR7);      // ダミーリード
+    _ = sil.reb_mem(rza1.RZA1_STBCR7); // ダミーリード
 
     // IMR-LS20, IMR-LS21, IMR-LSD, MMCIF, MOST50, SCUX動作
     sil.wrb_mem(rza1.RZA1_STBCR8, 0x05);
-    _ = sil.reb_mem(rza1.RZA1_STBCR8);      // ダミーリード
+    _ = sil.reb_mem(rza1.RZA1_STBCR8); // ダミーリード
 
     // I2C0, I2C1, I2C2, I2C3, SPIBSC0, SPIBSC1, VDC50, VDC51動作
     sil.wrb_mem(rza1.RZA1_STBCR9, 0x00);
-    _ = sil.reb_mem(rza1.RZA1_STBCR9);      // ダミーリード
+    _ = sil.reb_mem(rza1.RZA1_STBCR9); // ダミーリード
 
     // RSPI0, RSPI1, RSPI2, RSPI3, RSPI4, CD-ROMDEC, RSPDIF, RGPVG動作
     sil.wrb_mem(rza1.RZA1_STBCR10, 0x00);
-    _ = sil.reb_mem(rza1.RZA1_STBCR10);     // ダミーリード
+    _ = sil.reb_mem(rza1.RZA1_STBCR10); // ダミーリード
 
     // SSIF0, SSIF1, SSIF2, SSIF3, SSIF4, SSIF5動作
     sil.wrb_mem(rza1.RZA1_STBCR11, 0xc0);
-    _ = sil.reb_mem(rza1.RZA1_STBCR11);     // ダミーリード
+    _ = sil.reb_mem(rza1.RZA1_STBCR11); // ダミーリード
 
     // SDHI00, SDHI01, SDHI10, SDHI11動作
     sil.wrb_mem(rza1.RZA1_STBCR12, 0xf0);
-    _ = sil.reb_mem(rza1.RZA1_STBCR12);     // ダミーリード
+    _ = sil.reb_mem(rza1.RZA1_STBCR12); // ダミーリード
 }
 
 ///
@@ -118,64 +109,64 @@ fn lowpower_initialize() void {
 ///
 fn port_initialize() void {
     // ポート6:ビット3（TxD2）の設定
-    rza1.config_port(rza1.RZA1_PORT_PIBC(6),  3, false);
-    rza1.config_port(rza1.RZA1_PORT_PBDC(6),  3, false);
-    rza1.config_port(rza1.RZA1_PORT_PIPC(6),  3, true);
+    rza1.config_port(rza1.RZA1_PORT_PIBC(6), 3, false);
+    rza1.config_port(rza1.RZA1_PORT_PBDC(6), 3, false);
+    rza1.config_port(rza1.RZA1_PORT_PIPC(6), 3, true);
     // 第7兼用機能（TxD2），出力
-    rza1.config_port(rza1.RZA1_PORT_PMC(6),   3, true);
+    rza1.config_port(rza1.RZA1_PORT_PMC(6), 3, true);
     rza1.config_port(rza1.RZA1_PORT_PFCAE(6), 3, true);
-    rza1.config_port(rza1.RZA1_PORT_PFCE(6),  3, true);
-    rza1.config_port(rza1.RZA1_PORT_PFC(6),   3, false);
-    rza1.config_port(rza1.RZA1_PORT_PM(6),    3, false);
+    rza1.config_port(rza1.RZA1_PORT_PFCE(6), 3, true);
+    rza1.config_port(rza1.RZA1_PORT_PFC(6), 3, false);
+    rza1.config_port(rza1.RZA1_PORT_PM(6), 3, false);
 
     // ポート6:ビット2（RxD2）の設定
-    rza1.config_port(rza1.RZA1_PORT_PIBC(6),  2, false);
-    rza1.config_port(rza1.RZA1_PORT_PBDC(6),  2, false);
-    rza1.config_port(rza1.RZA1_PORT_PIPC(6),  2, true);
+    rza1.config_port(rza1.RZA1_PORT_PIBC(6), 2, false);
+    rza1.config_port(rza1.RZA1_PORT_PBDC(6), 2, false);
+    rza1.config_port(rza1.RZA1_PORT_PIPC(6), 2, true);
     // 第7兼用機能（RxD2），入力
-    rza1.config_port(rza1.RZA1_PORT_PMC(6),   2, true);
+    rza1.config_port(rza1.RZA1_PORT_PMC(6), 2, true);
     rza1.config_port(rza1.RZA1_PORT_PFCAE(6), 2, true);
-    rza1.config_port(rza1.RZA1_PORT_PFCE(6),  2, true);
-    rza1.config_port(rza1.RZA1_PORT_PFC(6),   2, false);
-    rza1.config_port(rza1.RZA1_PORT_PM(6),    2, true);
+    rza1.config_port(rza1.RZA1_PORT_PFCE(6), 2, true);
+    rza1.config_port(rza1.RZA1_PORT_PFC(6), 2, false);
+    rza1.config_port(rza1.RZA1_PORT_PM(6), 2, true);
 
     // ポート6:ビット13（LED1／赤）の設定
-    rza1.config_port(rza1.RZA1_PORT_PIBC(6),  13, false);
-    rza1.config_port(rza1.RZA1_PORT_PBDC(6),  13, false);
+    rza1.config_port(rza1.RZA1_PORT_PIBC(6), 13, false);
+    rza1.config_port(rza1.RZA1_PORT_PBDC(6), 13, false);
     // ポートモード，出力
-    rza1.config_port(rza1.RZA1_PORT_PMC(6),   13, false);
-    rza1.config_port(rza1.RZA1_PORT_PM(6),    13, false);
+    rza1.config_port(rza1.RZA1_PORT_PMC(6), 13, false);
+    rza1.config_port(rza1.RZA1_PORT_PM(6), 13, false);
 
     // ポート6:ビット14（LED2／緑）の設定
-    rza1.config_port(rza1.RZA1_PORT_PIBC(6),  14, false);
-    rza1.config_port(rza1.RZA1_PORT_PBDC(6),  14, false);
+    rza1.config_port(rza1.RZA1_PORT_PIBC(6), 14, false);
+    rza1.config_port(rza1.RZA1_PORT_PBDC(6), 14, false);
     // ポートモード，出力
-    rza1.config_port(rza1.RZA1_PORT_PMC(6),   14, false);
-    rza1.config_port(rza1.RZA1_PORT_PM(6),    14, false);
+    rza1.config_port(rza1.RZA1_PORT_PMC(6), 14, false);
+    rza1.config_port(rza1.RZA1_PORT_PM(6), 14, false);
 
     // ポート6:ビット15（LED3／青）の設定
-    rza1.config_port(rza1.RZA1_PORT_PIBC(6),  15, false);
-    rza1.config_port(rza1.RZA1_PORT_PBDC(6),  15, false);
+    rza1.config_port(rza1.RZA1_PORT_PIBC(6), 15, false);
+    rza1.config_port(rza1.RZA1_PORT_PBDC(6), 15, false);
     // ポートモード，出力
-    rza1.config_port(rza1.RZA1_PORT_PMC(6),   15, false);
-    rza1.config_port(rza1.RZA1_PORT_PM(6),    15, false);
+    rza1.config_port(rza1.RZA1_PORT_PMC(6), 15, false);
+    rza1.config_port(rza1.RZA1_PORT_PM(6), 15, false);
 
     // ポート6:ビット12（LED4／ユーザ）の設定
-    rza1.config_port(rza1.RZA1_PORT_PIBC(6),  12, false);
-    rza1.config_port(rza1.RZA1_PORT_PBDC(6),  12, false);
+    rza1.config_port(rza1.RZA1_PORT_PIBC(6), 12, false);
+    rza1.config_port(rza1.RZA1_PORT_PBDC(6), 12, false);
     // ポートモード，出力
-    rza1.config_port(rza1.RZA1_PORT_PMC(6),   12, false);
-    rza1.config_port(rza1.RZA1_PORT_PM(6),    12, false);
+    rza1.config_port(rza1.RZA1_PORT_PMC(6), 12, false);
+    rza1.config_port(rza1.RZA1_PORT_PM(6), 12, false);
 
     // ポート6:ビット0（ユーザボタン）の設定
-    rza1.config_port(rza1.RZA1_PORT_PIBC(6),  0, true);
-    rza1.config_port(rza1.RZA1_PORT_PBDC(6),  0, false);
+    rza1.config_port(rza1.RZA1_PORT_PIBC(6), 0, true);
+    rza1.config_port(rza1.RZA1_PORT_PBDC(6), 0, false);
     // 第6兼用機能（IRQ5），入力
-    rza1.config_port(rza1.RZA1_PORT_PMC(6),   0, true);
+    rza1.config_port(rza1.RZA1_PORT_PMC(6), 0, true);
     rza1.config_port(rza1.RZA1_PORT_PFCAE(6), 0, true);
-    rza1.config_port(rza1.RZA1_PORT_PFCE(6),  0, false);
-    rza1.config_port(rza1.RZA1_PORT_PFC(6),   0, true);
-    rza1.config_port(rza1.RZA1_PORT_PM(6),    0, true);
+    rza1.config_port(rza1.RZA1_PORT_PFCE(6), 0, false);
+    rza1.config_port(rza1.RZA1_PORT_PFC(6), 0, true);
+    rza1.config_port(rza1.RZA1_PORT_PM(6), 0, true);
 }
 
 ///
@@ -221,7 +212,10 @@ extern fn software_term_hook() void;
 pub fn exit() noreturn {
     // software_term_hookの呼び出し
     // 最適化の抑止のために，インラインアセンブラを使っている．
-    if (asm("" : [_]"=r"(-> u32) : [_]"0"(software_term_hook)) != 0) {
+    if (asm (""
+        : [_] "=r" (-> u32),
+        : [_] "0" (software_term_hook),
+    ) != 0) {
         software_term_hook();
     }
 
@@ -229,7 +223,7 @@ pub fn exit() noreturn {
     chip_terminate();
 
     // bkpt命令によりデバッガに制御を移す（パラメータが何が良いか未検討）
-    asm volatile("bkpt #0");
+    asm volatile ("bkpt #0");
     unreachable;
 }
 
@@ -243,7 +237,7 @@ pub const ExportDefs = struct {
     export fn hardware_init_hook() void {
         // 内蔵RAMへのアクセス／書込み許可
         sil.wrb_mem(rza1.RZA1_SYSCR3, 0x0f);
-        _ = sil.reb_mem(rza1.RZA1_SYSCR3);      // ダミーリード
+        _ = sil.reb_mem(rza1.RZA1_SYSCR3); // ダミーリード
 
         // クロック関係の初期化
         //
