@@ -1,7 +1,8 @@
 # asp3_in_zig
 TOPPERS/ASP3 Kernel written in Zig Programming Language
 
-このレポジトリには，asp3_in_zigをビルドするために必要なファイルの中で，TECSジェネレータは含んでいません。ビルドするためには，TECSジェネレータを，tecsgenディレクトリに置くか，リンクを貼ってください。
+このレポジトリは、TOPPERS Projectのレポジトリasp3_in_zig(https://github.com/toppers/asp3_in_zig)からフォークしたものです。
+
 
 ビルド&実行方法（例）
 
@@ -11,16 +12,17 @@ TOPPERS/ASP3 Kernel written in Zig Programming Language
     % make
     % qemu-system-arm -M realview-eb-mpcore -semihosting -m 128M -nographic -kernel asp
 
-Zigのコンパイラは，Release 0.8.0を利用してください。古い版では動作しません。最新版で動作するとは限りません。
+Zigのコンパイラは，Release 0.9.1を利用してください。古い版では動作しません。最新版で動作するとは限りません。
+また、現時点で対応しているターゲットはct11mpcoreのみで、開発段階のためサンプルプログラム以外の動作は未確認です。
 
 その他の依存しているソフトウェアの動作確認バージョンは，次の通りです。
 
     arm-none-eabi-gcc      9.3.1 20200408
     arm-none-eabi-objcopy  2.34.0.20200428
-    tecsgen                1.8.RC2
+    tecsgen                1.7.0
     ruby                   2.6.3p62
-    make                   GNU Make 3.81
-    qemu-system-arm        version 5.0.0
+    make                   GNU Make 4.3
+    qemu-system-arm        version 6.2.0(Debian 1:6.2+dfsg-2ubuntu6.21)
 
 ## 利用条件
 
