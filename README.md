@@ -1,7 +1,7 @@
 # asp3_in_zig
 TOPPERS/ASP3 Kernel written in Zig Programming Language
 
-このレポジトリは、TOPPERS Projectのレポジトリasp3_in_zig(https://github.com/toppers/asp3_in_zig)からフォークしたものです。
+このレポジトリは、TOPPERS Projectのレポジトリ[asp3_in_zig](https://github.com/toppers/asp3_in_zig)からJin-Koshinoがforkしたものです。
 
 
 ビルド&実行方法（例）
