@@ -938,7 +938,7 @@ pub fn v7_invalidate_dcache() void {
                         CP15_WRITE_DCISW(setlevel);
                     }
                 } else {
-                    const shift_way = @intCast(u5, @clz(u32, no_ways - 1));
+                    const shift_way = @intCast(u5, @clz(no_ways - 1));
                     var way: u32 = 0;
                     while (way < no_ways) : (way += 1) {
                         const waylevel = (way << shift_way) | (level << 1);
@@ -980,7 +980,7 @@ pub fn v7_clean_and_invalidate_dcache() void {
                         CP15_WRITE_DCCISW(setlevel);
                     }
                 } else {
-                    const shift_way = @intCast(u5, @clz(u32, no_ways - 1));
+                    const shift_way = @intCast(u5, @clz(no_ways - 1));
                     var way: u32 = 0;
                     while (way < no_ways) : (way += 1) {
                         const waylevel = (way << shift_way) | (level << 1);
