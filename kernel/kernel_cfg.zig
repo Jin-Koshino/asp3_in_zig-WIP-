@@ -86,7 +86,7 @@ const TENFY_SNDDTQ = zig.TENFY_SNDDTQ;
 ///
 ///  静的APIの記述を楽にするための関数
 ///
-pub fn CTSK(tskatr: ATR, exinf: anytype, task_main: TASK, itskpri: PRI, stksz: usize, stk: ?[*]u8) T_CTSK {
+pub fn CTSK(comptime tskatr: ATR, comptime exinf: anytype, comptime task_main: TASK, comptime itskpri: PRI, comptime stksz: usize, comptime stk: ?[*]u8) T_CTSK {
     return T_CTSK{
         .tskatr = tskatr,
         .exinf = comptime castToExinf(exinf),
@@ -97,7 +97,7 @@ pub fn CTSK(tskatr: ATR, exinf: anytype, task_main: TASK, itskpri: PRI, stksz: u
     };
 }
 
-pub fn CSEM(sematr: ATR, isemcnt: c_uint, maxsem: c_uint) T_CSEM {
+pub fn CSEM(comptime sematr: ATR, comptime isemcnt: c_uint, comptime maxsem: c_uint) T_CSEM {
     return T_CSEM{
         .sematr = sematr,
         .isemcnt = isemcnt,
@@ -105,14 +105,14 @@ pub fn CSEM(sematr: ATR, isemcnt: c_uint, maxsem: c_uint) T_CSEM {
     };
 }
 
-pub fn CFLG(flgatr: ATR, iflgptn: FLGPTN) T_CFLG {
+pub fn CFLG(comptime flgatr: ATR, comptime iflgptn: FLGPTN) T_CFLG {
     return T_CFLG{
         .flgatr = flgatr,
         .iflgptn = iflgptn,
     };
 }
 
-pub fn CDTQ(dtqatr: ATR, dtqcnt: c_uint, dtqmb: ?[*]u8) T_CDTQ {
+pub fn CDTQ(comptime dtqatr: ATR, comptime dtqcnt: c_uint, comptime dtqmb: ?[*]u8) T_CDTQ {
     return T_CDTQ{
         .dtqatr = dtqatr,
         .dtqcnt = dtqcnt,
@@ -120,7 +120,7 @@ pub fn CDTQ(dtqatr: ATR, dtqcnt: c_uint, dtqmb: ?[*]u8) T_CDTQ {
     };
 }
 
-pub fn CPDQ(pdqatr: ATR, pdqcnt: c_uint, maxdpri: PRI, pdqmb: ?[*]u8) T_CPDQ {
+pub fn CPDQ(comptime pdqatr: ATR, comptime pdqcnt: c_uint, comptime maxdpri: PRI, comptime pdqmb: ?[*]u8) T_CPDQ {
     return T_CPDQ{
         .pdqatr = pdqatr,
         .pdqcnt = pdqcnt,
@@ -129,14 +129,14 @@ pub fn CPDQ(pdqatr: ATR, pdqcnt: c_uint, maxdpri: PRI, pdqmb: ?[*]u8) T_CPDQ {
     };
 }
 
-pub fn CMTX(mtxatr: ATR, ceilpri: PRI) T_CMTX {
+pub fn CMTX(comptime mtxatr: ATR, comptime ceilpri: PRI) T_CMTX {
     return T_CMTX{
         .mtxatr = mtxatr,
         .ceilpri = ceilpri,
     };
 }
 
-pub fn CMPF(mpfatr: ATR, blkcnt: c_uint, blksz: c_uint, mpf: ?[*]u8, mpfmb: ?[*]u8) T_CMPF {
+pub fn CMPF(comptime mpfatr: ATR, comptime blkcnt: c_uint, comptime blksz: c_uint, comptime mpf: ?[*]u8, comptime mpfmb: ?[*]u8) T_CMPF {
     return T_CMPF{
         .mpfatr = mpfatr,
         .blkcnt = blkcnt,
@@ -146,14 +146,14 @@ pub fn CMPF(mpfatr: ATR, blkcnt: c_uint, blksz: c_uint, mpf: ?[*]u8, mpfmb: ?[*]
     };
 }
 
-pub fn DEXC(excatr: ATR, exchdr: EXCHDR) T_DEXC {
+pub fn DEXC(comptime excatr: ATR, comptime exchdr: EXCHDR) T_DEXC {
     return T_DEXC{
         .excatr = excatr,
         .exchdr = exchdr,
     };
 }
 
-pub fn CCYC(cycatr: ATR, nfyinfo: T_NFYINFO, cyctim: RELTIM, cycphs: RELTIM) T_CCYC {
+pub fn CCYC(comptime cycatr: ATR, comptime nfyinfo: T_NFYINFO, comptime cyctim: RELTIM, comptime cycphs: RELTIM) T_CCYC {
     return T_CCYC{
         .cycatr = cycatr,
         .nfyinfo = nfyinfo,
@@ -162,35 +162,35 @@ pub fn CCYC(cycatr: ATR, nfyinfo: T_NFYINFO, cyctim: RELTIM, cycphs: RELTIM) T_C
     };
 }
 
-pub fn CALM(almatr: ATR, nfyinfo: T_NFYINFO) T_CALM {
+pub fn CALM(comptime almatr: ATR, comptime nfyinfo: T_NFYINFO) T_CALM {
     return T_CALM{
         .almatr = almatr,
         .nfyinfo = nfyinfo,
     };
 }
 
-pub fn DOVR(ovratr: ATR, ovrhdr: OVRHDR) T_DOVR {
+pub fn DOVR(comptime ovratr: ATR, comptime ovrhdr: OVRHDR) T_DOVR {
     return T_DOVR{
         .ovratr = ovratr,
         .ovrhdr = ovrhdr,
     };
 }
 
-pub fn CINT(intatr: ATR, intpri: PRI) T_CINT {
+pub fn CINT(comptime intatr: ATR, comptime intpri: PRI) T_CINT {
     return T_CINT{
         .intatr = intatr,
         .intpri = intpri,
     };
 }
 
-pub fn DINH(inhatr: ATR, inthdr: INTHDR) T_DINH {
+pub fn DINH(comptime inhatr: ATR, comptime inthdr: INTHDR) T_DINH {
     return T_DINH{
         .inhatr = inhatr,
         .inthdr = inthdr,
     };
 }
 
-pub fn CISR(isratr: ATR, exinf: anytype, intno: INTNO, isr_main: ISR, isrpri: PRI) T_CISR {
+pub fn CISR(comptime isratr: ATR, comptime exinf: anytype, comptime intno: INTNO, comptime isr_main: ISR, comptime isrpri: PRI) T_CISR {
     return T_CISR{
         .isratr = isratr,
         .exinf = comptime castToExinf(exinf),
@@ -200,7 +200,7 @@ pub fn CISR(isratr: ATR, exinf: anytype, intno: INTNO, isr_main: ISR, isrpri: PR
     };
 }
 
-pub fn DICS(istksz: usize, comptime istk: *u8) T_DICS {
+pub fn DICS(comptime istksz: usize, comptime istk: *u8) T_DICS {
     const dics = comptime T_DICS{
         .istksz = istksz,
         .istk = istk,
@@ -208,7 +208,7 @@ pub fn DICS(istksz: usize, comptime istk: *u8) T_DICS {
     _ = dics;
 }
 
-pub fn AINI(iniatr: ATR, exinf: anytype, inirtn_main: INIRTN) T_AINI {
+pub fn AINI(comptime iniatr: ATR, comptime exinf: anytype, comptime inirtn_main: INIRTN) T_AINI {
     return T_AINI{
         .iniatr = iniatr,
         .exinf = comptime castToExinf(exinf),
@@ -216,7 +216,7 @@ pub fn AINI(iniatr: ATR, exinf: anytype, inirtn_main: INIRTN) T_AINI {
     };
 }
 
-pub fn ATER(teratr: ATR, exinf: anytype, comptime terrtn_main: TERRTN) T_ATER {
+pub fn ATER(comptime teratr: ATR, comptime exinf: anytype, comptime terrtn_main: TERRTN) T_ATER {
     return T_ATER{
         .teratr = teratr,
         .exinf = comptime castToExinf(exinf),
