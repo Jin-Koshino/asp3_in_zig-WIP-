@@ -254,7 +254,7 @@ pub fn defineInterruptStack(dics: T_DICS) ItronError!T_DICS {
 ///
 ///  初期化ルーチンの追加（静的APIの処理）
 ///
-pub fn attachInitializeRoutine(comptime aini: T_AINI) ItronError!INIRTNB {
+pub fn attachInitializeRoutine(aini: T_AINI) ItronError!INIRTNB {
     // iniatrが無効の場合（E_RSATR）［NGKI3241］［NGKI3202］［NGKI3203］
     //（TA_NULLでない場合）
     try checkValidAtr(aini.iniatr, TA_NULL);
@@ -266,7 +266,7 @@ pub fn attachInitializeRoutine(comptime aini: T_AINI) ItronError!INIRTNB {
 ///
 ///  終了処理ルーチンの追加（静的APIの処理）
 ///
-pub fn attachTerminateRoutine(comptime ater: T_ATER) ItronError!TERRTNB {
+pub fn attachTerminateRoutine(ater: T_ATER) ItronError!TERRTNB {
     // teratrが無効の場合（E_RSATR）［NGKI3248］［NGKI3208］［NGKI3209］
     //（TA_NULLでない場合）
     try checkValidAtr(ater.teratr, TA_NULL);
