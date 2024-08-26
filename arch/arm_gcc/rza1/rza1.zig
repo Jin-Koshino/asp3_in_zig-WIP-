@@ -64,9 +64,9 @@ pub const GIC_ARM11MPCORE = true;
 pub const GICC_BASE = 0xe8202000;
 pub const GICD_BASE = 0xe8201000;
 
-pub const RZA1_ICR0 = @ptrFromInt(*u16, 0xfcfef800);
-pub const RZA1_ICR1 = @ptrFromInt(*u16, 0xfcfef802);
-pub const RZA1_IRQRR = @ptrFromInt(*u16, 0xfcfef804);
+pub const RZA1_ICR0 = @as(*u16, @ptrFromInt(0xfcfef800));
+pub const RZA1_ICR1 = @as(*u16, @ptrFromInt(0xfcfef802));
+pub const RZA1_IRQRR = @as(*u16, @ptrFromInt(0xfcfef804));
 
 ///
 ///  OSタイマのベースアドレス
@@ -83,30 +83,30 @@ pub const PL310_BASE = 0x3ffff000;
 ///  クロックパルスジェネレータのベースアドレスとレジスタ
 ///
 pub const RZA1_CPG_BASE = 0xfcfe0000;
-pub const RZA1_FRQCR = @ptrFromInt(*u16, RZA1_CPG_BASE + 0x010);
-pub const RZA1_FRQCR2 = @ptrFromInt(*u16, RZA1_CPG_BASE + 0x014);
+pub const RZA1_FRQCR = @as(*u16, @ptrFromInt(RZA1_CPG_BASE + 0x010));
+pub const RZA1_FRQCR2 = @as(*u16, @ptrFromInt(RZA1_CPG_BASE + 0x014));
 
 ///
 ///  バスステートコントローラのベースアドレスとレジスタ
 ///
 pub const RZA1_BSC_BASE = 0x3FFFC000;
-pub const RZA1_CMNCR = @ptrFromInt(*u32, RZA1_BSC_BASE);
-pub const RZA1_CS0BCR = @ptrFromInt(*u32, RZA1_BSC_BASE + 0x0004);
-pub const RZA1_CS1BCR = @ptrFromInt(*u32, RZA1_BSC_BASE + 0x0008);
-pub const RZA1_CS2BCR = @ptrFromInt(*u32, RZA1_BSC_BASE + 0x000c);
-pub const RZA1_CS3BCR = @ptrFromInt(*u32, RZA1_BSC_BASE + 0x0010);
-pub const RZA1_CS4BCR = @ptrFromInt(*u32, RZA1_BSC_BASE + 0x0014);
-pub const RZA1_CS5BCR = @ptrFromInt(*u32, RZA1_BSC_BASE + 0x0018);
-pub const RZA1_CS0WCR = @ptrFromInt(*u32, RZA1_BSC_BASE + 0x0028);
-pub const RZA1_CS1WCR = @ptrFromInt(*u32, RZA1_BSC_BASE + 0x002c);
-pub const RZA1_CS2WCR = @ptrFromInt(*u32, RZA1_BSC_BASE + 0x0030);
-pub const RZA1_CS3WCR = @ptrFromInt(*u32, RZA1_BSC_BASE + 0x0034);
-pub const RZA1_CS4WCR = @ptrFromInt(*u32, RZA1_BSC_BASE + 0x0038);
-pub const RZA1_CS5WCR = @ptrFromInt(*u32, RZA1_BSC_BASE + 0x003c);
-pub const RZA1_SDCR = @ptrFromInt(*u32, RZA1_BSC_BASE + 0x004c);
-pub const RZA1_RTCSR = @ptrFromInt(*u32, RZA1_BSC_BASE + 0x0050);
-pub const RZA1_RTCNT = @ptrFromInt(*u32, RZA1_BSC_BASE + 0x0054);
-pub const RZA1_RTCOR = @ptrFromInt(*u32, RZA1_BSC_BASE + 0x0058);
+pub const RZA1_CMNCR = @as(u32, @ptrFromInt(RZA1_BSC_BASE));
+pub const RZA1_CS0BCR = @as(u32, @ptrFromInt(RZA1_BSC_BASE + 0x0004));
+pub const RZA1_CS1BCR = @as(u32, @ptrFromInt(RZA1_BSC_BASE + 0x0008));
+pub const RZA1_CS2BCR = @as(u32, @ptrFromInt(RZA1_BSC_BASE + 0x000c));
+pub const RZA1_CS3BCR = @as(u32, @ptrFromInt(RZA1_BSC_BASE + 0x0010));
+pub const RZA1_CS4BCR = @as(u32, @ptrFromInt(RZA1_BSC_BASE + 0x0014));
+pub const RZA1_CS5BCR = @as(u32, @ptrFromInt(RZA1_BSC_BASE + 0x0018));
+pub const RZA1_CS0WCR = @as(u32, @ptrFromInt(RZA1_BSC_BASE + 0x0028));
+pub const RZA1_CS1WCR = @as(u32, @ptrFromInt(RZA1_BSC_BASE + 0x002c));
+pub const RZA1_CS2WCR = @as(u32, @ptrFromInt(RZA1_BSC_BASE + 0x0030));
+pub const RZA1_CS3WCR = @as(u32, @ptrFromInt(RZA1_BSC_BASE + 0x0034));
+pub const RZA1_CS4WCR = @as(u32, @ptrFromInt(RZA1_BSC_BASE + 0x0038));
+pub const RZA1_CS5WCR = @as(u32, @ptrFromInt(RZA1_BSC_BASE + 0x003c));
+pub const RZA1_SDCR = @as(u32, @ptrFromInt(RZA1_BSC_BASE + 0x004c));
+pub const RZA1_RTCSR = @as(u32, @ptrFromInt(RZA1_BSC_BASE + 0x0050));
+pub const RZA1_RTCNT = @as(u32, @ptrFromInt(RZA1_BSC_BASE + 0x0054));
+pub const RZA1_RTCOR = @as(u32, @ptrFromInt(RZA1_BSC_BASE + 0x0058));
 
 ///
 ///  シリアルコミュニケーションインタフェースのベースアドレス
@@ -124,60 +124,60 @@ pub const SCIF7_BASE = 0xe800a800;
 ///  低消費電力モード関連のベースアドレスとレジスタ
 ///
 pub const RZA1_LOWPWR_BASE = 0xfcfe0000;
-pub const RZA1_STBCR1 = @ptrFromInt(*u8, RZA1_LOWPWR_BASE + 0x020);
-pub const RZA1_STBCR2 = @ptrFromInt(*u8, RZA1_LOWPWR_BASE + 0x024);
-pub const RZA1_STBCR3 = @ptrFromInt(*u8, RZA1_LOWPWR_BASE + 0x420);
-pub const RZA1_STBCR4 = @ptrFromInt(*u8, RZA1_LOWPWR_BASE + 0x424);
-pub const RZA1_STBCR5 = @ptrFromInt(*u8, RZA1_LOWPWR_BASE + 0x428);
-pub const RZA1_STBCR6 = @ptrFromInt(*u8, RZA1_LOWPWR_BASE + 0x42c);
-pub const RZA1_STBCR7 = @ptrFromInt(*u8, RZA1_LOWPWR_BASE + 0x430);
-pub const RZA1_STBCR8 = @ptrFromInt(*u8, RZA1_LOWPWR_BASE + 0x434);
-pub const RZA1_STBCR9 = @ptrFromInt(*u8, RZA1_LOWPWR_BASE + 0x438);
-pub const RZA1_STBCR10 = @ptrFromInt(*u8, RZA1_LOWPWR_BASE + 0x43c);
-pub const RZA1_STBCR11 = @ptrFromInt(*u8, RZA1_LOWPWR_BASE + 0x440);
-pub const RZA1_STBCR12 = @ptrFromInt(*u8, RZA1_LOWPWR_BASE + 0x444);
-pub const RZA1_STBCR13 = @ptrFromInt(*u8, RZA1_LOWPWR_BASE + 0x470);
-pub const RZA1_SYSCR1 = @ptrFromInt(*u8, RZA1_LOWPWR_BASE + 0x400);
-pub const RZA1_SYSCR2 = @ptrFromInt(*u8, RZA1_LOWPWR_BASE + 0x404);
-pub const RZA1_SYSCR3 = @ptrFromInt(*u8, RZA1_LOWPWR_BASE + 0x408);
-pub const RZA1_CPUSTS = @ptrFromInt(*u8, RZA1_LOWPWR_BASE + 0x018);
+pub const RZA1_STBCR1 = @as(*u8, @ptrFromInt(RZA1_LOWPWR_BASE + 0x020));
+pub const RZA1_STBCR2 = @as(*u8, @ptrFromInt(RZA1_LOWPWR_BASE + 0x024));
+pub const RZA1_STBCR3 = @as(*u8, @ptrFromInt(RZA1_LOWPWR_BASE + 0x420));
+pub const RZA1_STBCR4 = @as(*u8, @ptrFromInt(RZA1_LOWPWR_BASE + 0x424));
+pub const RZA1_STBCR5 = @as(*u8, @ptrFromInt(RZA1_LOWPWR_BASE + 0x428));
+pub const RZA1_STBCR6 = @as(*u8, @ptrFromInt(RZA1_LOWPWR_BASE + 0x42c));
+pub const RZA1_STBCR7 = @as(*u8, @ptrFromInt(RZA1_LOWPWR_BASE + 0x430));
+pub const RZA1_STBCR8 = @as(*u8, @ptrFromInt(RZA1_LOWPWR_BASE + 0x434));
+pub const RZA1_STBCR9 = @as(*u8, @ptrFromInt(RZA1_LOWPWR_BASE + 0x438));
+pub const RZA1_STBCR10 = @as(*u8, @ptrFromInt(RZA1_LOWPWR_BASE + 0x43c));
+pub const RZA1_STBCR11 = @as(*u8, @ptrFromInt(RZA1_LOWPWR_BASE + 0x440));
+pub const RZA1_STBCR12 = @as(*u8, @ptrFromInt(RZA1_LOWPWR_BASE + 0x444));
+pub const RZA1_STBCR13 = @as(*u8, @ptrFromInt(RZA1_LOWPWR_BASE + 0x470));
+pub const RZA1_SYSCR1 = @as(*u8, @ptrFromInt(RZA1_LOWPWR_BASE + 0x400));
+pub const RZA1_SYSCR2 = @as(*u8, @ptrFromInt(RZA1_LOWPWR_BASE + 0x404));
+pub const RZA1_SYSCR3 = @as(*u8, @ptrFromInt(RZA1_LOWPWR_BASE + 0x408));
+pub const RZA1_CPUSTS = @as(*u8, @ptrFromInt(RZA1_LOWPWR_BASE + 0x018));
 
 ///
 ///  汎用入出力ポートのベースアドレスとレジスタ
 ///
 pub const RZA1_PORT_BASE = 0xfcfe3000;
 pub fn RZA1_PORT_P(n: c_uint) *u16 {
-    return @ptrFromInt(*u16, RZA1_PORT_BASE + 0x0000 + n * 4);
+    return @as(*u16, @ptrFromInt(RZA1_PORT_BASE + 0x0000 + n * 4));
 }
 pub fn RZA1_PORT_PSR(n: c_uint) *u32 {
-    return @ptrFromInt(*u32, RZA1_PORT_BASE + 0x0100 + n * 4);
+    return @as(u32, @ptrFromInt(RZA1_PORT_BASE + 0x0100 + n * 4));
 }
 pub fn RZA1_PORT_PPR(n: c_uint) *u16 {
-    return @ptrFromInt(*u16, RZA1_PORT_BASE + 0x0200 + n * 4);
+    return @as(*u16, @ptrFromInt(RZA1_PORT_BASE + 0x0200 + n * 4));
 }
 pub fn RZA1_PORT_PM(n: c_uint) *u16 {
-    return @ptrFromInt(*u16, RZA1_PORT_BASE + 0x0300 + n * 4);
+    return @as(*u16, @ptrFromInt(RZA1_PORT_BASE + 0x0300 + n * 4));
 }
 pub fn RZA1_PORT_PMC(n: c_uint) *u16 {
-    return @ptrFromInt(*u16, RZA1_PORT_BASE + 0x0400 + n * 4);
+    return @as(*u16, @ptrFromInt(RZA1_PORT_BASE + 0x0400 + n * 4));
 }
 pub fn RZA1_PORT_PFC(n: c_uint) *u16 {
-    return @ptrFromInt(*u16, RZA1_PORT_BASE + 0x0500 + n * 4);
+    return @as(*u16, @ptrFromInt(RZA1_PORT_BASE + 0x0500 + n * 4));
 }
 pub fn RZA1_PORT_PFCE(n: c_uint) *u16 {
-    return @ptrFromInt(*u16, RZA1_PORT_BASE + 0x0600 + n * 4);
+    return @as(*u16, @ptrFromInt(RZA1_PORT_BASE + 0x0600 + n * 4));
 }
 pub fn RZA1_PORT_PFCAE(n: c_uint) *u16 {
-    return @ptrFromInt(*u16, RZA1_PORT_BASE + 0x0a00 + n * 4);
+    return @as(*u16, @ptrFromInt(RZA1_PORT_BASE + 0x0a00 + n * 4));
 }
 pub fn RZA1_PORT_PIBC(n: c_uint) *u16 {
-    return @ptrFromInt(*u16, RZA1_PORT_BASE + 0x4000 + n * 4);
+    return @as(*u16, @ptrFromInt(RZA1_PORT_BASE + 0x4000 + n * 4));
 }
 pub fn RZA1_PORT_PBDC(n: c_uint) *u16 {
-    return @ptrFromInt(*u16, RZA1_PORT_BASE + 0x4100 + n * 4);
+    return @as(*u16, @ptrFromInt(RZA1_PORT_BASE + 0x4100 + n * 4));
 }
 pub fn RZA1_PORT_PIPC(n: c_uint) *u16 {
-    return @ptrFromInt(*u16, RZA1_PORT_BASE + 0x4200 + n * 4);
+    return @as(*u16, @ptrFromInt(RZA1_PORT_BASE + 0x4200 + n * 4));
 }
 
 ///

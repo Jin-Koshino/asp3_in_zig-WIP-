@@ -140,13 +140,13 @@ pub fn internalIpm(ipm: PRI) u32 {
 ///
 ///  CPUインタフェース関連の定義
 ///
-const GICC_CTLR = @ptrFromInt(*u32, GICC_BASE + 0x00);
-const GICC_PMR = @ptrFromInt(*u32, GICC_BASE + 0x04);
-const GICC_BPR = @ptrFromInt(*u32, GICC_BASE + 0x08);
-const GICC_IAR = @ptrFromInt(*u32, GICC_BASE + 0x0c);
-const GICC_EOIR = @ptrFromInt(*u32, GICC_BASE + 0x10);
-const GICC_RPR = @ptrFromInt(*u32, GICC_BASE + 0x14);
-const GICC_HPPIR = @ptrFromInt(*u32, GICC_BASE + 0x18);
+const GICC_CTLR = @as(*u32, @ptrFromInt(GICC_BASE + 0x00));
+const GICC_PMR = @as(*u32, @ptrFromInt(GICC_BASE + 0x04));
+const GICC_BPR = @as(*u32, @ptrFromInt(GICC_BASE + 0x08));
+const GICC_IAR = @as(*u32, @ptrFromInt(GICC_BASE + 0x0c));
+const GICC_EOIR = @as(*u32, @ptrFromInt(GICC_BASE + 0x10));
+const GICC_RPR = @as(*u32, @ptrFromInt(GICC_BASE + 0x14));
+const GICC_HPPIR = @as(*u32, @ptrFromInt(GICC_BASE + 0x18));
 
 ///
 ///  CPUインタフェース制御レジスタ（GICC_CTLR）の設定値（GICv1でセキュ
@@ -158,48 +158,48 @@ const GICC_CTLR_ENABLE = 0x01;
 ///
 ///  ディストリビュータ関連の定義
 ///
-const GICD_CTLR = @ptrFromInt(*u32, GICD_BASE + 0x000);
-const GICD_TYPER = @ptrFromInt(*u32, GICD_BASE + 0x004);
-const GICD_IIDR = @ptrFromInt(*u32, GICD_BASE + 0x008);
+const GICD_CTLR = @as(*u32, @ptrFromInt(GICD_BASE + 0x000));
+const GICD_TYPER = @as(*u32, @ptrFromInt(GICD_BASE + 0x004));
+const GICD_IIDR = @as(*u32, @ptrFromInt(GICD_BASE + 0x008));
 fn GICD_IGROUPR(n: c_uint) *u32 {
-    return @ptrFromInt(*u32, GICD_BASE + 0x080 + n * 4);
+    return @as(*u32, @ptrFromInt(GICD_BASE + 0x080 + n * 4));
 }
 fn GICD_ISENABLER(n: c_uint) *u32 {
-    return @ptrFromInt(*u32, GICD_BASE + 0x100 + n * 4);
+    return @as(*u32, @ptrFromInt(GICD_BASE + 0x100 + n * 4));
 }
 fn GICD_ICENABLER(n: c_uint) *u32 {
-    return @ptrFromInt(*u32, GICD_BASE + 0x180 + n * 4);
+    return @as(*u32, @ptrFromInt(GICD_BASE + 0x180 + n * 4));
 }
 fn GICD_ISPENDR(n: c_uint) *u32 {
-    return @ptrFromInt(*u32, GICD_BASE + 0x200 + n * 4);
+    return @as(*u32, @ptrFromInt(GICD_BASE + 0x200 + n * 4));
 }
 fn GICD_ICPENDR(n: c_uint) *u32 {
-    return @ptrFromInt(*u32, GICD_BASE + 0x280 + n * 4);
+    return @as(*u32, @ptrFromInt(GICD_BASE + 0x280 + n * 4));
 }
 fn GICD_ISACTIVER(n: c_uint) *u32 {
-    return @ptrFromInt(*u32, GICD_BASE + 0x300 + n * 4);
+    return @as(*u32, @ptrFromInt(GICD_BASE + 0x300 + n * 4));
 }
 fn GICD_ICACTIVER(n: c_uint) *u32 {
-    return @ptrFromInt(*u32, GICD_BASE + 0x380 + n * 4);
+    return @as(*u32, @ptrFromInt(GICD_BASE + 0x380 + n * 4));
 }
 fn GICD_IPRIORITYR(n: c_uint) *u32 {
-    return @ptrFromInt(*u32, GICD_BASE + 0x400 + n * 4);
+    return @as(*u32, @ptrFromInt(GICD_BASE + 0x400 + n * 4));
 }
 fn GICD_ITARGETSR(n: c_uint) *u32 {
-    return @ptrFromInt(*u32, GICD_BASE + 0x800 + n * 4);
+    return @as(*u32, @ptrFromInt(GICD_BASE + 0x800 + n * 4));
 }
 fn GICD_ICFGR(n: c_uint) *u32 {
-    return @ptrFromInt(*u32, GICD_BASE + 0xc00 + n * 4);
+    return @as(*u32, @ptrFromInt(GICD_BASE + 0xc00 + n * 4));
 }
 fn GICD_NSCAR(n: c_uint) *u32 {
-    return @ptrFromInt(*u32, GICD_BASE + 0xe00 + n * 4);
+    return @as(*u32, @ptrFromInt(GICD_BASE + 0xe00 + n * 4));
 }
-const GICD_SGIR = @ptrFromInt(*u32, GICD_BASE + 0xf00);
+const GICD_SGIR = @as(*u32, @ptrFromInt(GICD_BASE + 0xf00));
 fn GICD_CPENDSGIR(n: c_uint) *u32 {
-    return @ptrFromInt(*u32, GICD_BASE + 0xf10 + n * 4);
+    return @as(*u32, @ptrFromInt(GICD_BASE + 0xf10 + n * 4));
 }
 fn GICD_SPENDSGIR(n: c_uint) *u32 {
-    return @ptrFromInt(*u32, GICD_BASE + 0xf20 + n * 4);
+    return @as(*u32, @ptrFromInt(GICD_BASE + 0xf20 + n * 4));
 }
 
 ///

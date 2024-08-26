@@ -122,13 +122,13 @@ fn sintToUsize(sint: anytype) usize {
 pub fn castToExinf(exinf: anytype) EXINF {
     return switch (@typeInfo(@TypeOf(exinf))) {
         .Null => null,
-        .Bool => @ptrFromInt(EXINF, @intFromBool(exinf)),
-        .Int => |int| @ptrFromInt(EXINF, if (int.signedness == .signed) sintToUsize(exinf) else exinf),
-        .ComptimeInt => @ptrFromInt(EXINF, if (exinf < 0) sintToUsize(exinf) else exinf),
-        .Enum => @ptrFromInt(EXINF, @intFromEnum(arg)),
+        .Bool => @as(EXINF, @ptrFromInt(@intFromBool(exinf))),
+        .Int => |int| @as(EXINF, @ptrFromInt(if (int.signedness == .signed) sintToUsize(exinf) else exinf)),
+        .ComptimeInt => @as(EXINF, @ptrFromInt(if (exinf < 0) sintToUsize(exinf) else exinf)),
+        .Enum => @as(EXINF, @ptrFromInt(@intFromEnum(arg))),
         .Pointer => |pointer| @ptrCast(EXINF, if (pointer.size == .Slice) exinf.ptr else exinf),
         .Array => @ptrCast(EXINF, &exinf),
-        .Optional => if (exinf) |_exinf| castToExinf(_exinf) else @ptrFromInt(EXINF, 0),
+        .Optional => if (exinf) |_exinf| castToExinf(_exinf) else @as(EXINF, @ptrFromInt(0)),
         else => @compileError("unsupported data type for castToExinf."),
     };
 }

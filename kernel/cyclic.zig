@@ -230,7 +230,7 @@ pub fn ref_cyc(cycid: ID, pk_rcyc: *T_RCYC) ItronError!void {
 ///  周期通知起動ルーチン
 ///
 fn callCyclic(arg: usize) void {
-    const p_cyccb = @ptrFromInt(*CYCCB, arg);
+    const p_cyccb = @as(*CYCCB, @ptrFromInt(arg));
 
     // 次回の起動のためのタイムイベントを登録する［ASPD1037］．
     p_cyccb.tmevtb.evttim += p_cyccb.p_cycinib.cyctim; //［ASPD1038］

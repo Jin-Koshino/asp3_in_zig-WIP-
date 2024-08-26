@@ -735,7 +735,7 @@ pub fn ExportTskCfg(tinib_table: []TINIB, torder_table: []ID) type {
 pub fn getTskId(info: usize) usize {
     var tskid: ID = undefined;
 
-    if (@ptrFromInt(?*TCB, info)) |p_tcb| {
+    if (@as(?*TCB, @ptrFromInt(info))) |p_tcb| {
         tskid = getTskIdFromTCB(p_tcb);
     } else {
         tskid = TSK_NONE;

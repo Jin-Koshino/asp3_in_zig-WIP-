@@ -215,7 +215,7 @@ pub fn ref_alm(almid: ID, pk_ralm: *T_RALM) ItronError!void {
 ///  アラーム通知起動ルーチン
 ///
 fn callAlarm(arg: usize) void {
-    const p_almcb = @ptrFromInt(*ALMCB, arg);
+    const p_almcb = @as(*ALMCB, @ptrFromInt(arg));
 
     // アラーム通知を停止状態にする．
     p_almcb.almsta = false;

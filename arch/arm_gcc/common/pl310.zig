@@ -53,35 +53,35 @@ const sil = @import("../../../include/sil.zig");
 ///
 ///  PL310のレジスタの番地の定義
 ///
-pub const CACHE_ID = @ptrFromInt(*u32, PL310_BASE + 0x000);
-pub const CACHE_TYPE = @ptrFromInt(*u32, PL310_BASE + 0x004);
-pub const CTRL = @ptrFromInt(*u32, PL310_BASE + 0x100);
-pub const AUX_CTRL = @ptrFromInt(*u32, PL310_BASE + 0x104);
-pub const TAG_RAM_CTRL = @ptrFromInt(*u32, PL310_BASE + 0x108);
-pub const DATA_RAM_CTRL = @ptrFromInt(*u32, PL310_BASE + 0x10c);
-pub const EVENT_CNT_CTRL = @ptrFromInt(*u32, PL310_BASE + 0x200);
-pub const EVENT_CNT1_CFG = @ptrFromInt(*u32, PL310_BASE + 0x204);
-pub const EVENT_CNT0_CFG = @ptrFromInt(*u32, PL310_BASE + 0x208);
-pub const EVENT_CNT1 = @ptrFromInt(*u32, PL310_BASE + 0x20c);
-pub const EVENT_CNT0 = @ptrFromInt(*u32, PL310_BASE + 0x210);
-pub const INT_MASK = @ptrFromInt(*u32, PL310_BASE + 0x214);
-pub const INT_MASK_STAT = @ptrFromInt(*u32, PL310_BASE + 0x218);
-pub const INT_RAW_STAT = @ptrFromInt(*u32, PL310_BASE + 0x21c);
-pub const INT_CLEAR = @ptrFromInt(*u32, PL310_BASE + 0x220);
-pub const CACHE_SYNC = @ptrFromInt(*u32, PL310_BASE + 0x730);
-pub const INV_PA = @ptrFromInt(*u32, PL310_BASE + 0x770);
-pub const INV_WAY = @ptrFromInt(*u32, PL310_BASE + 0x77c);
-pub const CLEAN_PA = @ptrFromInt(*u32, PL310_BASE + 0x7b0);
-pub const CLEAN_IDX = @ptrFromInt(*u32, PL310_BASE + 0x7b8);
-pub const CLEAN_WAY = @ptrFromInt(*u32, PL310_BASE + 0x7bc);
-pub const CLEAN_INV_PA = @ptrFromInt(*u32, PL310_BASE + 0x7f0);
-pub const CLEAN_INV_IDX = @ptrFromInt(*u32, PL310_BASE + 0x7f8);
-pub const CLEAN_INV_WAY = @ptrFromInt(*u32, PL310_BASE + 0x7Fc);
-pub const D_LOCKDOWN0 = @ptrFromInt(*u32, PL310_BASE + 0x900);
-pub const I_LOCKDOWN0 = @ptrFromInt(*u32, PL310_BASE + 0x904);
-pub const DEBUG_CTRL = @ptrFromInt(*u32, PL310_BASE + 0xf40);
-pub const PREFETCH_CTRL = @ptrFromInt(*u32, PL310_BASE + 0xf60);
-pub const POWER_CTRL = @ptrFromInt(*u32, PL310_BASE + 0xf80);
+pub const CACHE_ID = @as(*u32, @ptrFromInt(PL310_BASE + 0x000));
+pub const CACHE_TYPE = @as(*u32, @ptrFromInt(PL310_BASE + 0x004));
+pub const CTRL = @as(*u32, @ptrFromInt(PL310_BASE + 0x100));
+pub const AUX_CTRL = @as(*u32, @ptrFromInt(PL310_BASE + 0x104));
+pub const TAG_RAM_CTRL = @as(*u32, @ptrFromInt(PL310_BASE + 0x108));
+pub const DATA_RAM_CTRL = @as(*u32, @ptrFromInt(PL310_BASE + 0x10c));
+pub const EVENT_CNT_CTRL = @as(*u32, @ptrFromInt(PL310_BASE + 0x200));
+pub const EVENT_CNT1_CFG = @as(*u32, @ptrFromInt(PL310_BASE + 0x204));
+pub const EVENT_CNT0_CFG = @as(*u32, @ptrFromInt(PL310_BASE + 0x208));
+pub const EVENT_CNT1 = @as(*u32, @ptrFromInt(PL310_BASE + 0x20c));
+pub const EVENT_CNT0 = @as(*u32, @ptrFromInt(PL310_BASE + 0x210));
+pub const INT_MASK = @as(*u32, @ptrFromInt(PL310_BASE + 0x214));
+pub const INT_MASK_STAT = @as(*u32, @ptrFromInt(PL310_BASE + 0x218));
+pub const INT_RAW_STAT = @as(*u32, @ptrFromInt(PL310_BASE + 0x21c));
+pub const INT_CLEAR = @as(*u32, @ptrFromInt(PL310_BASE + 0x220));
+pub const CACHE_SYNC = @as(*u32, @ptrFromInt(PL310_BASE + 0x730));
+pub const INV_PA = @as(*u32, @ptrFromInt(PL310_BASE + 0x770));
+pub const INV_WAY = @as(*u32, @ptrFromInt(PL310_BASE + 0x77c));
+pub const CLEAN_PA = @as(*u32, @ptrFromInt(PL310_BASE + 0x7b0));
+pub const CLEAN_IDX = @as(*u32, @ptrFromInt(PL310_BASE + 0x7b8));
+pub const CLEAN_WAY = @as(*u32, @ptrFromInt(PL310_BASE + 0x7bc));
+pub const CLEAN_INV_PA = @as(*u32, @ptrFromInt(PL310_BASE + 0x7f0));
+pub const CLEAN_INV_IDX = @as(*u32, @ptrFromInt(PL310_BASE + 0x7f8));
+pub const CLEAN_INV_WAY = @as(*u32, @ptrFromInt(PL310_BASE + 0x7Fc));
+pub const D_LOCKDOWN0 = @as(*u32, @ptrFromInt(PL310_BASE + 0x900));
+pub const I_LOCKDOWN0 = @as(*u32, @ptrFromInt(PL310_BASE + 0x904));
+pub const DEBUG_CTRL = @as(*u32, @ptrFromInt(PL310_BASE + 0xf40));
+pub const PREFETCH_CTRL = @as(*u32, @ptrFromInt(PL310_BASE + 0xf60));
+pub const POWER_CTRL = @as(*u32, @ptrFromInt(PL310_BASE + 0xf80));
 
 ///
 ///  キャッシュ補助制御レジスタ（AUX_CTRL）の設定値

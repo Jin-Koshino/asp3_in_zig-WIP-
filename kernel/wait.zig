@@ -254,7 +254,7 @@ pub fn wait_complete(p_tcb: *TCB) void {
 ///  のもので，割込みハンドラから呼び出されることを想定している．
 ///
 pub fn wait_tmout(arg: usize) void {
-    const p_tcb = @ptrFromInt(*TCB, arg);
+    const p_tcb = @as(*TCB, @ptrFromInt(arg));
 
     wait_dequeue_wobj(p_tcb);
     p_tcb.p_winfo.* = WINFO{ .werror = ItronError.TimeoutError };
@@ -270,7 +270,7 @@ pub fn wait_tmout(arg: usize) void {
 }
 
 pub fn wait_tmout_ok(arg: usize) void {
-    const p_tcb = @ptrFromInt(*TCB, arg);
+    const p_tcb = @as(*TCB, @ptrFromInt(arg));
 
     p_tcb.p_winfo.* = WINFO{ .werror = null };
     make_non_wait(p_tcb);
