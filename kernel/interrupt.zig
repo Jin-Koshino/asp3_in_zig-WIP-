@@ -506,7 +506,7 @@ pub fn ExportIntIniB(intinib_table: []INTINIB) type {
 ///
 ///  割込みハンドラの定義（静的APIの処理）
 ///
-pub fn def_inh(comptime inhno: INHNO, comptime dinh: T_DINH, comptime cfg_data: *static_api.CfgData) ItronError!INHINIB {
+pub fn def_inh(inhno: INHNO, dinh: T_DINH, comptime cfg_data: *static_api.CfgData) ItronError!INHINIB {
     // inhnoが有効範囲外の場合（E_PAR）［NGKI3055］
     try checkParameter(validInhnoDefInh(inhno));
 
@@ -559,7 +559,7 @@ pub fn ExportInhIniB(inhinib_table: []INHINIB) type {
 ///
 ///  割込みサービスルーチンの生成（静的APIの処理）
 ///
-pub fn cre_isr(comptime cisr: T_CISR, comptime cfg_data: *static_api.CfgData) ItronError!T_CISR {
+pub fn cre_isr(cisr: T_CISR, comptime cfg_data: *static_api.CfgData) ItronError!T_CISR {
     // isratrが無効の場合（E_RSATR）［NGKI2998］［NGKI2952］［NGKI5176］
     //（TARGET_ISRATR以外のビットがセットされている場合）
     try checkValidAtr(cisr.isratr, TARGET_ISRATR);
