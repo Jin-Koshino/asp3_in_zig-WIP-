@@ -208,7 +208,7 @@ fn checkAndGetDtqCB(dtqid: ID) ItronError!*DTQCB {
 ///  データキュー管理ブロックからデータキューIDを取り出すための関数
 ///
 pub fn getDtqIdFromDtqCB(p_dtqcb: *DTQCB) ID {
-    return @intCast(ID, (@ptrToInt(p_dtqcb) - @ptrToInt(&cfg._kernel_dtqcb_table)) / @sizeOf(DTQCB)) + TMIN_DTQID;
+    return @intCast(ID, (@intFromPtr(p_dtqcb) - @intFromPtr(&cfg._kernel_dtqcb_table)) / @sizeOf(DTQCB)) + TMIN_DTQID;
 }
 
 ///

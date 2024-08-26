@@ -1720,7 +1720,7 @@ fn arm_mmu_initialize() void {
     }
 
     // 変換テーブルとして，section_tableを使用する．
-    reg = @intCast(u32, @ptrToInt(&section_table)) | TTBR_CONFIG;
+    reg = @intCast(u32, @intFromPtr(&section_table)) | TTBR_CONFIG;
     arm.CP15_WRITE_TTBR0(reg);
 
     // ドメインアクセス制御の設定
@@ -2089,6 +2089,6 @@ pub const CoreExportDefs = struct {
     ///  この関数自身はリンクされず，最終的な実行ファイルには残らない．
     ///
     export fn _kernel_vector_table() callconv(.Naked) usize {
-        return @ptrToInt(vector_table);
+        return @intFromPtr(vector_table);
     }
 };

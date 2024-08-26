@@ -48,25 +48,25 @@ pub const hrt = mpcore_timer.TMRWDG_HRT(.{
 ///  ARM Dual-Timer Module（SP804）の番地の定義
 ///
 fn SP804_LR(base: usize) *u32 {
-    return @intToPtr(*u32, base + 0x00);
+    return @as(*u32, @ptrFromInt(base + 0x00));
 }
 fn SP804_CVR(base: usize) *u32 {
-    return @intToPtr(*u32, base + 0x04);
+    return @ptrFromInt(*u32, base + 0x04);
 }
 fn SP804_CR(base: usize) *u32 {
-    return @intToPtr(*u32, base + 0x08);
+    return @ptrFromInt(*u32, base + 0x08);
 }
 fn SP804_ICR(base: usize) *u32 {
-    return @intToPtr(*u32, base + 0x0c);
+    return @ptrFromInt(*u32, base + 0x0c);
 }
 fn SP804_RIS(base: usize) *u32 {
-    return @intToPtr(*u32, base + 0x10);
+    return @ptrFromInt(*u32, base + 0x10);
 }
 fn SP804_MIS(base: usize) *u32 {
-    return @intToPtr(*u32, base + 0x14);
+    return @ptrFromInt(*u32, base + 0x14);
 }
 fn SP804_BGLR(base: usize) *u32 {
-    return @intToPtr(*u32, base + 0x18);
+    return @ptrFromInt(*u32, base + 0x18);
 }
 
 ///

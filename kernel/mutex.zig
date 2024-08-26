@@ -224,7 +224,7 @@ fn checkAndGetMtxCB(mtxid: ID) ItronError!*MTXCB {
 ///  ミューテックス管理ブロックからミューテックスIDを取り出すための関数
 ///
 pub fn getMtxIdFromMtxCB(p_mtxcb: *MTXCB) ID {
-    return @intCast(ID, (@ptrToInt(p_mtxcb) - @ptrToInt(&cfg._kernel_mtxcb_table)) / @sizeOf(MTXCB)) + TMIN_MTXID;
+    return @intCast(ID, (@intFromPtr(p_mtxcb) - @intFromPtr(&cfg._kernel_mtxcb_table)) / @sizeOf(MTXCB)) + TMIN_MTXID;
 }
 
 ///
@@ -627,7 +627,7 @@ pub fn ExportMtxCfg(mtxinib_table: []MTXINIB) type {
 ///  ミューテックス管理ブロックのポインタのチェック
 ///
 pub fn validMTXCB(p_mtxcb: *MTXCB) bool {
-    if ((@ptrToInt(p_mtxcb) - @ptrToInt(&cfg._kernel_mtxcb_table)) % @sizeOf(MTXCB) != 0) {
+    if ((@intFromPtr(p_mtxcb) - @intFromPtr(&cfg._kernel_mtxcb_table)) % @sizeOf(MTXCB) != 0) {
         return false;
     }
     const mtxid = getMtxIdFromMtxCB(p_mtxcb);

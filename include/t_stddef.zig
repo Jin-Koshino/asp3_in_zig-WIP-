@@ -122,13 +122,13 @@ fn sintToUsize(sint: anytype) usize {
 pub fn castToExinf(exinf: anytype) EXINF {
     return switch (@typeInfo(@TypeOf(exinf))) {
         .Null => null,
-        .Bool => @intToPtr(EXINF, @boolToInt(exinf)),
-        .Int => |int| @intToPtr(EXINF, if (int.signedness == .signed) sintToUsize(exinf) else exinf),
-        .ComptimeInt => @intToPtr(EXINF, if (exinf < 0) sintToUsize(exinf) else exinf),
-        .Enum => @intToPtr(EXINF, @enumToInt(arg)),
+        .Bool => @ptrFromInt(EXINF, @intFromBool(exinf)),
+        .Int => |int| @ptrFromInt(EXINF, if (int.signedness == .signed) sintToUsize(exinf) else exinf),
+        .ComptimeInt => @ptrFromInt(EXINF, if (exinf < 0) sintToUsize(exinf) else exinf),
+        .Enum => @ptrFromInt(EXINF, @intFromEnum(arg)),
         .Pointer => |pointer| @ptrCast(EXINF, if (pointer.size == .Slice) exinf.ptr else exinf),
         .Array => @ptrCast(EXINF, &exinf),
-        .Optional => if (exinf) |_exinf| castToExinf(_exinf) else @intToPtr(EXINF, 0),
+        .Optional => if (exinf) |_exinf| castToExinf(_exinf) else @ptrFromInt(EXINF, 0),
         else => @compileError("unsupported data type for castToExinf."),
     };
 }
@@ -138,7 +138,7 @@ pub fn castToExinf(exinf: anytype) EXINF {
 ///
 pub fn exinfToPtr(comptime T: type, exinf: EXINF) T {
     if (@typeInfo(T) == .Pointer) {
-        return @intToPtr(T, @ptrToInt(exinf));
+        return @ptrFromInt(T, @intFromPtr(exinf));
     } else {
         @compileError("unsupported data type for exinfToPtr.");
     }
@@ -146,9 +146,9 @@ pub fn exinfToPtr(comptime T: type, exinf: EXINF) T {
 pub fn exinfToInt(comptime T: type, exinf: EXINF) T {
     if (@typeInfo(T) == .Int) {
         return @intCast(T, if (@typeInfo(T).Int.signedness == .signed)
-            @bitCast(isize, @ptrToInt(exinf))
+            @bitCast(isize, @intFromPtr(exinf))
         else
-            @ptrToInt(exinf));
+            @intFromPtr(exinf));
     } else {
         @compileError("unsupported data type for exinfToInt.");
     }

@@ -125,12 +125,12 @@ extern fn syslog_wri_log(prio: c_uint, p_syslog: *SYSLOG) ER;
 fn logPar(arg: anytype) usize {
     return switch (@typeInfo(@TypeOf(arg))) {
         .Null => 0,
-        .Bool => @boolToInt(arg),
+        .Bool => @intFromBool(arg),
         .Int => |int| if (int.signedness == .signed) @bitCast(usize, @intCast(isize, arg)) else @intCast(usize, arg),
         .ComptimeInt => if (arg < 0) @bitCast(usize, @intCast(isize, arg)) else @intCast(usize, arg),
-        .Enum => @enumToInt(arg),
-        .Pointer => |pointer| @ptrToInt(if (pointer.size == .Slice) arg.ptr else arg),
-        .Array => @ptrToInt(&arg),
+        .Enum => @intFromEnum(arg),
+        .Pointer => |pointer| @intFromPtr(if (pointer.size == .Slice) arg.ptr else arg),
+        .Array => @intFromPtr(&arg),
         .Optional => if (arg) |_arg| logPar(_arg) else 0,
         else => @compileError("unsupported data type for syslog."),
     };

@@ -42,22 +42,22 @@ comptime {
 ///  OSタイマレジスタの番地の定義
 ///
 fn OSTM_CMP(base: usize) *u32 {
-    return @intToPtr(*u32, base + 0x00);
+    return @ptrFromInt(*u32, base + 0x00);
 }
 fn OSTM_CNT(base: usize) *u32 {
-    return @intToPtr(*u32, base + 0x04);
+    return @ptrFromInt(*u32, base + 0x04);
 }
 fn OSTM_TE(base: usize) *u8 {
-    return @intToPtr(*u8, base + 0x10);
+    return @ptrFromInt(*u8, base + 0x10);
 }
 fn OSTM_TS(base: usize) *u8 {
-    return @intToPtr(*u8, base + 0x14);
+    return @ptrFromInt(*u8, base + 0x14);
 }
 fn OSTM_TT(base: usize) *u8 {
-    return @intToPtr(*u8, base + 0x18);
+    return @ptrFromInt(*u8, base + 0x18);
 }
 fn OSTM_CTL(base: usize) *u8 {
-    return @intToPtr(*u8, base + 0x20);
+    return @ptrFromInt(*u8, base + 0x20);
 }
 
 ///

@@ -193,7 +193,7 @@ const graph = [3][]const u8{
 ///
 export fn task(exinf: EXINF) void {
     var n: u32 = 0;
-    var tskno: u32 = @intCast(u32, @ptrToInt(exinf));
+    var tskno: u32 = @intCast(u32, @intFromPtr(exinf));
     var ch: u8 = undefined;
     var pk_rovr: if (TOPPERS_SUPPORT_OVRHDR) T_ROVR else void = undefined;
 
@@ -337,7 +337,7 @@ export fn exc_task(exinf: EXINF) void {
 ///  オーバランハンドラ
 ///
 export fn overrun_handler(tskid: ID, exinf: EXINF) void {
-    const tskno = @intCast(u32, @ptrToInt(exinf));
+    const tskno = @intCast(u32, @intFromPtr(exinf));
     syslog(LOG_NOTICE, "Overrun handler for task%d.", .{tskno});
 }
 

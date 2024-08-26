@@ -789,13 +789,13 @@ pub fn GenCfgData(comptime cfg_data: *CfgData) type {
     exportCheck(0x12345678, "TOPPERS_magic_number");
     exportCheck(decl(u32, target_impl, "CHECK_USIZE_ALIGN", 1), "CHECK_USIZE_ALIGN");
     exportCheck(decl(u32, target_impl, "CHECK_USIZE_ALIGN", 1), "CHECK_USIZE_ALIGN");
-    exportCheck(@boolToInt(isTrue(target_impl, "CHECK_USIZE_NONNULL")), "CHECK_USIZE_NONNULL");
+    exportCheck(@intFromBool(isTrue(target_impl, "CHECK_USIZE_NONNULL")), "CHECK_USIZE_NONNULL");
     exportCheck(decl(u32, target_impl, "CHECK_FUNC_ALIGN", 1), "CHECK_FUNC_ALIGN");
-    exportCheck(@boolToInt(isTrue(target_impl, "CHECK_FUNC_NONNULL")), "CHECK_FUNC_NONNULL");
+    exportCheck(@intFromBool(isTrue(target_impl, "CHECK_FUNC_NONNULL")), "CHECK_FUNC_NONNULL");
     exportCheck(decl(u32, target_impl, "CHECK_STACK_ALIGN", 1), "CHECK_STACK_ALIGN");
-    exportCheck(@boolToInt(isTrue(target_impl, "CHECK_STACK_NONNULL")), "CHECK_STACK_NONNULL");
+    exportCheck(@intFromBool(isTrue(target_impl, "CHECK_STACK_NONNULL")), "CHECK_STACK_NONNULL");
     exportCheck(decl(u32, target_impl, "CHECK_MPF_ALIGN", 1), "CHECK_MPF_ALIGN");
-    exportCheck(@boolToInt(isTrue(target_impl, "CHECK_MPF_NONNULL")), "CHECK_MPF_NONNULL");
+    exportCheck(@intFromBool(isTrue(target_impl, "CHECK_MPF_NONNULL")), "CHECK_MPF_NONNULL");
 
     exportCheck(@sizeOf(usize), "sizeof_usize");
     exportCheck(@sizeOf(c_uint), "sizeof_UINT");

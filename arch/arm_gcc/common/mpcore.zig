@@ -34,10 +34,10 @@ pub const CP15_ACTLR_FW =
 ///  SCUレジスタの番地の定義
 ///
 pub const SCU_BASE = MPCORE_PMR_BASE + 0x0000;
-pub const SCU_CTRL = @intToPtr(*u32, SCU_BASE + 0x00);
-pub const SCU_CONFIG = @intToPtr(*u32, SCU_BASE + 0x04);
-pub const SCU_CPUSTAT = @intToPtr(*u32, SCU_BASE + 0x08);
-pub const SCU_INVALL = @intToPtr(*u32, SCU_BASE + 0x0c);
+pub const SCU_CTRL = @ptrFromInt(*u32, SCU_BASE + 0x00);
+pub const SCU_CONFIG = @ptrFromInt(*u32, SCU_BASE + 0x04);
+pub const SCU_CPUSTAT = @ptrFromInt(*u32, SCU_BASE + 0x08);
+pub const SCU_INVALL = @ptrFromInt(*u32, SCU_BASE + 0x0c);
 
 ///
 ///  SCU制御レジスタ（SCU_CTRL）の設定値
@@ -77,16 +77,16 @@ pub const IRQNO_WDG = 30; // ウォッチドッグの割込み番号
 ///  プライベートタイマとウォッチドッグレジスタの番地の定義
 ///
 pub const TMR_BASE = MPCORE_PMR_BASE + 0x0600;
-pub const TMR_LR = @intToPtr(*u32, TMR_BASE + 0x00);
-pub const TMR_CNT = @intToPtr(*u32, TMR_BASE + 0x04);
-pub const TMR_CTRL = @intToPtr(*u32, TMR_BASE + 0x08);
-pub const TMR_ISR = @intToPtr(*u32, TMR_BASE + 0x0c);
-pub const WDG_LR = @intToPtr(*u32, TMR_BASE + 0x20);
-pub const WDG_CNT = @intToPtr(*u32, TMR_BASE + 0x24);
-pub const WDG_CTRL = @intToPtr(*u32, TMR_BASE + 0x28);
-pub const WDG_ISR = @intToPtr(*u32, TMR_BASE + 0x2c);
-pub const WDG_RST = @intToPtr(*u32, TMR_BASE + 0x30);
-pub const WDG_DIS = @intToPtr(*u32, TMR_BASE + 0x34);
+pub const TMR_LR = @ptrFromInt(*u32, TMR_BASE + 0x00);
+pub const TMR_CNT = @ptrFromInt(*u32, TMR_BASE + 0x04);
+pub const TMR_CTRL = @ptrFromInt(*u32, TMR_BASE + 0x08);
+pub const TMR_ISR = @ptrFromInt(*u32, TMR_BASE + 0x0c);
+pub const WDG_LR = @ptrFromInt(*u32, TMR_BASE + 0x20);
+pub const WDG_CNT = @ptrFromInt(*u32, TMR_BASE + 0x24);
+pub const WDG_CTRL = @ptrFromInt(*u32, TMR_BASE + 0x28);
+pub const WDG_ISR = @ptrFromInt(*u32, TMR_BASE + 0x2c);
+pub const WDG_RST = @ptrFromInt(*u32, TMR_BASE + 0x30);
+pub const WDG_DIS = @ptrFromInt(*u32, TMR_BASE + 0x34);
 
 ///
 ///  プライベートタイマ制御レジスタ（TMR_CTRL）の設定値
@@ -124,13 +124,13 @@ pub const WDG_ISR_EVENTFLAG = 0x01;
 ///  グローバルタイマレジスタの番地の定義
 ///
 pub const GTC_BASE = MPCORE_PMR_BASE + 0x0200;
-pub const GTC_COUNT_L = @intToPtr(*u32, GTC_BASE + 0x00);
-pub const GTC_COUNT_U = @intToPtr(*u32, GTC_BASE + 0x04);
-pub const GTC_CTRL = @intToPtr(*u32, GTC_BASE + 0x08);
-pub const GTC_ISR = @intToPtr(*u32, GTC_BASE + 0x0c);
-pub const GTC_CVR_L = @intToPtr(*u32, GTC_BASE + 0x10);
-pub const GTC_CVR_U = @intToPtr(*u32, GTC_BASE + 0x14);
-pub const GTC_AUTOINCR = @intToPtr(*u32, GTC_BASE + 0x18);
+pub const GTC_COUNT_L = @ptrFromInt(*u32, GTC_BASE + 0x00);
+pub const GTC_COUNT_U = @ptrFromInt(*u32, GTC_BASE + 0x04);
+pub const GTC_CTRL = @ptrFromInt(*u32, GTC_BASE + 0x08);
+pub const GTC_ISR = @ptrFromInt(*u32, GTC_BASE + 0x0c);
+pub const GTC_CVR_L = @ptrFromInt(*u32, GTC_BASE + 0x10);
+pub const GTC_CVR_U = @ptrFromInt(*u32, GTC_BASE + 0x14);
+pub const GTC_AUTOINCR = @ptrFromInt(*u32, GTC_BASE + 0x18);
 
 ///
 ///  グローバルタイマ制御レジスタ（GTC_CTRL）の設定値

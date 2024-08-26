@@ -213,7 +213,7 @@ fn checkAndGetSemCB(semid: ID) ItronError!*SEMCB {
 ///  セマフォ管理ブロックからセマフォIDを取り出すための関数
 ///
 fn getSemIdFromSemCB(p_semcb: *SEMCB) ID {
-    return @intCast(ID, (@ptrToInt(p_semcb) - @ptrToInt(&cfg._kernel_semcb_table)) / @sizeOf(SEMCB)) + TMIN_SEMID;
+    return @intCast(ID, (@intFromPtr(p_semcb) - @intFromPtr(&cfg._kernel_semcb_table)) / @sizeOf(SEMCB)) + TMIN_SEMID;
 }
 
 ///

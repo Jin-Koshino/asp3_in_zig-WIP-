@@ -226,7 +226,7 @@ fn checkAndGetMpfCB(mpfid: ID) ItronError!*MPFCB {
 ///  固定長メモリプール管理ブロックから固定長メモリプールIDを取り出すための関数
 ///
 fn getMpfIdFromMpfCB(p_mpfcb: *MPFCB) ID {
-    return @intCast(ID, (@ptrToInt(p_mpfcb) - @ptrToInt(&cfg._kernel_mpfcb_table)) / @sizeOf(MPFCB)) + TMIN_MPFID;
+    return @intCast(ID, (@intFromPtr(p_mpfcb) - @intFromPtr(&cfg._kernel_mpfcb_table)) / @sizeOf(MPFCB)) + TMIN_MPFID;
 }
 
 ///
@@ -363,8 +363,8 @@ pub fn rel_mpf(mpfid: ID, blk: *u8) ItronError!void {
     errdefer |err| traceLog("relMpfLeave", .{err});
     try checkContextTaskUnlock();
     const p_mpfcb = try checkAndGetMpfCB(mpfid);
-    try checkParameter(@ptrToInt(p_mpfcb.p_wobjinib.mpf) <= @ptrToInt(blk));
-    var blkoffset = @ptrToInt(blk) - @ptrToInt(p_mpfcb.p_wobjinib.mpf);
+    try checkParameter(@intFromPtr(p_mpfcb.p_wobjinib.mpf) <= @intFromPtr(blk));
+    var blkoffset = @intFromPtr(blk) - @intFromPtr(p_mpfcb.p_wobjinib.mpf);
     try checkParameter(blkoffset % p_mpfcb.p_wobjinib.blksz == 0);
     try checkParameter(blkoffset / p_mpfcb.p_wobjinib.blksz < p_mpfcb.unused);
     var blkidx = @intCast(c_uint, blkoffset / p_mpfcb.p_wobjinib.blksz);

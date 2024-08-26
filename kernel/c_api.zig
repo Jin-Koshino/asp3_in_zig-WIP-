@@ -131,7 +131,7 @@ fn callServiceUint(result: ItronError!c_uint) ER_UINT {
 // 返値をER_BOOL型に変換
 fn callServiceBool(result: ItronError!bool) ER_BOOL {
     if (result) |retval| {
-        return @intCast(ER_BOOL, @boolToInt(retval));
+        return @intCast(ER_BOOL, @intFromBool(retval));
     } else |err| {
         return errorcode.itronErrorCode(err);
     }
@@ -238,7 +238,7 @@ export fn ena_ter() ER {
 
 // sns_terのC言語API
 export fn sns_ter() c_int {
-    return @boolToInt(task_term.sns_ter());
+    return @intFromBool(task_term.sns_ter());
 }
 
 // ter_tskのC言語API
@@ -563,27 +563,27 @@ export fn ena_dsp() ER {
 
 // sns_ctxのC言語API
 export fn sns_ctx() c_int {
-    return @boolToInt(sys_manage.sns_ctx());
+    return @intFromBool(sys_manage.sns_ctx());
 }
 
 // sns_locのC言語API
 export fn sns_loc() c_int {
-    return @boolToInt(sys_manage.sns_loc());
+    return @intFromBool(sys_manage.sns_loc());
 }
 
 // sns_dspのC言語API
 export fn sns_dsp() c_int {
-    return @boolToInt(sys_manage.sns_dsp());
+    return @intFromBool(sys_manage.sns_dsp());
 }
 
 // sns_dpnのC言語API
 export fn sns_dpn() c_int {
-    return @boolToInt(sys_manage.sns_dpn());
+    return @intFromBool(sys_manage.sns_dpn());
 }
 
 // sns_kerのC言語API
 export fn sns_ker() c_int {
-    return @boolToInt(sys_manage.sns_ker());
+    return @intFromBool(sys_manage.sns_ker());
 }
 
 // ext_kerのC言語API
@@ -629,7 +629,7 @@ export fn get_ipm(p_intpri: *PRI) ER {
 
 // xsns_dpnのC言語API
 export fn xsns_dpn(p_excinf: *anyopaque) c_int {
-    return @boolToInt(exception.xsns_dpn(p_excinf));
+    return @intFromBool(exception.xsns_dpn(p_excinf));
 }
 
 ///

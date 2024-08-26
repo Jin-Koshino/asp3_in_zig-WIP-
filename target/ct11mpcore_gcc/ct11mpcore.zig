@@ -54,9 +54,9 @@ pub const MPCORE_WDG_PS_VALUE = 99;
 ///  Emulation Board上のリソース
 ///
 pub const EB_BASE = 0x10000000;
-pub const EB_LOCK = @intToPtr(*u32, EB_BASE + 0x0020);
-pub const EB_PLD_CTRL1 = @intToPtr(*u32, EB_BASE + 0x0074);
-pub const EB_PLD_CTRL2 = @intToPtr(*u32, EB_BASE + 0x0078);
+pub const EB_LOCK = @as(*u32, @ptrFromInt(EB_BASE + 0x0020));
+pub const EB_PLD_CTRL1 = @as(*u32, @ptrFromInt(EB_BASE + 0x0074));
+pub const EB_PLD_CTRL2 = @as(*u32, @ptrFromInt(EB_BASE + 0x0078));
 
 ///
 ///  ロックレジスタ（EB_LOCK）の設定値

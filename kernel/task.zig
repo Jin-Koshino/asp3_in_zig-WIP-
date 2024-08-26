@@ -408,7 +408,7 @@ pub fn getTIniB(tskid: ID) *const TINIB {
 ///  TCBからタスクIDを取り出すための関数
 ///
 pub fn getTskIdFromTCB(p_tcb: *TCB) ID {
-    return @intCast(ID, (@ptrToInt(p_tcb) - @ptrToInt(&cfg._kernel_tcb_table)) / @sizeOf(TCB)) + TMIN_TSKID;
+    return @intCast(ID, (@intFromPtr(p_tcb) - @intFromPtr(&cfg._kernel_tcb_table)) / @sizeOf(TCB)) + TMIN_TSKID;
 }
 
 ///
@@ -735,7 +735,7 @@ pub fn ExportTskCfg(tinib_table: []TINIB, torder_table: []ID) type {
 pub fn getTskId(info: usize) usize {
     var tskid: ID = undefined;
 
-    if (@intToPtr(?*TCB, info)) |p_tcb| {
+    if (@ptrFromInt(?*TCB, info)) |p_tcb| {
         tskid = getTskIdFromTCB(p_tcb);
     } else {
         tskid = TSK_NONE;
@@ -762,7 +762,7 @@ pub fn getTskStat(info: usize) usize {
             tstatstr = "RUNNABLE";
         }
     }
-    return @ptrToInt(tstatstr);
+    return @intFromPtr(tstatstr);
 }
 
 ///
@@ -772,7 +772,7 @@ pub fn getTskStat(info: usize) usize {
 ///  TCBへのポインタのチェック
 ///
 pub fn validTCB(p_tcb: *TCB) bool {
-    if ((@ptrToInt(p_tcb) - @ptrToInt(&cfg._kernel_tcb_table)) % @sizeOf(TCB) != 0) {
+    if ((@intFromPtr(p_tcb) - @intFromPtr(&cfg._kernel_tcb_table)) % @sizeOf(TCB) != 0) {
         return false;
     }
     const tskid = getTskIdFromTCB(p_tcb);
@@ -786,7 +786,7 @@ pub fn onStack(addr: usize, size: usize, p_tinib: *const TINIB) bool {
     if (@hasDecl(target_impl, "onStack")) {
         return target_impl.onStack(addr, size, p_tinib);
     } else {
-        return @ptrToInt(p_tinib.tskinictxb.stk) <= addr and addr + size <= @ptrToInt(&p_tinib.tskinictxb.stk[p_tinib.tskinictxb.stksz]);
+        return @intFromPtr(p_tinib.tskinictxb.stk) <= addr and addr + size <= @intFromPtr(&p_tinib.tskinictxb.stk[p_tinib.tskinictxb.stksz]);
     }
 }
 
@@ -798,12 +798,12 @@ pub fn validTSKCTXB(p_tcb: *TCB) bool {
         return target_impl.validTSKCTXB(&p_tcb.tskctxb, p_tcb);
     } else {
         // spがアラインしているかをチェック
-        if ((@ptrToInt(p_tcb.tskctxb.sp) & (CHECK_STACK_ALIGN - 1)) != 0) {
+        if ((@intFromPtr(p_tcb.tskctxb.sp) & (CHECK_STACK_ALIGN - 1)) != 0) {
             return false;
         }
 
         // spがスタック上を指しているかをチェック
-        if (!onStack(@ptrToInt(p_tcb.tskctxb.sp), 0, p_tcb.p_tinib)) {
+        if (!onStack(@intFromPtr(p_tcb.tskctxb.sp), 0, p_tcb.p_tinib)) {
             return false;
         }
         return true;
@@ -897,14 +897,14 @@ fn bitTCB(p_tcb: *TCB) ItronError!void {
     if (isWaiting(tstat)) {
         var winfo_size: usize = undefined;
         if (p_tcb.p_winfo.p_tmevtb) |p_tmevtb| {
-            try checkBit(onStack(@ptrToInt(p_tmevtb), @sizeOf(TMEVTB), p_tinib));
+            try checkBit(onStack(@intFromPtr(p_tmevtb), @sizeOf(TMEVTB), p_tinib));
             try checkBit(validTMEVTB(p_tmevtb));
             if ((tstat & TS_WAITING_MASK) != TS_WAITING_DLY) {
                 try checkBit(p_tmevtb.callback == wait_tmout);
             } else {
                 try checkBit(p_tmevtb.callback == wait_tmout_ok);
             }
-            try checkBit(p_tmevtb.arg == @ptrToInt(p_tcb));
+            try checkBit(p_tmevtb.arg == @intFromPtr(p_tcb));
         }
 
         switch (tstat & TS_WAITING_MASK) {
@@ -929,7 +929,7 @@ fn bitTCB(p_tcb: *TCB) ItronError!void {
             },
         }
 
-        try checkBit(onStack(@ptrToInt(p_tcb.p_winfo), winfo_size, p_tinib));
+        try checkBit(onStack(@intFromPtr(p_tcb.p_winfo), winfo_size, p_tinib));
     }
 
     // p_lastmtxの検査

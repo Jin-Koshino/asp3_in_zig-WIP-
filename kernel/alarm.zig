@@ -142,7 +142,7 @@ pub fn initialize_alarm() void {
         p_almcb.p_alminib = &cfg._kernel_alminib_table[i];
         p_almcb.almsta = false;
         p_almcb.tmevtb.callback = callAlarm;
-        p_almcb.tmevtb.arg = @ptrToInt(p_almcb);
+        p_almcb.tmevtb.arg = @intFromPtr(p_almcb);
     }
 }
 
@@ -215,7 +215,7 @@ pub fn ref_alm(almid: ID, pk_ralm: *T_RALM) ItronError!void {
 ///  アラーム通知起動ルーチン
 ///
 fn callAlarm(arg: usize) void {
-    const p_almcb = @intToPtr(*ALMCB, arg);
+    const p_almcb = @ptrFromInt(*ALMCB, arg);
 
     // アラーム通知を停止状態にする．
     p_almcb.almsta = false;

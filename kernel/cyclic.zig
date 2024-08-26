@@ -147,7 +147,7 @@ pub fn initialize_cyclic() void {
     for (cfg._kernel_cyccb_table[0..cfg._kernel_cycinib_table.len]) |*p_cyccb, i| {
         p_cyccb.p_cycinib = &cfg._kernel_cycinib_table[i];
         p_cyccb.tmevtb.callback = callCyclic;
-        p_cyccb.tmevtb.arg = @ptrToInt(p_cyccb);
+        p_cyccb.tmevtb.arg = @intFromPtr(p_cyccb);
         if ((p_cyccb.p_cycinib.cycatr & TA_STA) != 0) {
             // 初回の起動のためのタイムイベントを登録する［ASPD1035］
             // ［ASPD1062］．
@@ -230,7 +230,7 @@ pub fn ref_cyc(cycid: ID, pk_rcyc: *T_RCYC) ItronError!void {
 ///  周期通知起動ルーチン
 ///
 fn callCyclic(arg: usize) void {
-    const p_cyccb = @intToPtr(*CYCCB, arg);
+    const p_cyccb = @ptrFromInt(*CYCCB, arg);
 
     // 次回の起動のためのタイムイベントを登録する［ASPD1037］．
     p_cyccb.tmevtb.evttim += p_cyccb.p_cycinib.cyctim; //［ASPD1038］

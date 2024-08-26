@@ -197,7 +197,7 @@ fn checkAndGetFlgCB(flgid: ID) ItronError!*FLGCB {
 ///  イベントフラグ管理ブロックからイベントフラグIDを取り出すための関数
 ///
 fn getFlgIdFromFlgCB(p_flgcb: *FLGCB) ID {
-    return @intCast(ID, (@ptrToInt(p_flgcb) - @ptrToInt(&cfg._kernel_flgcb_table)) / @sizeOf(FLGCB)) + TMIN_FLGID;
+    return @intCast(ID, (@intFromPtr(p_flgcb) - @intFromPtr(&cfg._kernel_flgcb_table)) / @sizeOf(FLGCB)) + TMIN_FLGID;
 }
 
 ///

@@ -93,11 +93,11 @@ extern fn tTraceLog_eTraceLog_write(p_trace: *const TRACE) ER;
 ///
 fn logPar(arg: anytype) usize {
     return switch (@typeInfo(@TypeOf(arg))) {
-        .Bool => @boolToInt(arg),
+        .Bool => @intFromBool(arg),
         .Int, .ComptimeInt => @intCast(usize, arg),
-        .Enum => @enumToInt(arg),
-        .Pointer => |pointer| @ptrToInt(if (pointer.size == .Slice) arg.ptr else arg),
-        .Array => @ptrToInt(&arg),
+        .Enum => @intFromEnum(arg),
+        .Pointer => |pointer| @intFromPtr(if (pointer.size == .Slice) arg.ptr else arg),
+        .Array => @intFromPtr(&arg),
         .Optional => logPar(arg.?),
         else => @compileError("unsupported data type for syslog."),
     };

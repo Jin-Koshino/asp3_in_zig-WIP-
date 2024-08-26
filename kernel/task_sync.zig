@@ -405,7 +405,7 @@ pub fn dly_tsk(dlytim: RELTIM) ItronError!void {
             p_selftsk.p_winfo = &winfo;
             winfo.p_tmevtb = &tmevtb;
             tmevtb.callback = wait_tmout_ok;
-            tmevtb.arg = @ptrToInt(task.p_runtsk);
+            tmevtb.arg = @intFromPtr(task.p_runtsk);
             tmevtb_enqueue_reltim(&tmevtb, dlytim);
             traceLog("taskStateChange", .{p_selftsk});
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();

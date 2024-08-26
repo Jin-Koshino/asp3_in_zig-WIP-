@@ -240,10 +240,10 @@ pub fn ref_tsk(tskid: ID, pk_rtsk: *T_RTSK) ItronError!void {
             pk_rtsk.wupcnt = p_tcb.flags.wupque;
 
             // タスク終了要求状態の取出し［NGKI3467］
-            pk_rtsk.raster = @boolToInt(p_tcb.flags.raster);
+            pk_rtsk.raster = @intFromBool(p_tcb.flags.raster);
 
             // タスク終了禁止状態の取出し［NGKI3468］
-            pk_rtsk.dister = @boolToInt(!p_tcb.flags.enater);
+            pk_rtsk.dister = @intFromBool(!p_tcb.flags.enater);
         }
 
         // 起動要求キューイング数の取出し［NGKI1238］

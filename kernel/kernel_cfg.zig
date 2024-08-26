@@ -227,7 +227,7 @@ pub fn ATER(teratr: ATR, exinf: anytype, comptime terrtn_main: TERRTN) T_ATER {
 pub fn NFY_TMEHDR(comptime exinf: anytype, comptime tmehdr: TMEHDR) T_NFYINFO {
     return T_NFYINFO{ .nfy = .{ .Handler = .{
         .exinf = comptime castToExinf(exinf),
-        .tmehdr = @ptrCast(TMEHDR, tmehdr),
+        .tmehdr = @ptrCast(tmehdr),
     } } };
 }
 
@@ -276,14 +276,14 @@ pub fn NFYINFO(comptime args: anytype, comptime cfg_data: *CfgData) T_NFYINFO {
         .nfy = switch (nfymode1) {
             TNFY_HANDLER => .{ .Handler = .{
                 .exinf = castToExinf(par1),
-                .tmehdr = @ptrCast(TMEHDR, par2),
+                .tmehdr = @ptrCast(par2),
             } },
             TNFY_SETVAR => .{ .SetVar = .{
-                .p_var = @ptrCast(*usize, par1),
+                .p_var = @ptrCast(par1),
                 .value = par2,
             } },
             TNFY_INCVAR => .{ .IncVar = .{
-                .p_var = @ptrCast(*usize, par1),
+                .p_var = @ptrCast(par1),
             } },
             TNFY_ACTTSK => .{ .ActTsk = .{
                 .tskid = cfg_data.getTskId(par1),
@@ -310,10 +310,10 @@ pub fn NFYINFO(comptime args: anytype, comptime cfg_data: *CfgData) T_NFYINFO {
         .enfy = switch (nfymode2) {
             0 => null,
             TENFY_SETVAR => .{ .SetVar = .{
-                .p_var = @ptrCast(*usize, epar1),
+                .p_var = @ptrCast(epar1),
             } },
             TENFY_INCVAR => .{ .IncVar = .{
-                .p_var = @ptrCast(*usize, epar1),
+                .p_var = @ptrCast(epar1),
             } },
             TENFY_ACTTSK => .{ .ActTsk = .{
                 .tskid = cfg_data.getTskId(epar1),

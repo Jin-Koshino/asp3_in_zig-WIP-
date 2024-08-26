@@ -48,7 +48,7 @@ const builtin = @import("builtin");
 ///
 pub const Feature = std.Target.arm.Feature;
 pub fn isEnabled(feature: Feature) bool {
-    return builtin.cpu.features.isEnabled(@enumToInt(feature));
+    return builtin.cpu.features.isEnabled(@intFromEnum(feature));
 }
 
 ///

@@ -174,7 +174,7 @@ pub fn make_wait_tmout(tstat: u8, p_winfo: *WINFO, p_tmevtb: *TMEVTB, tmout: TMO
         assert(tmout <= TMAX_RELTIM);
         p_winfo.p_tmevtb = p_tmevtb;
         p_tmevtb.callback = wait_tmout;
-        p_tmevtb.arg = @ptrToInt(task.p_runtsk);
+        p_tmevtb.arg = @intFromPtr(task.p_runtsk);
         tmevtb_enqueue_reltim(p_tmevtb, @intCast(RELTIM, tmout));
     }
 }
@@ -254,7 +254,7 @@ pub fn wait_complete(p_tcb: *TCB) void {
 ///  のもので，割込みハンドラから呼び出されることを想定している．
 ///
 pub fn wait_tmout(arg: usize) void {
-    const p_tcb = @intToPtr(*TCB, arg);
+    const p_tcb = @ptrFromInt(*TCB, arg);
 
     wait_dequeue_wobj(p_tcb);
     p_tcb.p_winfo.* = WINFO{ .werror = ItronError.TimeoutError };
@@ -270,7 +270,7 @@ pub fn wait_tmout(arg: usize) void {
 }
 
 pub fn wait_tmout_ok(arg: usize) void {
-    const p_tcb = @intToPtr(*TCB, arg);
+    const p_tcb = @ptrFromInt(*TCB, arg);
 
     p_tcb.p_winfo.* = WINFO{ .werror = null };
     make_non_wait(p_tcb);

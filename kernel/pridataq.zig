@@ -243,7 +243,7 @@ pub fn checkAndGetPdqCB(pdqid: ID) ItronError!*PDQCB {
 ///  優先度データキュー管理ブロックから優先度データキューIDを取り出すための関数
 ///
 fn getPdqIdFromPdqCB(p_pdqcb: *PDQCB) ID {
-    return @intCast(ID, (@ptrToInt(p_pdqcb) - @ptrToInt(&cfg._kernel_pdqcb_table)) / @sizeOf(PDQCB)) + TMIN_PDQID;
+    return @intCast(ID, (@intFromPtr(p_pdqcb) - @intFromPtr(&cfg._kernel_pdqcb_table)) / @sizeOf(PDQCB)) + TMIN_PDQID;
 }
 
 ///
