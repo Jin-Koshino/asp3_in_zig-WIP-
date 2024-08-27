@@ -198,7 +198,7 @@ pub const ExternMtxCfg = struct {
 ///  ミューテックスIDの最大値
 ///
 fn maxMtxId() ID {
-    return @intCast(ID, TMIN_MTXID + cfg._kernel_mtxinib_table.len - 1);
+    return @intCast(TMIN_MTXID + cfg._kernel_mtxinib_table.len - 1);
 }
 
 ///
@@ -213,7 +213,7 @@ fn isCeilingMtx(p_mtxcb: *MTXCB) bool {
 ///  ミューテックスIDからミューテックス管理ブロックを取り出すための関数
 ///
 fn indexMtx(mtxid: ID) usize {
-    return @intCast(usize, mtxid - TMIN_MTXID);
+    return @intCast(mtxid - TMIN_MTXID);
 }
 fn checkAndGetMtxCB(mtxid: ID) ItronError!*MTXCB {
     try checkId(TMIN_MTXID <= mtxid and mtxid <= maxMtxId());
@@ -224,7 +224,7 @@ fn checkAndGetMtxCB(mtxid: ID) ItronError!*MTXCB {
 ///  ミューテックス管理ブロックからミューテックスIDを取り出すための関数
 ///
 pub fn getMtxIdFromMtxCB(p_mtxcb: *MTXCB) ID {
-    return @intCast(ID, (@intFromPtr(p_mtxcb) - @intFromPtr(&cfg._kernel_mtxcb_table)) / @sizeOf(MTXCB)) + TMIN_MTXID;
+    return @as(ID, @intCast((@intFromPtr(p_mtxcb) - @intFromPtr(&cfg._kernel_mtxcb_table)) / @sizeOf(MTXCB))) + TMIN_MTXID;
 }
 
 ///
@@ -316,7 +316,7 @@ fn mutexCalcPriority(p_tcb: *TCB) TaskPrio {
 
     while (op_mtxcb) |p_mtxcb| : (op_mtxcb = p_mtxcb.p_prevmtx) {
         if (isCeilingMtx(p_mtxcb) and p_mtxcb.p_wobjinib.ceilpri < prio) {
-            prio = @intCast(TaskPrio, p_mtxcb.p_wobjinib.ceilpri);
+            prio = @as(TaskPrio, @intCast(p_mtxcb.p_wobjinib.ceilpri));
         }
     }
     return prio;
@@ -348,7 +348,7 @@ fn mutexAcquire(p_tcb: *TCB, p_mtxcb: *MTXCB) void {
     p_mtxcb.p_prevmtx = p_tcb.p_lastmtx;
     p_tcb.p_lastmtx = p_mtxcb;
     if (isCeilingMtx(p_mtxcb) and p_mtxcb.p_wobjinib.ceilpri < p_tcb.prio) {
-        change_priority(p_tcb, @intCast(TaskPrio, p_mtxcb.p_wobjinib.ceilpri), true);
+        change_priority(p_tcb, @as(TaskPrio, @intCast(p_mtxcb.p_wobjinib.ceilpri)), true);
     }
 }
 
@@ -373,7 +373,7 @@ fn mutexRelease(p_mtxcb: *MTXCB) void {
         p_mtxcb.p_prevmtx = p_tcb.p_lastmtx;
         p_tcb.p_lastmtx = p_mtxcb;
         if (isCeilingMtx(p_mtxcb) and p_mtxcb.p_wobjinib.ceilpri < p_tcb.prio) {
-            p_tcb.prio = @intCast(TaskPrio, p_mtxcb.p_wobjinib.ceilpri);
+            p_tcb.prio = @as(TaskPrio, @intCast(p_mtxcb.p_wobjinib.ceilpri));
         }
         make_non_wait(p_tcb);
     }

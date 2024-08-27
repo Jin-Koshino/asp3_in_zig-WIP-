@@ -224,7 +224,7 @@ pub fn chg_pri(tskid: ID, tskpri: PRI) ItronError!void {
         p_tcb = try checkAndGetTCB(tskid); //［NGKI1187］
     }
     if (tskpri == TPRI_INI) { //［NGKI1199］
-        newbprio = @intCast(TaskPrio, p_tcb.p_tinib.ipri);
+        newbprio = @as(TaskPrio, @intCast(p_tcb.p_tinib.ipri));
     } else {
         try checkParameter(validTaskPri(tskpri)); //［NGKI1188］
         newbprio = internalTaskPrio(tskpri);

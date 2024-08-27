@@ -190,14 +190,14 @@ pub const ExternDtqCfg = struct {
 ///  データキューIDの最大値
 ///
 fn maxDtqId() ID {
-    return @intCast(ID, TMIN_DTQID + cfg._kernel_dtqinib_table.len - 1);
+    return @intCast(TMIN_DTQID + cfg._kernel_dtqinib_table.len - 1);
 }
 
 ///
 ///  データキューIDからデータキュー管理ブロックを取り出すための関数
 ///
 fn indexDtq(dtqid: ID) usize {
-    return @intCast(usize, dtqid - TMIN_DTQID);
+    return @intCast(dtqid - TMIN_DTQID);
 }
 fn checkAndGetDtqCB(dtqid: ID) ItronError!*DTQCB {
     try checkId(TMIN_DTQID <= dtqid and dtqid <= maxDtqId());
@@ -208,7 +208,7 @@ fn checkAndGetDtqCB(dtqid: ID) ItronError!*DTQCB {
 ///  データキュー管理ブロックからデータキューIDを取り出すための関数
 ///
 pub fn getDtqIdFromDtqCB(p_dtqcb: *DTQCB) ID {
-    return @intCast(ID, (@intFromPtr(p_dtqcb) - @intFromPtr(&cfg._kernel_dtqcb_table)) / @sizeOf(DTQCB)) + TMIN_DTQID;
+    return @as(ID, @intCast((@intFromPtr(p_dtqcb) - @intFromPtr(&cfg._kernel_dtqcb_table)) / @sizeOf(DTQCB))) + TMIN_DTQID;
 }
 
 ///

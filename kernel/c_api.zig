@@ -122,7 +122,7 @@ fn callService(result: ItronError!void) ER {
 // 返値をER_UINT型に変換
 fn callServiceUint(result: ItronError!c_uint) ER_UINT {
     if (result) |retval| {
-        return @intCast(ER_UINT, @intCast(u31, retval));
+        return @as(ER_UINT, @intCast(@as(u31, @intCast(retval))));
     } else |err| {
         return errorcode.itronErrorCode(err);
     }
@@ -131,7 +131,7 @@ fn callServiceUint(result: ItronError!c_uint) ER_UINT {
 // 返値をER_BOOL型に変換
 fn callServiceBool(result: ItronError!bool) ER_BOOL {
     if (result) |retval| {
-        return @intCast(ER_BOOL, @intFromBool(retval));
+        return @as(ER_BOOL, @intCast(@intFromBool(retval)));
     } else |err| {
         return errorcode.itronErrorCode(err);
     }

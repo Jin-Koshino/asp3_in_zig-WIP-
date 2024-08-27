@@ -195,14 +195,14 @@ pub const ExternSemCfg = struct {
 ///  セマフォIDの最大値
 ///
 fn maxSemId() ID {
-    return @intCast(ID, TMIN_SEMID + cfg._kernel_seminib_table.len - 1);
+    return @intCast(TMIN_SEMID + cfg._kernel_seminib_table.len - 1);
 }
 
 ///
 ///  セマフォIDからセマフォ管理ブロックを取り出すための関数
 ///
 fn indexSem(semid: ID) usize {
-    return @intCast(usize, semid - TMIN_SEMID);
+    return @intCast(semid - TMIN_SEMID);
 }
 fn checkAndGetSemCB(semid: ID) ItronError!*SEMCB {
     try checkId(TMIN_SEMID <= semid and semid <= maxSemId());
@@ -213,7 +213,7 @@ fn checkAndGetSemCB(semid: ID) ItronError!*SEMCB {
 ///  セマフォ管理ブロックからセマフォIDを取り出すための関数
 ///
 fn getSemIdFromSemCB(p_semcb: *SEMCB) ID {
-    return @intCast(ID, (@intFromPtr(p_semcb) - @intFromPtr(&cfg._kernel_semcb_table)) / @sizeOf(SEMCB)) + TMIN_SEMID;
+    return @as(ID, @intCast((@intFromPtr(p_semcb) - @intFromPtr(&cfg._kernel_semcb_table)) / @sizeOf(SEMCB))) + TMIN_SEMID;
 }
 
 ///

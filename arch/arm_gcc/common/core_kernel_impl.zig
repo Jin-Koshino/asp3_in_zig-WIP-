@@ -960,7 +960,7 @@ pub fn exc_sense_context(p_excinf: *T_EXCINF) bool {
 ///  CPU例外の発生した時の割込み優先度マスクの参照
 ///
 pub fn exc_get_intpri(p_excinf: *T_EXCINF) PRI {
-    return @intCast(PRI, p_excinf.intpri);
+    return @as(PRI, @intCast(p_excinf.intpri));
 }
 
 ///
@@ -1720,7 +1720,7 @@ fn arm_mmu_initialize() void {
     }
 
     // 変換テーブルとして，section_tableを使用する．
-    reg = @intCast(u32, @intFromPtr(&section_table)) | TTBR_CONFIG;
+    reg = @as(u32, @intCast(@intFromPtr(&section_table))) | TTBR_CONFIG;
     arm.CP15_WRITE_TTBR0(reg);
 
     // ドメインアクセス制御の設定

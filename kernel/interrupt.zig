@@ -185,14 +185,14 @@ fn inhnoToIntno(inhno: INHNO) ?INTNO {
     if (@hasDecl(target_impl, "inhnoToIntno")) {
         return target_impl.inhnoToIntno(inhno);
     } else {
-        return @intCast(INTNO, inhno);
+        return @intCast(inhno);
     }
 }
 pub fn intnoToInhno(intno: INTNO) INHNO {
     if (@hasDecl(target_impl, "intnoToInhno")) {
         return target_impl.intnoToInhno(intno);
     } else {
-        return @intCast(INHNO, intno);
+        return @intCast(intno);
     }
 }
 

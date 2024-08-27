@@ -179,14 +179,14 @@ pub const ExternFlgCfg = struct {
 ///  イベントフラグIDの最大値
 ///
 fn maxFlgId() ID {
-    return @intCast(ID, TMIN_FLGID + cfg._kernel_flginib_table.len - 1);
+    return @intCast(TMIN_FLGID + cfg._kernel_flginib_table.len - 1);
 }
 
 ///
 ///  イベントフラグIDからイベントフラグ管理ブロックを取り出すための関数
 ///
 fn indexFlg(flgid: ID) usize {
-    return @intCast(usize, flgid - TMIN_FLGID);
+    return @intCast(flgid - TMIN_FLGID);
 }
 fn checkAndGetFlgCB(flgid: ID) ItronError!*FLGCB {
     try checkId(TMIN_FLGID <= flgid and flgid <= maxFlgId());
@@ -197,7 +197,7 @@ fn checkAndGetFlgCB(flgid: ID) ItronError!*FLGCB {
 ///  イベントフラグ管理ブロックからイベントフラグIDを取り出すための関数
 ///
 fn getFlgIdFromFlgCB(p_flgcb: *FLGCB) ID {
-    return @intCast(ID, (@intFromPtr(p_flgcb) - @intFromPtr(&cfg._kernel_flgcb_table)) / @sizeOf(FLGCB)) + TMIN_FLGID;
+    return @as(ID, @intCast((@intFromPtr(p_flgcb) - @intFromPtr(&cfg._kernel_flgcb_table)) / @sizeOf(FLGCB))) + TMIN_FLGID;
 }
 
 ///

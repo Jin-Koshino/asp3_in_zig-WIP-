@@ -408,7 +408,7 @@ pub const CfgData = struct {
         comptime var i: usize = 0;
         comptime var p_item = self.tsk_list.head;
         inline while (p_item) |item| : (p_item = item.p_next) {
-            torder_table[i] = @intCast(ID, i + 1);
+            torder_table[i] = @as(ID, @intCast(i + 1));
             i += 1;
         }
         return &torder_table;
@@ -604,7 +604,7 @@ pub const CfgData = struct {
         comptime var p_isr = addItem(T_ISR, &p_self.isr_list);
         p_isr.name = isr_name;
         p_isr.cfg.cisr = comptime interrupt.cre_isr(cisr, p_self) catch |err| reportError("CRE_ISR", err);
-        p_isr.cfg.isrid = comptime @intCast(ID, p_self.isr_list.length);
+        p_isr.cfg.isrid = comptime @as(ID, @intCast(p_self.isr_list.length));
         p_isr.cfg.genflag = false;
     }
 

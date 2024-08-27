@@ -47,7 +47,7 @@ const t_stddef = zig.t_stddef;
 
 const target_impl = kernel_impl.target_impl;
 const HRTCNT = t_stddef.HRTCNT;
-const TSTEP_HRTCNT = zig.TSTEP_HRTCNT 
+const TSTEP_HRTCNT = zig.TSTEP_HRTCNT;
 const target_timer = kernel_impl.target_timer;
 const TCYC_HRTCNT = zig.TCYC_HRTCNT;
 const time_event = kernel_impl.time_event;
@@ -251,7 +251,7 @@ pub const ovrtimer = struct {
         if (ovr_event.simtim <= current_simtim) {
             ovrtim = 0;
         } else {
-            ovrtim = @intCast(PRCTIM, ovr_event.simtim - current_simtim);
+            ovrtim = @intCast(ovr_event.simtim - current_simtim);
         }
         ovr_event.enable = false;
         select_event();
@@ -266,7 +266,7 @@ pub const ovrtimer = struct {
         if (ovr_event.simtim <= current_simtim) {
             return 0;
         } else {
-            return @intCast(PRCTIM, ovr_event.simtim - current_simtim);
+            return @intCast(ovr_event.simtim - current_simtim);
         }
     }
 
@@ -366,7 +366,7 @@ fn simtim_advance(time: c_uint) void {
 
         // 時刻をremain_time進めると，タイマ割込みの発生時刻を過ぎる場合
         if (current_simtim < next_event.simtim) {
-            remain_time -= @intCast(c_uint, next_event.simtim - current_simtim);
+            remain_time -= @as(c_int, @intCast(next_event.simtim - current_simtim));
             current_simtim = next_event.simtim;
         }
         next_event.enable = false;

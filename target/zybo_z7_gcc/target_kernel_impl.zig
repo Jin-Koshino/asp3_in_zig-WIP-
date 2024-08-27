@@ -103,7 +103,7 @@ pub fn initialize() void {
     chip_initialize();
 
     // ベクタテーブルの設定
-    arm.CP15_WRITE_VBAR(@intCast(u32, @intFromPtr(vector_table)));
+    arm.CP15_WRITE_VBAR(@as(u32, @intCast(@intFromPtr(vector_table))));
 
     // SIOを初期化
     if (!TOPPERS_OMIT_TECS) {

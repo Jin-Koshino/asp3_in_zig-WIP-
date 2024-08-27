@@ -219,7 +219,7 @@ pub fn ref_tsk(tskid: ID, pk_rtsk: *T_RTSK) ItronError!void {
 
                 // タイムアウトするまでの時間の取出し
                 if (p_tcb.p_winfo.p_tmevtb) |p_tmevtb| {
-                    pk_rtsk.lefttmo = @intCast(TMO, tmevt_lefttim(p_tmevtb));
+                    pk_rtsk.lefttmo = @as(TMO, @intCast(tmevt_lefttim(p_tmevtb)));
                 } //［NGKI1233］［NGKI1235］
                 else {
                     pk_rtsk.lefttmo = TMO_FEVR; //［NGKI1234］

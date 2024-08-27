@@ -129,12 +129,12 @@ const GIC_PRI_MASK = switch (GIC_PRI_LEVEL) {
 
 /// 割込み優先度マスクの外部表現への変換
 pub fn externalIpm(pri: u32) PRI {
-    return @intCast(PRI, (pri >> GIC_PRI_SHIFT)) - (GIC_PRI_LEVEL - 1);
+    return @as(PRI, @intCast((pri >> GIC_PRI_SHIFT))) - (GIC_PRI_LEVEL - 1);
 }
 
 /// 割込み優先度マスクの内部表現への変換
 pub fn internalIpm(ipm: PRI) u32 {
-    return @intCast(u32, ipm + GIC_PRI_LEVEL - 1) << GIC_PRI_SHIFT;
+    return @as(u32, @intCast(u32, ipm + GIC_PRI_LEVEL - 1)) << GIC_PRI_SHIFT;
 }
 
 ///
@@ -270,28 +270,28 @@ pub fn gicc_terminate() void {
 ///  割込み禁止（割込みイネーブルのクリア）
 ///
 fn gicd_disable_int(intno: INTNO) void {
-    sil.swrw_mem(GICD_ICENABLER(intno / 32), @as(u32, 1) << @intCast(u5, intno % 32));
+    sil.swrw_mem(GICD_ICENABLER(intno / 32), @as(u32, 1) << @as(u5, @intCast(intno % 32)));
 }
 
 ///
 ///  割込み許可（割込みイネーブルのセット）
 ///
 fn gicd_enable_int(intno: INTNO) void {
-    sil.swrw_mem(GICD_ISENABLER(intno / 32), @as(u32, 1) << @intCast(u5, intno % 32));
+    sil.swrw_mem(GICD_ISENABLER(intno / 32), @as(u32, 1) << @as(u5, @intCast(intno % 32)));
 }
 
 ///
 ///  割込みペンディングのクリア
 ///
 fn gicd_clear_pending(intno: INTNO) void {
-    sil.swrw_mem(GICD_ICPENDR(intno / 32), @as(u32, 1) << @intCast(u5, intno % 32));
+    sil.swrw_mem(GICD_ICPENDR(intno / 32), @as(u32, 1) << @as(u5, @intCast(intno % 32)));
 }
 
 ///
 ///  割込みペンディングのセット
 ///
 fn gicd_set_pending(intno: INTNO) void {
-    sil.swrw_mem(GICD_ISPENDR(intno / 32), @as(u32, 1) << @intCast(u5, intno % 32));
+    sil.swrw_mem(GICD_ISPENDR(intno / 32), @as(u32, 1) << @as(u5, @intCast(intno % 32)));
 }
 
 ///
@@ -299,7 +299,7 @@ fn gicd_set_pending(intno: INTNO) void {
 ///
 fn gicd_probe_pending(intno: INTNO) bool {
     return (sil.rew_mem(GICD_ISPENDR(intno / 32)) &
-        @as(u32, 1) << @intCast(u5, intno % 32)) != 0;
+        @as(u32, 1) << @as(u5, @intCast(intno % 32))) != 0;
 }
 
 ///
@@ -316,8 +316,8 @@ pub fn gicd_config(intno: INTNO, conf: u32) void {
     if (intno >= GIC_INTNO_PPI0) {
         var reg = sil.rew_mem(GICD_ICFGR(intno / 16));
         var shift: c_uint = (intno % 16) * 2;
-        reg &= ~(@as(u32, 0x03) << @intCast(u5, shift));
-        reg |= (conf << @intCast(u5, shift));
+        reg &= ~(@as(u32, 0x03) << @as(u5, @intCast(shift)));
+        reg |= (conf << @as(u5, @intCast(shift)));
         sil.wrw_mem(GICD_ICFGR(intno / 16), reg);
     }
 }
@@ -328,8 +328,8 @@ pub fn gicd_config(intno: INTNO, conf: u32) void {
 pub fn gicd_set_priority(intno: INTNO, pri: u32) void {
     var reg = sil.rew_mem(GICD_IPRIORITYR(intno / 4));
     var shift: c_uint = (intno % 4) * 8;
-    reg &= ~(@as(u32, 0xff) << @intCast(u5, shift));
-    reg |= (pri << @intCast(u5, @intCast(u5, shift)));
+    reg &= ~(@as(u32, 0xff) << @as(u5, @intCast(shift)));
+    reg |= (pri << @as(u5, @intCast(@as(u5, @intCast(shift)))));
     sil.wrw_mem(GICD_IPRIORITYR(intno / 4), reg);
 }
 
@@ -346,8 +346,8 @@ pub fn gicd_set_priority(intno: INTNO, pri: u32) void {
 pub fn gicd_set_target(intno: INTNO, affinity: u32) void {
     var reg = sil.rew_mem(GICD_ITARGETSR(intno / 4));
     var shift: c_uint = (intno % 4) * 8;
-    reg &= ~(@as(u32, 0xff) << @intCast(u5, shift));
-    reg |= (affinity << @intCast(u5, shift));
+    reg &= ~(@as(u32, 0xff) << @as(u5, @intCast(shift)));
+    reg |= (affinity << @as(u5, @intCast(shift)));
     sil.wrw_mem(GICD_ITARGETSR(intno / 4), reg);
 }
 
@@ -559,7 +559,7 @@ fn config_int(intno: INTNO, intatr: ATR, intpri: PRI) void {
 
     // 割込み優先度とターゲットプロセッサを設定
     gicd_set_priority(intno, internalIpm(intpri));
-    gicd_set_target(intno, @as(u32, 1) << @intCast(u5, arm.get_my_prcidx()));
+    gicd_set_target(intno, @as(u32, 1) << @as(u5, @intCast(arm.get_my_prcidx())));
 
     // 割込みを許可
     if ((intatr & TA_ENAINT) != 0) {

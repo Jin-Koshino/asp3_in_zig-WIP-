@@ -126,14 +126,14 @@ pub const ExternCycCfg = struct {
 ///  周期通知IDの最大値
 ///
 fn maxCycId() ID {
-    return @intCast(ID, TMIN_CYCID + cfg._kernel_cycinib_table.len - 1);
+    return @intCast(TMIN_CYCID + cfg._kernel_cycinib_table.len - 1);
 }
 
 ///
 ///  周期通知IDから周期通知管理ブロックを取り出すための関数
 ///
 fn indexCyc(cycid: ID) usize {
-    return @intCast(usize, cycid - TMIN_CYCID);
+    return @intCast(cycid - TMIN_CYCID);
 }
 fn checkAndGetCycCB(cycid: ID) ItronError!*CYCCB {
     try checkId(TMIN_CYCID <= cycid and cycid <= maxCycId());
@@ -152,7 +152,7 @@ pub fn initialize_cyclic() void {
             // 初回の起動のためのタイムイベントを登録する［ASPD1035］
             // ［ASPD1062］．
             p_cyccb.cycsta = true;
-            p_cyccb.tmevtb.evttim = @intCast(EVTTIM, p_cyccb.p_cycinib.cycphs);
+            p_cyccb.tmevtb.evttim = @as(EVTTIM, @intCast(p_cyccb.p_cycinib.cycphs));
             tmevtb_register(&p_cyccb.tmevtb);
         } else {
             p_cyccb.cycsta = false;

@@ -388,10 +388,10 @@ pub fn update_current_evttim() void {
     current_hrtcnt = new_hrtcnt; //［ASPD1016］
 
     previous_evttim = current_evttim;
-    current_evttim +%= @intCast(EVTTIM, hrtcnt_advance); //［ASPD1015］
+    current_evttim +%= @as(EVTTIM, @intCast(hrtcnt_advance)); //［ASPD1015］
     boundary_evttim = current_evttim -% BOUNDARY_MARGIN; //［ASPD1011］
 
-    if (monotonic_evttim -% previous_evttim < @intCast(EVTTIM, hrtcnt_advance)) {
+    if (monotonic_evttim -% previous_evttim < @as(EVTTIM, @intCast(hrtcnt_advance))) {
         if (current_evttim < monotonic_evttim) { //［ASPD1045］
             systim_offset +%= @as(SYSTIM, 1) << @bitSizeOf(EVTTIM);
         }
@@ -424,7 +424,7 @@ pub fn set_hrt_event() void {
     } else if (EVTTIM_LE(top_evttim(), current_evttim)) {
         target_timer.hrt.raise_event(); //［ASPD1017］
     } else {
-        const hrtcnt = @intCast(HRTCNT, top_evttim() -% current_evttim);
+        const hrtcnt = @as(HRTCNT, @intCast(top_evttim() -% current_evttim));
         if (HRTCNT_BOUND == null or hrtcnt <= HRTCNT_BOUND.?) {
             target_timer.hrt.set_event(hrtcnt); //［ASPD1006］
         } else { //［ASPD1002］
@@ -521,7 +521,7 @@ pub fn tmevt_lefttim(p_tmevtb: *TMEVTB) RELTIM {
         // タイムイベントの発生時刻を過ぎている場合には0を返す［NGKI0552］．
         return 0;
     } else {
-        return @intCast(RELTIM, evttim -% current_evttim_ub);
+        return @as(RELTIM, @intCast(evttim -% current_evttim_ub));
     }
 }
 

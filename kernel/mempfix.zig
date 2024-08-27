@@ -208,14 +208,14 @@ pub const ExternMpfCfg = struct {
 ///  固定長メモリプールIDの最大値
 ///
 fn maxMpfId() ID {
-    return @intCast(ID, TMIN_MPFID + cfg._kernel_mpfinib_table.len - 1);
+    return @intCast(TMIN_MPFID + cfg._kernel_mpfinib_table.len - 1);
 }
 
 ///
 ///  固定長メモリプールIDから固定長メモリプール管理ブロックを取り出すための関数
 ///
 fn indexMpf(mpfid: ID) usize {
-    return @intCast(usize, mpfid - TMIN_MPFID);
+    return @intCast(mpfid - TMIN_MPFID);
 }
 fn checkAndGetMpfCB(mpfid: ID) ItronError!*MPFCB {
     try checkId(TMIN_MPFID <= mpfid and mpfid <= maxMpfId());
@@ -226,7 +226,7 @@ fn checkAndGetMpfCB(mpfid: ID) ItronError!*MPFCB {
 ///  固定長メモリプール管理ブロックから固定長メモリプールIDを取り出すための関数
 ///
 fn getMpfIdFromMpfCB(p_mpfcb: *MPFCB) ID {
-    return @intCast(ID, (@intFromPtr(p_mpfcb) - @intFromPtr(&cfg._kernel_mpfcb_table)) / @sizeOf(MPFCB)) + TMIN_MPFID;
+    return @as(ID, @intCast((@intFromPtr(p_mpfcb) - @intFromPtr(&cfg._kernel_mpfcb_table)) / @sizeOf(MPFCB))) + TMIN_MPFID;
 }
 
 ///
@@ -367,7 +367,7 @@ pub fn rel_mpf(mpfid: ID, blk: *u8) ItronError!void {
     var blkoffset = @intFromPtr(blk) - @intFromPtr(p_mpfcb.p_wobjinib.mpf);
     try checkParameter(blkoffset % p_mpfcb.p_wobjinib.blksz == 0);
     try checkParameter(blkoffset / p_mpfcb.p_wobjinib.blksz < p_mpfcb.unused);
-    var blkidx = @intCast(c_uint, blkoffset / p_mpfcb.p_wobjinib.blksz);
+    var blkidx = @as(c_uint, @intCast(blkoffset / p_mpfcb.p_wobjinib.blksz));
     try checkParameter(p_mpfcb.p_wobjinib.p_mpfmb[blkidx].next == INDEX_ALLOC);
     {
         target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();

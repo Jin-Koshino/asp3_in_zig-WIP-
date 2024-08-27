@@ -175,7 +175,7 @@ pub fn make_wait_tmout(tstat: u8, p_winfo: *WINFO, p_tmevtb: *TMEVTB, tmout: TMO
         p_winfo.p_tmevtb = p_tmevtb;
         p_tmevtb.callback = wait_tmout;
         p_tmevtb.arg = @intFromPtr(task.p_runtsk);
-        tmevtb_enqueue_reltim(p_tmevtb, @intCast(RELTIM, tmout));
+        tmevtb_enqueue_reltim(p_tmevtb, @as(RELTIM, @intCast(tmout)));
     }
 }
 

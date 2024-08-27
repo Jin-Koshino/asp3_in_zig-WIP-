@@ -225,14 +225,14 @@ pub const ExternPdqCfg = struct {
 ///  優先度データIDの最大値
 ///
 fn maxPdqId() ID {
-    return @intCast(ID, TMIN_PDQID + cfg._kernel_pdqinib_table.len - 1);
+    return @intCast(TMIN_PDQID + cfg._kernel_pdqinib_table.len - 1);
 }
 
 ///
 ///  優先度データキューIDから優先度データキュー管理ブロックを取り出すための関数
 ///
 pub fn indexPdq(pdqid: ID) usize {
-    return @intCast(usize, pdqid - TMIN_PDQID);
+    return @intCast(pdqid - TMIN_PDQID);
 }
 pub fn checkAndGetPdqCB(pdqid: ID) ItronError!*PDQCB {
     try checkId(TMIN_PDQID <= pdqid and pdqid <= maxPdqId());
@@ -243,7 +243,7 @@ pub fn checkAndGetPdqCB(pdqid: ID) ItronError!*PDQCB {
 ///  優先度データキュー管理ブロックから優先度データキューIDを取り出すための関数
 ///
 fn getPdqIdFromPdqCB(p_pdqcb: *PDQCB) ID {
-    return @intCast(ID, (@intFromPtr(p_pdqcb) - @intFromPtr(&cfg._kernel_pdqcb_table)) / @sizeOf(PDQCB)) + TMIN_PDQID;
+    return @as(ID, @intCast((@intFromPtr(p_pdqcb) - @intFromPtr(&cfg._kernel_pdqcb_table)) / @sizeOf(PDQCB))) + TMIN_PDQID;
 }
 
 ///

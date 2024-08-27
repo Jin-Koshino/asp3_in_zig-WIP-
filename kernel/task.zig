@@ -135,10 +135,10 @@ pub const TaskPrio = prio_bitmap.PrioType(TNUM_TPRI);
 ///  タスク優先度の内部表現・外部表現変換関数
 ///
 pub fn internalTaskPrio(tskpri: PRI) TaskPrio {
-    return @intCast(TaskPrio, tskpri - TMIN_TPRI);
+    return @intCast(tskpri - TMIN_TPRI);
 }
 pub fn externalTaskPrio(prio: TaskPrio) PRI {
-    return @intCast(PRI, prio + TMIN_TPRI);
+    return @intCast(prio + TMIN_TPRI);
 }
 
 ///
@@ -383,14 +383,14 @@ pub const ExternTskCfg = struct {
 ///  タスクIDの最大値
 ///
 fn maxTskId() ID {
-    return @intCast(ID, TMIN_TSKID + cfg._kernel_tinib_table.len - 1);
+    return @intCast(TMIN_TSKID + cfg._kernel_tinib_table.len - 1);
 }
 
 ///
 ///  タスクIDからTCBを取り出すための関数
 ///
 fn indexTsk(tskid: ID) usize {
-    return @intCast(usize, tskid - TMIN_TSKID);
+    return @intCast(tskid - TMIN_TSKID);
 }
 pub fn checkAndGetTCB(tskid: ID) ItronError!*TCB {
     try checkId(TMIN_TSKID <= tskid and tskid <= maxTskId());
@@ -408,7 +408,7 @@ pub fn getTIniB(tskid: ID) *const TINIB {
 ///  TCBからタスクIDを取り出すための関数
 ///
 pub fn getTskIdFromTCB(p_tcb: *TCB) ID {
-    return @intCast(ID, (@intFromPtr(p_tcb) - @intFromPtr(&cfg._kernel_tcb_table)) / @sizeOf(TCB)) + TMIN_TSKID;
+    return @as(ID, @intCast((@intFromPtr(p_tcb) - @intFromPtr(&cfg._kernel_tcb_table)) / @sizeOf(TCB))) + TMIN_TSKID;
 }
 
 ///
@@ -526,7 +526,7 @@ pub fn set_dspflg() void {
 ///
 fn make_dormant(p_tcb: *TCB) void {
     p_tcb.tstat = TS_DORMANT;
-    p_tcb.bprio = @intCast(TaskPrio, p_tcb.p_tinib.ipri);
+    p_tcb.bprio = @as(TaskPrio, @intCast(p_tcb.p_tinib.ipri));
     p_tcb.prio = p_tcb.bprio;
     p_tcb.flags.wupque = 0;
     p_tcb.flags.raster = false;
@@ -740,13 +740,13 @@ pub fn getTskId(info: usize) usize {
     } else {
         tskid = TSK_NONE;
     }
-    return @intCast(usize, tskid);
+    return @as(usize, @intCast(tskid));
 }
 
 pub fn getTskStat(info: usize) usize {
     var tstatstr: [*:0]const u8 = undefined;
 
-    const tstat = @intCast(u8, info);
+    const tstat = @as(u8, @intCast(info));
     if (isDormant(tstat)) {
         tstatstr = "DORMANT";
     } else {
@@ -829,9 +829,9 @@ fn bitSched() ItronError!void {
     // ready_queueとready_primapの整合性の検査
     for (ready_queue) |*p_queue, prio| {
         if (p_queue.isEmpty()) {
-            try checkBit(!ready_primap.isSet(@intCast(TaskPrio, prio)));
+            try checkBit(!ready_primap.isSet(@as(TaskPrio, @intCast(prio))));
         } else {
-            try checkBit(ready_primap.isSet(@intCast(TaskPrio, prio)));
+            try checkBit(ready_primap.isSet(@as(TaskPrio, @intCast(prio))));
         }
 
         var p_entry = p_queue.p_next;

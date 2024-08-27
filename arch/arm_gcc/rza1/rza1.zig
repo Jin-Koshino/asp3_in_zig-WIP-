@@ -231,7 +231,7 @@ pub const INTNO_SCIF7_TXI = 252; // SCIF7 送信割込み
 ///
 pub fn clear_irq(intno: INTNO) void {
     var reg = sil.reh_mem(RZA1_IRQRR);
-    reg &= ~(1 << @intCast(u4, intno - INTNO_IRQ0));
+    reg &= ~(1 << @as(u4, @intCast(intno - INTNO_IRQ0)));
     sil.swrh_mem(RZA1_IRQRR, reg);
 }
 

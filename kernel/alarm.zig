@@ -120,14 +120,14 @@ pub const ExternAlmCfg = struct {
 ///  アラーム通知IDの最大値
 ///
 fn maxAlmId() ID {
-    return @intCast(ID, TMIN_ALMID + cfg._kernel_alminib_table.len - 1);
+    return @intCast(TMIN_ALMID + cfg._kernel_alminib_table.len - 1);
 }
 
 ///
 ///  アラーム通知IDからアラーム通知管理ブロックを取り出すための関数
 ///
 fn indexAlm(almid: ID) usize {
-    return @intCast(usize, almid - TMIN_ALMID);
+    return @intCast(almid - TMIN_ALMID);
 }
 fn checkAndGetAlmCB(almid: ID) ItronError!*ALMCB {
     try checkId(TMIN_ALMID <= almid and almid <= maxAlmId());
