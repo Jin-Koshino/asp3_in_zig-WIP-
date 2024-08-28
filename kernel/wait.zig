@@ -381,14 +381,14 @@ fn wobj_queue_insert(p_wobjcb: *WOBJCB) void {
 ///
 pub fn wobj_make_wait(p_wobjcb: anytype, tstat: u8, p_winfo_wobj: anytype) void {
     make_wait(tstat, &p_winfo_wobj.winfo);
-    wobj_queue_insert(@ptrCast(*WOBJCB, p_wobjcb));
+    wobj_queue_insert(@as(*WOBJCB, @ptrCast(p_wobjcb)));
     p_winfo_wobj.p_wobjcb = p_wobjcb;
     traceLog("taskStateChange", .{task.p_runtsk.?});
 }
 
 pub fn wobj_make_wait_tmout(p_wobjcb: anytype, tstat: u8, p_winfo_wobj: anytype, p_tmevtb: *TMEVTB, tmout: TMO) void {
     make_wait_tmout(tstat, &p_winfo_wobj.winfo, p_tmevtb, tmout);
-    wobj_queue_insert(@ptrCast(*WOBJCB, p_wobjcb));
+    wobj_queue_insert(@as(*WOBJCB, @ptrCast(p_wobjcb)));
     p_winfo_wobj.p_wobjcb = p_wobjcb;
     traceLog("taskStateChange", .{task.p_runtsk.?});
 }

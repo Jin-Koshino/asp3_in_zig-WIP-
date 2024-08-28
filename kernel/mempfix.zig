@@ -289,7 +289,7 @@ pub fn get_mpf(mpfid: ID, p_blk: **u8) ItronError!void {
         if (task.p_runtsk.?.flags.raster) {
             return ItronError.TerminationRequestRaised;
         } else if (p_mpfcb.fblkcnt > 0) {
-            getMpfBlock(p_mpfcb, @ptrCast(*[*]u8, p_blk));
+            getMpfBlock(p_mpfcb, @as(*[*]u8, @ptrCast(p_blk)));
         } else {
             var winfo_mpf: WINFO_MPF = undefined;
             wobj_make_wait(p_mpfcb, TS_WAITING_MPF, &winfo_mpf);
@@ -315,7 +315,7 @@ pub fn pget_mpf(mpfid: ID, p_blk: **u8) ItronError!void {
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (p_mpfcb.fblkcnt > 0) {
-            getMpfBlock(p_mpfcb, @ptrCast(*[*]u8, p_blk));
+            getMpfBlock(p_mpfcb, @as(*[*]u8, @ptrCast(p_blk)));
         } else {
             return ItronError.TimeoutError;
         }
@@ -339,7 +339,7 @@ pub fn tget_mpf(mpfid: ID, p_blk: **u8, tmout: TMO) ItronError!void {
         if (task.p_runtsk.?.flags.raster) {
             return ItronError.TerminationRequestRaised;
         } else if (p_mpfcb.fblkcnt > 0) {
-            getMpfBlock(p_mpfcb, @ptrCast(*[*]u8, p_blk));
+            getMpfBlock(p_mpfcb, @as(*[*]u8, @ptrCast(p_blk)));
         } else if (tmout == TMO_POL) {
             return ItronError.TimeoutError;
         } else {

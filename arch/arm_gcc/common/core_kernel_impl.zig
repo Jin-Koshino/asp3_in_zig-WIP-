@@ -922,7 +922,7 @@ pub fn ExportExcIniB(excinib_list: []exception.EXCINIB) type {
     exportCheck(@sizeOf(EXCHDR), "sizeof_EXCHDR");
 
     comptime var exc_table =
-        [1]EXCHDR{@ptrCast(EXCHDR, _kernel_default_exc_handler)} ** TNUM_EXCNO;
+        [1]EXCHDR{@as(EXCHDR, @ptrCast(_kernel_default_exc_handler))} ** TNUM_EXCNO;
     for (excinib_list) |excinib| {
         exc_table[excinib.excno] = excinib.exchdr;
     }

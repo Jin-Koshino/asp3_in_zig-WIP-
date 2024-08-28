@@ -161,7 +161,7 @@ var volatile_var: u32 = undefined;
 noinline fn consume_time(ctime: u32) void {
     var i: u32 = 0;
     while (i < ctime) : (i += 1) {
-        const dummy = @ptrCast(*volatile u32, &volatile_var).*;
+        const dummy = @as(*volatile u32, @ptrCast(&volatile_var)).*;
     }
 }
 

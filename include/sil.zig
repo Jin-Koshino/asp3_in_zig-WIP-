@@ -77,11 +77,11 @@ pub const dly_nse = target.dly_nse;
 ///  指定された型の単位の読出し／書込み
 ///
 fn readMemory(comptime T: type, mem: *const T) T {
-    return @ptrCast(*const volatile T, mem).*;
+    return @as(*const volatile T, @ptrCast(mem)).*;
 }
 
 fn writeMemory(comptime T: type, mem: *T, data: T) void {
-    @ptrCast(*volatile T, mem).* = data;
+    @as(*volatile T, @ptrCast(mem)).* = data;
 }
 
 ///

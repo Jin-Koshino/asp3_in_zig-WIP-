@@ -428,17 +428,17 @@ export fn ref_mtx(mtxid: ID, pk_rmtx: *T_RMTX) ER {
 
 // get_mpfのC言語API
 export fn get_mpf(mpfid: ID, p_blk: **anyopaque) ER {
-    return callService(mempfix.get_mpf(mpfid, @ptrCast(**u8, p_blk)));
+    return callService(mempfix.get_mpf(mpfid, @as(**u8, @ptrCast(p_blk))));
 }
 
 // pget_mpfのC言語API
 export fn pget_mpf(mpfid: ID, p_blk: **anyopaque) ER {
-    return callService(mempfix.pget_mpf(mpfid, @ptrCast(**u8, p_blk)));
+    return callService(mempfix.pget_mpf(mpfid, @as(**u8, @ptrCast(p_blk))));
 }
 
 // tget_mpfのC言語API
 export fn tget_mpf(mpfid: ID, p_blk: **anyopaque, tmout: TMO) ER {
-    return callService(mempfix.tget_mpf(mpfid, @ptrCast(**u8, p_blk), tmout));
+    return callService(mempfix.tget_mpf(mpfid, @as(**u8, @ptrCast(p_blk)), tmout));
 }
 
 // rel_mpfのC言語API

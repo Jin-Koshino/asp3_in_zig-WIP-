@@ -543,7 +543,7 @@ pub fn ini_mtx(mtxid: ID) ItronError!void {
         init_wait_queue(&p_mtxcb.wait_queue);
         if (p_mtxcb.p_loctsk) |p_loctsk| {
             p_mtxcb.p_loctsk = null;
-            var pp_prevmtx = @ptrCast(*?*MTXCB, &p_loctsk.p_lastmtx);
+            var pp_prevmtx = @as(*?*MTXCB, @ptrCast(&p_loctsk.p_lastmtx));
             while (pp_prevmtx.*) |p_prevmtx| : (pp_prevmtx = &p_prevmtx.p_prevmtx) {
                 if (p_prevmtx == p_mtxcb) {
                     pp_prevmtx.* = p_mtxcb.p_prevmtx;
