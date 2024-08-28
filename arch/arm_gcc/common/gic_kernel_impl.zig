@@ -134,7 +134,7 @@ pub fn externalIpm(pri: u32) PRI {
 
 /// 割込み優先度マスクの内部表現への変換
 pub fn internalIpm(ipm: PRI) u32 {
-    return @as(u32, @intCast(u32, ipm + GIC_PRI_LEVEL - 1)) << GIC_PRI_SHIFT;
+    return @as(u32, @intCast(ipm + GIC_PRI_LEVEL - 1)) << GIC_PRI_SHIFT;
 }
 
 ///
