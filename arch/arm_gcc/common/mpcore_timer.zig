@@ -285,7 +285,7 @@ pub fn GTC_HRT(param: GTC_HRT_PARAM) type {
             var cvr_u: u32 = undefined;
             var reg: u32 = undefined;
 
-            cvr_l = @truncate(u32, cvr);
+            cvr_l = @truncate(cvr);
             cvr_u = @as(u32, @intCast(cvr >> 32));
 
             // コンパレータをディスエーブル
@@ -341,7 +341,7 @@ pub fn GTC_HRT(param: GTC_HRT_PARAM) type {
         pub fn get_current() HRTCNT {
             // グローバルタイマのカウント値（64ビット）を読み出し，
             // mpcore.GTC_FREQで除し，HRTCNTのビット数に切り詰めた値を返す．
-            return (@truncate(HRTCNT, get_count() / param.GTC_FREQ));
+            return (@truncate(get_count() / param.GTC_FREQ));
         }
 
         ///

@@ -152,9 +152,9 @@ pub const hrt = struct {
     ///
     pub fn get_current() HRTCNT {
         if (TCYC_HRTCNT) |tcyc_hrtcnt| {
-            return @truncate(HRTCNT, truncate_simtim(current_simtim) % tcyc_hrtcnt);
+            return @truncate(truncate_simtim(current_simtim) % tcyc_hrtcnt);
         } else {
-            return @truncate(HRTCNT, truncate_simtim(current_simtim));
+            return @truncate(truncate_simtim(current_simtim));
         }
     }
 

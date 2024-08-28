@@ -203,7 +203,7 @@ pub fn ERCD(mercd: ER, sercd: ER) ER {
     return @intCast((@bitCast(c_uint, sercd) << 8) | @as(u8, @intCast(@bitCast(c_uint, mercd))));
 }
 pub fn MERCD(ercd: ER) ER {
-    return @intCast(@truncate(i8, ercd));
+    return @intCast(@as(u8, @truncate(ercd)));
 }
 pub fn SERCD(ercd: ER) ER {
     return ercd >> 8;
