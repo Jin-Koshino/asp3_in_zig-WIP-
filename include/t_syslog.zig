@@ -126,8 +126,8 @@ fn logPar(arg: anytype) usize {
     return switch (@typeInfo(@TypeOf(arg))) {
         .Null => 0,
         .Bool => @intFromBool(arg),
-        .Int => |int| if (int.signedness == .signed) @bitCast(usize, @intCast(isize, arg)) else @as(usize, @intCast(arg)),
-        .ComptimeInt => if (arg < 0) @bitCast(usize, @as(isize, @intCast(arg))) else @as(usize, @intCast(arg)),
+        .Int => |int| if (int.signedness == .signed) @as(usize, @bitCast(@as(isize, @intCast(arg)))) else @as(usize, @intCast(arg)),
+        .ComptimeInt => if (arg < 0) @as(usize, @bitCast(@as(isize, @intCast(arg)))) else @as(usize, @intCast(arg)),
         .Enum => @intFromEnum(arg),
         .Pointer => |pointer| @intFromPtr(if (pointer.size == .Slice) arg.ptr else arg),
         .Array => @intFromPtr(&arg),

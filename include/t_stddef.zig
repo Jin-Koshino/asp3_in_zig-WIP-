@@ -117,7 +117,7 @@ pub const ACVCT = struct { // アクセス許可ベクタ
 ///  EXINF型への強制変換
 ///
 fn sintToUsize(sint: anytype) usize {
-    return @bitCast(usize, @as(isize, @intCast(sint)));
+    return @as(usize, @bitCast(@as(isize, @intCast(sint))));
 }
 pub fn castToExinf(exinf: anytype) EXINF {
     return switch (@typeInfo(@TypeOf(exinf))) {
@@ -138,7 +138,7 @@ pub fn castToExinf(exinf: anytype) EXINF {
 ///
 pub fn exinfToPtr(comptime T: type, exinf: EXINF) T {
     if (@typeInfo(T) == .Pointer) {
-        return @ptrFromInt(T, @intFromPtr(exinf));
+        return @ptrFromInt(@intFromPtr(exinf));
     } else {
         @compileError("unsupported data type for exinfToPtr.");
     }
@@ -146,7 +146,7 @@ pub fn exinfToPtr(comptime T: type, exinf: EXINF) T {
 pub fn exinfToInt(comptime T: type, exinf: EXINF) T {
     if (@typeInfo(T) == .Int) {
         return @intCast(if (@typeInfo(T).Int.signedness == .signed)
-            @bitCast(isize, @intFromPtr(exinf))
+            @as(isize, @bitCast(@intFromPtr(exinf)))
         else
             @intFromPtr(exinf));
     } else {
@@ -200,7 +200,7 @@ pub const TMO_NBLK = std.math.maxInt(TMO) - 1; // ノンブロッキング
 ///  エラーコード生成・分解マクロ
 ///
 pub fn ERCD(mercd: ER, sercd: ER) ER {
-    return @intCast((@bitCast(c_uint, sercd) << 8) | @as(u8, @intCast(@bitCast(c_uint, mercd))));
+    return @intCast((@as(c_uint, @bitCast(sercd)) << 8) | @as(u8, @intCast(@as(c_uint, @bitCast(mercd)))));
 }
 pub fn MERCD(ercd: ER) ER {
     return @intCast(@as(u8, @truncate(ercd)));

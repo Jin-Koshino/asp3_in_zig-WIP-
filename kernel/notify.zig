@@ -155,7 +155,7 @@ fn genNotifyFunction(comptime nfyinfo: T_NFYINFO) type {
                     switch (comptime enfy) {
                         .SetVar => {
                             exinfToPtr(*usize, exinf).* =
-                                @bitCast(usize, @as(isize, @intCast(ercd)));
+                                @as(usize, @bitCast(@as(isize, @intCast(ercd))));
                         },
                         .IncVar => {
                             _ = c_api.loc_cpu();
@@ -175,7 +175,7 @@ fn genNotifyFunction(comptime nfyinfo: T_NFYINFO) type {
                             _ = c_api.set_flg(setflg.flgid, setflg.flgptn);
                         },
                         .SndDtq => |snddtq| {
-                            _ = c_api.psnd_dtq(snddtq.dtqid, @bitCast(usize, @as(isize, @intCast(ercd))));
+                            _ = c_api.psnd_dtq(snddtq.dtqid, @as(usize, @bitCast(@as(isize, @intCast(ercd)))));
                         },
                     }
                 }
