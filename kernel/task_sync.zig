@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
 ///                                 Toyohashi Univ. of Technology, JAPAN
 ///  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
@@ -187,7 +187,7 @@ pub fn slp_tsk() ItronError!void {
 
 ///
 ///  起床待ち（タイムアウトあり）［NGKI1253］
-/// 
+///
 pub fn tslp_tsk(tmout: TMO) ItronError!void {
     var winfo: WINFO = undefined;
     var tmevtb: TMEVTB = undefined;

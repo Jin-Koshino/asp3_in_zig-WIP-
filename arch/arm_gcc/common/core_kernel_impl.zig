@@ -602,7 +602,7 @@ fn ExportCfg(intinib_list: []interrupt.INTINIB) type {
 }
 
 pub fn ExportIntIniB(intinib_list: []interrupt.INTINIB) type {
-    _ = intinib_list;
+
     return struct {
         pub usingnamespace if (isTrue(target_impl.mpcore_kernel_impl.gic_kernel_impl, "USE_INTINIB_TABLE"))
             ExportIniB(intinib_list)

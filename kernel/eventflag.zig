@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
 ///                                 Toyohashi Univ. of Technology, JAPAN
 ///  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
@@ -218,7 +218,7 @@ pub fn getFlgIdFromWinfo(p_winfo: *WINFO) ID {
 ///  イベントフラグ機能の初期化
 ///
 pub fn initialize_eventflag() void {
-    for (cfg._kernel_flgcb_table[0..cfg._kernel_flginib_table.len]) |*p_flgcb, i| {
+    for (cfg._kernel_flgcb_table[0..cfg._kernel_flginib_table.len], 0..) |*p_flgcb, i| {
         p_flgcb.wait_queue.initialize();
         p_flgcb.p_wobjinib = &cfg._kernel_flginib_table[i];
         p_flgcb.flgptn = p_flgcb.p_wobjinib.iflgptn;
@@ -438,7 +438,7 @@ pub fn cre_flg(cflg: T_CFLG) ItronError!FLGINIB {
 ///
 pub fn ExportFlgCfg(flginib_table: []FLGINIB) type {
     const tnum_flg = flginib_table.len;
-    defer _ = tnum_flg;
+
     return struct {
         pub export const _kernel_flginib_table = flginib_table;
 

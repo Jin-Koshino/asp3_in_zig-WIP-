@@ -1,7 +1,7 @@
 ///
 ///  TOPPERS Software
 ///      Toyohashi Open Platform for Embedded Real-Time Systems
-/// 
+///
 ///  Copyright (C) 2020-2021 by Embedded and Real-Time Systems Laboratory
 ///                 Graduate School of Informatics, Nagoya Univ., JAPAN
 ///
@@ -45,7 +45,7 @@ const assert = std.debug.assert;
 
 /// 優先度の段階数が level の時の優先度のビット長
 fn bitSizeOfPrio(comptime level: comptime_int) comptime_int {
-   return std.math.log2_int_ceil(u16, level);
+    return std.math.log2_int_ceil(u16, level);
 }
 
 /// 優先度の段階数が level の時の優先度のデータ型
@@ -158,20 +158,17 @@ fn TwoLevelBitmap(comptime level: comptime_int) type {
             if (!self.upper_bitmap.bitCheck()) {
                 return false;
             }
-            if (self.lower_bitmap[(level - 1) / 32].bitmap
-                    & ~@as(BitmapType(32),
-                           (1 << ((level - 1) % 32 + 1)) - 1) != 0) {
+            if (self.lower_bitmap[(level - 1) / 32].bitmap & ~@as(BitmapType(32), (1 << ((level - 1) % 32 + 1)) - 1) != 0) {
                 return false;
             }
 
             // upper_bitmapとlower_bitmapの整合性の検査
-            for (self.lower_bitmap) |*bitmap, upper_prio| {
+            for (self.lower_bitmap, 0..) |*bitmap, upper_prio| {
                 if (bitmap.bitmap == 0) {
                     if (self.upper_bitmap.isSet(@as(UpperPrio, @intCast(upper_prio)))) {
                         return false;
                     }
-                }
-                else {
+                } else {
                     if (!self.upper_bitmap.isSet(@as(UpperPrio, @intCast(upper_prio)))) {
                         return false;
                     }
@@ -186,16 +183,13 @@ fn TwoLevelBitmap(comptime level: comptime_int) type {
 pub fn PrioBitmap(comptime level: comptime_int) type {
     if (level <= 1) {
         @compileError("priority level must be larger than 1.");
-    }
-    else if (level <= 32) {
+    } else if (level <= 32) {
         // 32レベル以下の場合は1段のビットマップで実装
         return OneLevelBitmap(level);
-    }
-    else if (level <= 1024) {
+    } else if (level <= 1024) {
         // 1024レベル以下の場合は2段のビットマップで実装
         return TwoLevelBitmap(level);
-    }
-    else {
+    } else {
         @compileError("unsuppored priority levels.");
     }
 }

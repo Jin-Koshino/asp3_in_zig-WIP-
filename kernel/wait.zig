@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
 ///                                 Toyohashi Univ. of Technology, JAPAN
 ///  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
@@ -374,7 +374,7 @@ fn wobj_queue_insert(p_wobjcb: *WOBJCB) void {
 
 ///
 ///  同期・通信オブジェクトに対する待ち状態への遷移
-///  
+///
 ///  実行中のタスクを待ち状態に遷移させ，同期・通信オブジェクトの待ち
 ///  キューにつなぐ．また，待ち情報ブロック（WINFO）のp_wobjcbを設定す
 ///  る．wobj_make_wait_tmoutは，タイムイベントブロックの登録も行う．

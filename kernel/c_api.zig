@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2020-2021 by Embedded and Real-Time Systems Laboratory
 ///                 Graduate School of Informatics, Nagoya Univ., JAPAN
 ///
@@ -56,13 +56,13 @@ const T_RTSK = zig.T_RTSK;
 const task_refer = kernel_impl.task_refer;
 const task_sync = kernel_impl.task_sync;
 const TMO = t_stddef.TMO;
-const RELTIM= t_stddef.RELTIM;
+const RELTIM = t_stddef.RELTIM;
 const task_term = kernel_impl.task_term;
 const semaphore = kernel_impl.semaphore;
 const T_RSEM = zig.T_RSEM;
 const FLGPTN = zig.FLGPTN;
 const eventflag = kernel_impl.eventflag;
-const MODE= t_stddef.MODE;
+const MODE = t_stddef.MODE;
 const T_RFLG = zig.T_RFLG;
 const dataqueue = kernel_impl.dataqueue;
 const T_RDTQ = zig.T_RDTQ;

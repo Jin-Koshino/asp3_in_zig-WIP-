@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
 ///                                 Toyohashi Univ. of Technology, JAPAN
 ///  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
@@ -247,7 +247,7 @@ pub fn getMpfIdFromWinfo(p_winfo: *WINFO) ID {
 ///  固定長メモリプール機能の初期化
 ///
 pub fn initialize_mempfix() void {
-    for (cfg._kernel_mpfcb_table[0..cfg._kernel_mpfinib_table.len]) |*p_mpfcb, i| {
+    for (cfg._kernel_mpfcb_table[0..cfg._kernel_mpfinib_table.len], 0..) |*p_mpfcb, i| {
         p_mpfcb.wait_queue.initialize();
         p_mpfcb.p_wobjinib = &cfg._kernel_mpfinib_table[i];
         p_mpfcb.fblkcnt = p_mpfcb.p_wobjinib.blkcnt;

@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
 ///                                 Toyohashi Univ. of Technology, JAPAN
 ///  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
@@ -277,7 +277,7 @@ fn validDataPri(datapri: PRI, maxdpri: PRI) bool {
 ///  優先度データキュー機能の初期化
 ///
 pub fn initialize_pridataq() void {
-    for (cfg._kernel_pdqcb_table[0..cfg._kernel_pdqinib_table.len]) |*p_pdqcb, i| {
+    for (cfg._kernel_pdqcb_table[0..cfg._kernel_pdqinib_table.len], 0..) |*p_pdqcb, i| {
         p_pdqcb.swait_queue.initialize();
         p_pdqcb.p_wobjinib = &cfg._kernel_pdqinib_table[i];
         p_pdqcb.rwait_queue.initialize();

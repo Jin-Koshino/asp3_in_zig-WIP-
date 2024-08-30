@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
 ///                                 Toyohashi Univ. of Technology, JAPAN
 ///  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
@@ -274,10 +274,10 @@ pub fn initialize_interrupt() void {
 ///  割込みの禁止［NGKI3555］
 ///
 pub fn dis_int(intno: INTNO) ItronError!void {
-    traceLog("disIntEnter", .{ intno });
-    errdefer |err| traceLog("disIntLeave", .{ err });
-    comptime try checkNotSupported(TOPPERS_SUPPORT_DIS_INT);    //［NGKI3093］
-    try checkParameter(validIntnoDisInt(intno));    //［NGKI3083］［NGKI3087］
+    traceLog("disIntEnter", .{intno});
+    errdefer |err| traceLog("disIntLeave", .{err});
+    comptime try checkNotSupported(TOPPERS_SUPPORT_DIS_INT); //［NGKI3093］
+    try checkParameter(validIntnoDisInt(intno)); //［NGKI3083］［NGKI3087］
     {
         var locked = target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock();
         if (!locked) {
@@ -610,7 +610,7 @@ const c_api = struct {
 fn GenInterruptHandler(comptime isrcfg_table: []ISRCFG) type {
     return struct {
         pub fn handler() callconv(.C) void {
-            inline for (isrcfg_table) |isrcfg, i| {
+            inline for (isrcfg_table, 0..) |isrcfg, i| {
                 if (i > 0) {
                     if (c_api.sns_loc() != 0) {
                         _ = c_api.unl_cpu();

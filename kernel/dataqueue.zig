@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
 ///                                 Toyohashi Univ. of Technology, JAPAN
 ///  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
@@ -235,7 +235,7 @@ pub fn getDtqIdFromWinfoRDtq(p_winfo: *WINFO) ID {
 ///  データキュー機能の初期化
 ///
 pub fn initialize_dataqueue() void {
-    for (cfg._kernel_dtqcb_table[0..cfg._kernel_dtqinib_table.len]) |*p_dtqcb, i| {
+    for (cfg._kernel_dtqcb_table[0..cfg._kernel_dtqinib_table.len], 0..) |*p_dtqcb, i| {
         p_dtqcb.swait_queue.initialize();
         p_dtqcb.p_wobjinib = &cfg._kernel_dtqinib_table[i];
         p_dtqcb.rwait_queue.initialize();
@@ -594,7 +594,7 @@ pub fn cre_dtq(comptime cdtq: T_CDTQ) ItronError!DTQINIB {
 ///
 pub fn ExportDtqCfg(dtqinib_table: []DTQINIB) type {
     const tnum_dtq = dtqinib_table.len;
-    defer _ = tnum_dtq;
+
     return struct {
         pub export const _kernel_dtqinib_table = dtqinib_table;
 

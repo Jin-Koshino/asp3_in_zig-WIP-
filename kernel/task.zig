@@ -704,10 +704,11 @@ pub fn cre_tsk(comptime ctsk: T_CTSK) ItronError!TINIB {
         .ipri = internalTaskPrio(ctsk.itskpri),
         .tskinictxb = if (@hasDecl(target_impl, "TSKINICTXB"))
             target_impl.genTskIniCtxB(stksz, stk)
-        else .{
-            .stksz = stksz,
-            .stk = stk,
-        },
+        else
+            .{
+                .stksz = stksz,
+                .stk = stk,
+            },
     };
 }
 
@@ -827,7 +828,7 @@ fn bitSched() ItronError!void {
     try checkBit(ready_primap.bitCheck());
 
     // ready_queueとready_primapの整合性の検査
-    for (ready_queue) |*p_queue, prio| {
+    for (ready_queue, 0..) |*p_queue, prio| {
         if (p_queue.isEmpty()) {
             try checkBit(!ready_primap.isSet(@as(TaskPrio, @intCast(prio))));
         } else {

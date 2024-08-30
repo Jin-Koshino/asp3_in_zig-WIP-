@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
 ///                                 Toyohashi Univ. of Technology, JAPAN
 ///  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
@@ -234,7 +234,7 @@ pub fn getSemIdFromWinfo(p_winfo: *WINFO) ID {
 ///  セマフォ機能の初期化
 ///
 pub fn initialize_semaphore() void {
-    for (cfg._kernel_semcb_table[0..cfg._kernel_seminib_table.len]) |*p_semcb, i| {
+    for (cfg._kernel_semcb_table[0..cfg._kernel_seminib_table.len], 0..) |*p_semcb, i| {
         p_semcb.wait_queue.initialize();
         p_semcb.p_wobjinib = &cfg._kernel_seminib_table[i];
         p_semcb.semcnt = p_semcb.p_wobjinib.isemcnt;

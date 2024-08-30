@@ -138,7 +138,7 @@ fn checkAndGetAlmCB(almid: ID) ItronError!*ALMCB {
 ///  アラーム通知機能の初期化
 ///
 pub fn initialize_alarm() void {
-    for (cfg._kernel_almcb_table[0..cfg._kernel_alminib_table.len]) |*p_almcb, i| {
+    for (cfg._kernel_almcb_table[0..cfg._kernel_alminib_table.len], 0..) |*p_almcb, i| {
         p_almcb.p_alminib = &cfg._kernel_alminib_table[i];
         p_almcb.almsta = false;
         p_almcb.tmevtb.callback = callAlarm;
@@ -260,7 +260,7 @@ pub fn ExportAlmCfg(alminib_table: []ALMINIB) type {
     exportCheck(@offsetOf(ALMINIB, "nfyhdr"), "offsetof_ALMINIB_nfyhdr");
 
     const tnum_alm = alminib_table.len;
-    defer _ = tnum_alm;
+
     return struct {
         pub export const _kernel_alminib_table = alminib_table;
 

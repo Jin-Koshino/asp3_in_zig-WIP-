@@ -119,7 +119,6 @@ const TMRWDG_HRT_PARAM = struct {
 };
 
 pub fn TMRWDG_HRT(param: TMRWDG_HRT_PARAM) type {
-    _ = param;
     return struct {
         ///
         ///  高分解能タイマ割込みハンドラ登録のための定数

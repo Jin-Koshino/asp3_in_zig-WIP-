@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
 ///                                 Toyohashi Univ. of Technology, JAPAN
 ///  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
@@ -144,7 +144,7 @@ fn checkAndGetCycCB(cycid: ID) ItronError!*CYCCB {
 ///  周期通知機能の初期化
 ///
 pub fn initialize_cyclic() void {
-    for (cfg._kernel_cyccb_table[0..cfg._kernel_cycinib_table.len]) |*p_cyccb, i| {
+    for (cfg._kernel_cyccb_table[0..cfg._kernel_cycinib_table.len], 0..) |*p_cyccb, i| {
         p_cyccb.p_cycinib = &cfg._kernel_cycinib_table[i];
         p_cyccb.tmevtb.callback = callCyclic;
         p_cyccb.tmevtb.arg = @intFromPtr(p_cyccb);

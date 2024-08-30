@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
 ///                 Graduate School of Informatics, Nagoya Univ., JAPAN
 ///
@@ -249,7 +249,7 @@ pub fn initialize_mutex() void {
     task.mtxhook_scan_ceilmtx = mutexScanCeilMtx;
     task.mtxhook_release_all = mutexReleaseAll;
 
-    for (cfg._kernel_mtxcb_table[0..cfg._kernel_mtxinib_table.len]) |*p_mtxcb, i| {
+    for (cfg._kernel_mtxcb_table[0..cfg._kernel_mtxinib_table.len], 0..) |*p_mtxcb, i| {
         p_mtxcb.wait_queue.initialize();
         p_mtxcb.p_wobjinib = &cfg._kernel_mtxinib_table[i];
         p_mtxcb.p_loctsk = null;
@@ -688,7 +688,7 @@ fn bitMTXCB(p_mtxcb: *MTXCB) ItronError!void {
 ///
 pub fn bitMutex() ItronError!void {
     // ミューテックス毎の整合性検査
-    for (cfg._kernel_mtxcb_table[0..cfg._kernel_mtxinib_table.len]) |*p_mtxcb, i| {
+    for (cfg._kernel_mtxcb_table[0..cfg._kernel_mtxinib_table.len], 0..) |*p_mtxcb, i| {
         defer _ = i;
         try bitMTXCB(p_mtxcb);
     }
