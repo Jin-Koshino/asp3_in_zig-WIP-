@@ -132,7 +132,7 @@ const validTCB = task.validTCB;
 ///  （WOBJINIB）を拡張（オブジェクト指向言語の継承に相当）したもので，
 ///  最初のフィールドが共通になっている．
 ///
-pub const MTXINIB = struct {
+pub const MTXINIB = extern struct {
     wobjatr: ATR, // ミューテックス属性
     ceilpri: c_uint, // ミューテックスの上限優先度（内部表現）
 };
@@ -149,7 +149,7 @@ comptime {
 ///  （WOBJCB）を拡張（オブジェクト指向言語の継承に相当）したもので，
 ///  最初の2つのフィールドが共通になっている．
 ///
-pub const MTXCB = struct {
+pub const MTXCB = extern struct {
     wait_queue: queue.Queue, // ミューテックス待ちキュー
     p_wobjinib: *const MTXINIB, // 初期化ブロックへのポインタ
     p_loctsk: ?*TCB, // ミューテックスをロックしているタスク

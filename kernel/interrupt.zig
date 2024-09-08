@@ -661,7 +661,7 @@ pub fn generateInhForIsr(isrcfg_table: []ISRCFG, comptime cfg_data: *static_api.
         }
 
         // ISR優先度順にソート
-        std.sort.sort(ISRCFG, &isrcfg_table_intno, {}, isrcfgLessThan);
+        std.sort.insertion(ISRCFG, &isrcfg_table_intno, {}, isrcfgLessThan);
 
         // ISRを呼び出す割込みハンドラの生成
         cfg_data.addInh(INHINIB{

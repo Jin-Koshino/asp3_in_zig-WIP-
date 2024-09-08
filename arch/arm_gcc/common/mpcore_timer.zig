@@ -118,7 +118,7 @@ const TMRWDG_HRT_PARAM = struct {
     WDG_FREQ: u32 = 1,
 };
 
-pub fn TMRWDG_HRT(param: TMRWDG_HRT_PARAM) type {
+pub fn TMRWDG_HRT(comptime param: TMRWDG_HRT_PARAM) type {
     return struct {
         ///
         ///  高分解能タイマ割込みハンドラ登録のための定数

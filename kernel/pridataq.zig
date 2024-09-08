@@ -144,7 +144,7 @@ const PDQMB = struct {
 ///  （WOBJINIB）を拡張（オブジェクト指向言語の継承に相当）したもので，
 ///  最初のフィールドが共通になっている．
 ///
-pub const PDQINIB = struct {
+pub const PDQINIB = extern struct {
     wobjatr: ATR, // 優先度データキュー属性
     pdqcnt: c_uint, // 優先度データキューの容量
     maxdpri: PRI, // データ優先度の最大値
@@ -163,7 +163,7 @@ comptime {
 ///  （WOBJCB）を拡張（オブジェクト指向言語の継承に相当）したもので，
 ///  最初の2つのフィールドが共通になっている．
 ///
-const PDQCB = struct {
+const PDQCB = extern struct {
     swait_queue: queue.Queue, // 優先度データキュー送信待ちキュー
     p_wobjinib: *const PDQINIB, // 初期化ブロックへのポインタ
     rwait_queue: queue.Queue, // 優先度データキュー受信待ちキュー
@@ -185,14 +185,14 @@ comptime {
 ///  （WINFO_WOBJ）を拡張（オブジェクト指向言語の継承に相当）したもの
 ///  で，最初の2つのフィールドが共通になっている．
 ///
-const WINFO_SPDQ = struct {
+const WINFO_SPDQ = extern struct {
     winfo: WINFO, // 標準の待ち情報ブロック
     p_wobjcb: *PDQCB, // 待っている優先度データキューの管理ブロック
     data: usize, // 送信データ
     datapri: PRI, // データ優先度
 };
 
-const WINFO_RPDQ = struct {
+const WINFO_RPDQ = extern struct {
     winfo: WINFO, // 標準の待ち情報ブロック
     p_wobjcb: *PDQCB, // 待っている優先度データキューの管理ブロック
     data: usize, // 受信データ

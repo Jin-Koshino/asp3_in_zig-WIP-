@@ -137,7 +137,7 @@ const INDEX_ALLOC = ~@as(c_uint, 1); // 割当て済みのブロック
 ///  （WOBJINIB）を拡張（オブジェクト指向言語の継承に相当）したもので，
 ///  最初のフィールドが共通になっている．
 ///
-pub const MPFINIB = struct {
+pub const MPFINIB = extern struct {
     wobjatr: ATR, // 固定長メモリプール属性
     blkcnt: c_uint, // メモリブロック数
     blksz: c_uint, // メモリブロックのサイズ（丸めた値）
@@ -157,7 +157,7 @@ comptime {
 ///  （WOBJCB）を拡張（オブジェクト指向言語の継承に相当）したもので，
 ///  最初の2つのフィールドが共通になっている．
 ///
-const MPFCB = struct {
+const MPFCB = extern struct {
     wait_queue: queue.Queue, // 固定長メモリプール待ちキュー
     p_wobjinib: *const MPFINIB, // 初期化ブロックへのポインタ
     fblkcnt: c_uint, // 未割当てブロック数
@@ -177,7 +177,7 @@ comptime {
 ///  （WINFO_WOBJ）を拡張（オブジェクト指向言語の継承に相当）したもの
 ///  で，最初の2つのフィールドが共通になっている．
 ///
-const WINFO_MPF = struct {
+const WINFO_MPF = extern struct {
     winfo: WINFO, // 標準の待ち情報ブロック
     p_wobjcb: *MPFCB, // 待っている固定長メモリプールの管理ブロック
     blk: [*]u8, // 獲得したメモリブロック

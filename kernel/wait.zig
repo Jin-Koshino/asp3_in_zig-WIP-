@@ -119,7 +119,7 @@ const TA_TPRI = zig.TA_TPRI;
 ///  ている．そのため，wercdへエラーコードを設定するのは，タイムイベン
 ///  トブロックを登録解除した後にしなければならない．
 ///
-pub const WINFO = union {
+pub const WINFO = extern union {
     werror: ?ItronError, // 待ち解除時のエラー
     p_tmevtb: ?*TMEVTB, // 待ち状態用のタイムイベントブロック
 };
@@ -313,7 +313,7 @@ pub fn wait_tskid(p_wait_queue: *queue.Queue) ID {
 ///
 ///  同期・通信オブジェクトの初期化ブロックの共通部分
 ///
-pub const WOBJINIB = struct {
+pub const WOBJINIB = extern struct {
     wobjatr: ATR, // オブジェクト属性
 };
 
@@ -327,7 +327,7 @@ pub fn checkWobjIniB(comptime T: type) void {
 ///
 ///  同期・通信オブジェクトの管理ブロックの共通部分
 ///
-pub const WOBJCB = struct {
+pub const WOBJCB = extern struct {
     wait_queue: queue.Queue, // 待ちキュー
     p_wobjinib: *const WOBJINIB, // 初期化ブロックへのポインタ
 };
@@ -346,7 +346,7 @@ pub fn checkWobjCB(comptime T: type) void {
 ///
 ///  同期・通信オブジェクトの待ち情報ブロックの共通部分
 ///
-pub const WINFO_WOBJ = struct {
+pub const WINFO_WOBJ = extern struct {
     winfo: WINFO, // 標準の待ち情報ブロック
     p_wobjcb: *WOBJCB, // 待ちオブジェクトの管理ブロック
 };

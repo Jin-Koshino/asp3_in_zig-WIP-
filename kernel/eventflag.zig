@@ -108,7 +108,7 @@ const option = kernel_impl.option;
 ///  （WOBJINIB）を拡張（オブジェクト指向言語の継承に相当）したもので，
 ///  最初のフィールドが共通になっている．
 ///
-pub const FLGINIB = struct {
+pub const FLGINIB = extern struct {
     wobjatr: ATR, // イベントフラグ属性
     iflgptn: FLGPTN, // イベントフラグのビットパターンの初期値
 };
@@ -125,7 +125,7 @@ comptime {
 ///  （WOBJCB）を拡張（オブジェクト指向言語の継承に相当）したもので，
 ///  最初の2つのフィールドが共通になっている．
 ///
-const FLGCB = struct {
+const FLGCB = extern struct {
     wait_queue: queue.Queue, // イベントフラグ待ちキュー
     p_wobjinib: *const FLGINIB, // 初期化ブロックへのポインタ
     flgptn: FLGPTN, // イベントフラグ現在パターン
@@ -147,7 +147,7 @@ comptime {
 ///  解除時のパターンを入れる（1つのフィールドを2つの目的に兼用してい
 ///  る）．
 ///
-const WINFO_FLG = struct {
+const WINFO_FLG = extern struct {
     winfo: WINFO, // 標準の待ち情報ブロック
     p_wobjcb: *FLGCB, // 待っているイベントフラグの管理ブロック
     waiptn: FLGPTN, // 待ちパターン／待ち解除時のパターン

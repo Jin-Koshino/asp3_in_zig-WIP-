@@ -129,7 +129,7 @@ const TMAX_MAXSEM = zig.TMAX_MAXSEM;
 ///  （WOBJINIB）を拡張（オブジェクト指向言語の継承に相当）したもので，
 ///  最初のフィールドが共通になっている．
 ///
-pub const SEMINIB = struct {
+pub const SEMINIB = extern struct {
     wobjatr: t_stddef.ATR, // セマフォ属性
     isemcnt: u32, // セマフォの資源数の初期値
     maxsem: u32, // セマフォの最大資源数
@@ -147,7 +147,7 @@ comptime {
 ///  （WOBJCB）を拡張（オブジェクト指向言語の継承に相当）したもので，
 ///  最初の2つのフィールドが共通になっている．
 ///
-const SEMCB = struct {
+const SEMCB = extern struct {
     wait_queue: queue.Queue, // セマフォ待ちキュー
     p_wobjinib: *const SEMINIB, // 初期化ブロックへのポインタ
     semcnt: u32, // セマフォ現在カウント値
@@ -165,7 +165,7 @@ comptime {
 ///  （WINFO_WOBJ）を拡張（オブジェクト指向言語の継承に相当）したもの
 ///  で，すべてのフィールドが共通になっている．
 ///
-const WINFO_SEM = struct {
+const WINFO_SEM = extern struct {
     winfo: WINFO, // 標準の待ち情報ブロック
     p_wobjcb: *SEMCB, // 待っているセマフォの管理ブロック
 };

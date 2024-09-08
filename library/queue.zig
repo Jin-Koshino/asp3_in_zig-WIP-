@@ -55,7 +55,7 @@ const assert = std.debug.assert;
 ///
 ///  ダブルリンクキューの構造体
 ///
-pub const Queue = struct {
+pub const Queue = extern struct {
     p_next: *Queue,             // 次エントリへのポインタ
     p_prev: *Queue,             // 前エントリへのポインタ
 

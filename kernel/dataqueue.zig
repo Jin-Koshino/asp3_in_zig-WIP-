@@ -113,7 +113,7 @@ const DTQMB = struct {
 ///  （WOBJINIB）を拡張（オブジェクト指向言語の継承に相当）したもので，
 ///  最初のフィールドが共通になっている．
 ///
-pub const DTQINIB = struct {
+pub const DTQINIB = extern struct {
     wobjatr: ATR, // データキュー属性
     dtqcnt: c_uint, // データキューの容量
     p_dtqmb: ?[*]DTQMB, // データキュー管理領域
@@ -131,7 +131,7 @@ comptime {
 ///  （WOBJCB）を拡張（オブジェクト指向言語の継承に相当）したもので，
 ///  最初の2つのフィールドが共通になっている．
 ///
-const DTQCB = struct {
+const DTQCB = extern struct {
     swait_queue: queue.Queue, // データキュー送信待ちキュー
     p_wobjinib: *const DTQINIB, // 初期化ブロックへのポインタ
     rwait_queue: queue.Queue, // データキュー受信待ちキュー
@@ -152,13 +152,13 @@ comptime {
 ///  （WINFO_WOBJ）を拡張（オブジェクト指向言語の継承に相当）したもの
 ///  で，最初の2つのフィールドが共通になっている．
 ///
-const WINFO_SDTQ = struct {
+const WINFO_SDTQ = extern struct {
     winfo: WINFO, // 標準の待ち情報ブロック
     p_wobjcb: *DTQCB, // 待っているデータキューの管理ブロック
     data: usize, // 送信データ
 };
 
-const WINFO_RDTQ = struct {
+const WINFO_RDTQ = extern struct {
     winfo: WINFO, // 標準の待ち情報ブロック
     p_wobjcb: *DTQCB, // 待っているデータキューの管理ブロック
     data: usize, // 受信データ
