@@ -584,14 +584,14 @@ pub fn ExportInhIniB(comptime inhinib_list: []interrupt.INHINIB) type {
 ///
 
 // 割込み要求ライン初期化ブロック
-fn ExportIniB(intinib_list: []interrupt.INTINIB) type {
+fn ExportIniB(comptime intinib_list: []interrupt.INTINIB) type {
     return struct {
         pub export const _kernel_intinib_table = intinib_list;
     };
 }
 
 // 割込み要求ライン設定テーブル
-fn ExportCfg(intinib_list: []interrupt.INTINIB) type {
+fn ExportCfg(comptime intinib_list: []interrupt.INTINIB) type {
     comptime var intcfg_table = [1]bool{false} ** TNUM_INTNO;
     for (intinib_list) |intinib| {
         intcfg_table[intinib.intno] = true;
