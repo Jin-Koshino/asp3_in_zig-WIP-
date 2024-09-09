@@ -565,7 +565,7 @@ pub const ExternIntIniB = struct {
 ///
 extern fn _kernel_default_int_handler() void;
 
-pub fn ExportInhIniB(inhinib_list: []interrupt.INHINIB) type {
+pub fn ExportInhIniB(comptime inhinib_list: []interrupt.INHINIB) type {
     // チェック処理用の定義の生成
     exportCheck(TNUM_INHNO, "TNUM_INHNO");
     exportCheck(@sizeOf(INTHDR), "sizeof_INTHDR");
@@ -601,7 +601,7 @@ fn ExportCfg(intinib_list: []interrupt.INTINIB) type {
     };
 }
 
-pub fn ExportIntIniB(intinib_list: []interrupt.INTINIB) type {
+pub fn ExportIntIniB(comptime intinib_list: []interrupt.INTINIB) type {
 
     return struct {
         pub usingnamespace if (isTrue(target_impl.mpcore_kernel_impl.gic_kernel_impl, "USE_INTINIB_TABLE"))
@@ -916,7 +916,7 @@ pub const ExternExcIniB = struct {
 ///
 extern fn _kernel_default_exc_handler(p_excinf: *T_EXCINF, excno: EXCNO) void;
 
-pub fn ExportExcIniB(excinib_list: []exception.EXCINIB) type {
+pub fn ExportExcIniB(comptime excinib_list: []exception.EXCINIB) type {
     // チェック処理用の定義の生成
     exportCheck(TNUM_EXCNO, "TNUM_EXCNO");
     exportCheck(@sizeOf(EXCHDR), "sizeof_EXCHDR");

@@ -278,7 +278,7 @@ pub fn attachTerminateRoutine(ater: T_ATER) ItronError!TERRTNB {
 ///
 ///  初期化ルーチンブロックの生成（静的APIの処理）
 ///
-pub fn ExportIniRtnB(inirtnb_table: []INIRTNB) type {
+pub fn ExportIniRtnB(comptime inirtnb_table: []INIRTNB) type {
     // チェック処理用の定義の生成
     exportCheck(@sizeOf(INIRTNB), "sizeof_INIRTNB");
     exportCheck(@sizeOf(INIRTN), "sizeof_INIRTN");
@@ -292,7 +292,7 @@ pub fn ExportIniRtnB(inirtnb_table: []INIRTNB) type {
 ///
 ///  終了処理ルーチンブロックの生成（静的APIの処理）
 ///
-pub fn ExportTerRtnB(terrtnb_table: []TERRTNB) type {
+pub fn ExportTerRtnB(comptime terrtnb_table: []TERRTNB) type {
     // チェック処理用の定義の生成
     exportCheck(@sizeOf(TERRTNB), "sizeof_TERRTNB");
     exportCheck(@sizeOf(TERRTN), "sizeof_TERRTN");
@@ -306,7 +306,7 @@ pub fn ExportTerRtnB(terrtnb_table: []TERRTNB) type {
 ///
 ///  非タスクコンテキスト用スタック領域関係のデータの生成（静的APIの処理）
 ///
-pub fn ExportIcs(dics: T_DICS) type {
+pub fn ExportIcs(comptime dics: T_DICS) type {
     const istksz = TOPPERS_ROUND_SZ(dics.istksz, STACK_ALIGN);
     return struct {
         pub export const _kernel_istksz: usize = istksz;

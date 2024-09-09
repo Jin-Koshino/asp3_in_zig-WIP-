@@ -120,7 +120,7 @@ const TA_TPRI = zig.TA_TPRI;
 ///  トブロックを登録解除した後にしなければならない．
 ///
 pub const WINFO = extern union {
-    werror: ?ItronError, // 待ち解除時のエラー
+    werror: ?*ItronError, // 待ち解除時のエラー
     p_tmevtb: ?*TMEVTB, // 待ち状態用のタイムイベントブロック
 };
 

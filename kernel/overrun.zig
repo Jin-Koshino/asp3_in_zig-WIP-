@@ -260,7 +260,7 @@ pub fn defineOverrun(dovr: T_DOVR) ItronError!OVRINIB {
 ///
 ///  オーバランハンドラ初期化ブロックの生成（静的APIの処理）
 ///
-pub fn ExportOvrIniB(_ovrinib: ?OVRINIB) type {
+pub fn ExportOvrIniB(comptime _ovrinib: ?OVRINIB) type {
     // チェック処理用の定義の生成
     exportCheck(@sizeOf(OVRHDR), "sizeof_OVRHDR");
     exportCheck(@offsetOf(OVRINIB, "ovrhdr"), "offsetof_OVRINIB_ovrhdr");

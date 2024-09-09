@@ -468,7 +468,7 @@ pub fn cre_mpf(comptime cmpf: T_CMPF) ItronError!MPFINIB {
 ///  固定長メモリプールに関するコンフィギュレーションデータの取り込み
 ///  （静的APIの処理）
 ///
-pub fn ExportMpfCfg(mpfinib_table: []MPFINIB) type {
+pub fn ExportMpfCfg(comptime mpfinib_table: []MPFINIB) type {
     // チェック処理用の定義の生成
     exportCheck(@sizeOf(MPFINIB), "sizeof_MPFINIB");
     exportCheck(@offsetOf(MPFINIB, "mpf"), "offsetof_MPFINIB_mpf");

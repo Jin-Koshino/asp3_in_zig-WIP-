@@ -625,7 +625,7 @@ pub fn cre_pdq(comptime cpdq: T_CPDQ) ItronError!PDQINIB {
 ///  優先度データキューに関するコンフィギュレーションデータの生成（静
 ///  的APIの処理）
 ///
-pub fn ExportPdqCfg(pdqinib_table: []PDQINIB) type {
+pub fn ExportPdqCfg(comptime pdqinib_table: []PDQINIB) type {
     const tnum_pdq = pdqinib_table.len;
     return struct {
         pub export const _kernel_pdqinib_table = pdqinib_table;

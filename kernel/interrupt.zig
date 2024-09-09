@@ -497,7 +497,7 @@ pub fn cfg_int(intno: INTNO, cint: T_CINT) ItronError!INTINIB {
 ///
 ///  割込み要求ライン初期化ブロックの生成（静的APIの処理）
 ///
-pub fn ExportIntIniB(intinib_table: []INTINIB) type {
+pub fn ExportIntIniB(comptime intinib_table: []INTINIB) type {
     return struct {
         export const _kernel_intinib_table = intinib_table;
     };
@@ -543,7 +543,7 @@ pub fn def_inh(inhno: INHNO, dinh: T_DINH, comptime cfg_data: *static_api.CfgDat
 ///
 ///  割込みハンドラ初期化ブロックの生成（静的APIの処理）
 ///
-pub fn ExportInhIniB(inhinib_table: []INHINIB) type {
+pub fn ExportInhIniB(comptime inhinib_table: []INHINIB) type {
     // チェック処理用の定義の生成
     exportCheck(@sizeOf(INHINIB), "sizeof_INHINIB");
     exportCheck(@sizeOf(INHNO), "sizeof_INHNO");

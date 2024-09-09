@@ -164,7 +164,7 @@ pub fn def_exc(excno: EXCNO, dexc: T_DEXC) ItronError!EXCINIB {
 ///
 ///  CPU例外ハンドラ初期化ブロックの生成（静的APIの処理）
 ///
-pub fn ExportExcIniB(excinib_table: []EXCINIB) type {
+pub fn ExportExcIniB(comptime excinib_table: []EXCINIB) type {
     // チェック処理用の定義の生成
     exportCheck(@sizeOf(EXCINIB), "sizeof_EXCINIB");
     exportCheck(@sizeOf(EXCNO), "sizeof_EXCNO");

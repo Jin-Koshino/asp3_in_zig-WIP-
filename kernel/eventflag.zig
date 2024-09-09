@@ -436,7 +436,7 @@ pub fn cre_flg(cflg: T_CFLG) ItronError!FLGINIB {
 ///  イベントフラグに関するコンフィギュレーションデータの生成（静的API
 ///  の処理）
 ///
-pub fn ExportFlgCfg(flginib_table: []FLGINIB) type {
+pub fn ExportFlgCfg(comptime flginib_table: []FLGINIB) type {
     const tnum_flg = flginib_table.len;
 
     return struct {

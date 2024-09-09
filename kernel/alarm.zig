@@ -252,7 +252,7 @@ pub fn cre_alm(comptime calm: T_CALM) ItronError!ALMINIB {
 ///  アラーム通知に関するコンフィギュレーションデータの生成（静的APIの
 ///  処理）
 ///
-pub fn ExportAlmCfg(alminib_table: []ALMINIB) type {
+pub fn ExportAlmCfg(comptime alminib_table: []ALMINIB) type {
     // チェック処理用の定義の生成
     exportCheck(@sizeOf(ALMINIB), "sizeof_ALMINIB");
     exportCheck(@offsetOf(ALMINIB, "almatr"), "offsetof_ALMINIB_almatr");

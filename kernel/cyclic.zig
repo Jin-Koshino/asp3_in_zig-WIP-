@@ -277,7 +277,7 @@ pub fn cre_cyc(comptime ccyc: T_CCYC) ItronError!CYCINIB {
 ///
 ///  周期通知に関するコンフィギュレーションデータのの生成（静的APIの処理）
 ///
-pub fn ExportCycCfg(cycinib_table: []CYCINIB) type {
+pub fn ExportCycCfg(comptime cycinib_table: []CYCINIB) type {
     // チェック処理用の定義の生成
     exportCheck(@sizeOf(CYCINIB), "sizeof_CYCINIB");
     exportCheck(@offsetOf(CYCINIB, "cycatr"), "offsetof_CYCINIB_cycatr");

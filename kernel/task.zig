@@ -715,7 +715,7 @@ pub fn cre_tsk(comptime ctsk: T_CTSK) ItronError!TINIB {
 ///
 ///  タスクに関するコンフィギュレーションデータの生成（静的APIの処理）
 ///
-pub fn ExportTskCfg(tinib_table: []TINIB, torder_table: []ID) type {
+pub fn ExportTskCfg(comptime tinib_table: []TINIB, comptime torder_table: []ID) type {
     // チェック処理用の定義の生成
     exportCheck(@sizeOf(TINIB), "sizeof_TINIB");
     exportCheck(@sizeOf(zig.TASK), "sizeof_TASK");
