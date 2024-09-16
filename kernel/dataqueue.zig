@@ -596,7 +596,8 @@ pub fn ExportDtqCfg(comptime dtqinib_table: []DTQINIB) type {
     const tnum_dtq = dtqinib_table.len;
 
     return struct {
-        pub export const _kernel_dtqinib_table = dtqinib_table;
+        pub export const _kernel_dtqinib_table: ?*DTQINIB = if (tnum_dtq == 0) null else &dtqinib_table[0];
+        pub export const _kernel_tnum_dtq = tnum_dtq;
 
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする

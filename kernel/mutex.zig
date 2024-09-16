@@ -610,7 +610,8 @@ pub fn cre_mtx(cmtx: T_CMTX) ItronError!MTXINIB {
 pub fn ExportMtxCfg(comptime mtxinib_table: []MTXINIB) type {
     const tnum_mtx = mtxinib_table.len;
     return struct {
-        pub export const _kernel_mtxinib_table = mtxinib_table;
+        pub export const _kernel_mtxinib_table: ?*MTXINIB = if (tnum_mtx == 0) null else &mtxinib_table[0];
+        pub export const _kernel_tnum_mtx = tnum_mtx;
 
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする

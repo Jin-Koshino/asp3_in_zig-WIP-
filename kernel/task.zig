@@ -724,7 +724,8 @@ pub fn ExportTskCfg(comptime tinib_table: []TINIB, comptime torder_table: []ID) 
 
     const tnum_tsk = tinib_table.len;
     return struct {
-        pub export const _kernel_tinib_table = tinib_table;
+        pub export const _kernel_tinib_table: ?*TINIB = if (tnum_tsk == 0) null else &tinib_table[0];
+        pub export const _kenrel_tnum_tsk = tnum_tsk;
         pub export const _kernel_torder_table = torder_table[0..tnum_tsk].*;
         pub export var _kernel_tcb_table: [tnum_tsk]TCB = undefined;
     };

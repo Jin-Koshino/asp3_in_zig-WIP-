@@ -350,9 +350,9 @@ pub const CfgData = struct {
     fn addItem(comptime T: type, comptime p_list: *LIST(T)) *T {
         comptime var item: T = undefined;
         item.p_next = null;
-        if (p_list.tail) |tail| {
-            tail.p_next = &item;
-        } else {
+        if (p_list.tail) |tail| {   //p_list.tailがnullでない場合
+            tail.p_next = &item;    //p_listの最後尾にitemを追加
+        } else {    //p_list.tailがnull(p_listが空)の場合
             p_list.head = &item;
         }
         p_list.tail = &item;

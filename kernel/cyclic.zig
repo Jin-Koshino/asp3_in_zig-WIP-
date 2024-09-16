@@ -286,7 +286,8 @@ pub fn ExportCycCfg(comptime cycinib_table: []CYCINIB) type {
 
     const tnum_cyc = cycinib_table.len;
     return struct {
-        pub export const _kernel_cycinib_table = cycinib_table;
+        pub export const _kernel_cycinib_table: ?*CYCINIB = if (tnum_cyc == 0) null else &cycinib_table[0];
+        pub export const _kernel_tnum_cyc = tnum_cyc;
 
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする

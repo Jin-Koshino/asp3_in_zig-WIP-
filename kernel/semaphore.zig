@@ -414,7 +414,8 @@ pub fn cre_sem(csem: T_CSEM) ItronError!SEMINIB {
 pub fn ExportSemCfg(comptime seminib_table: []SEMINIB) type {
     const tnum_sem = seminib_table.len;
     return struct {
-        pub export const _kernel_seminib_table = seminib_table;
+        pub export const _kernel_seminib_table: ?*SEMINIB = if(tnum_sem == 0) null else &seminib_table[0];
+        pub export const _kernel_tnum_sem = tnum_sem;
 
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする

@@ -728,36 +728,45 @@ comptime {
             \\ _kernel_seminib_table:
             \\ .weak _kernel_semcb_table
             \\ _kernel_semcb_table:
+            
             \\ .weak _kernel_flginib_table
             \\ _kernel_flginib_table:
             \\ .weak _kernel_flgcb_table
             \\ _kernel_flgcb_table:
+            
             \\ .weak _kernel_dtqinib_table
             \\ _kernel_dtqinib_table:
             \\ .weak _kernel_dtqcb_table
             \\ _kernel_dtqcb_table:
+            
             \\ .weak _kernel_pdqinib_table
             \\ _kernel_pdqinib_table:
             \\ .weak _kernel_pdqcb_table
             \\ _kernel_pdqcb_table:
+            
             \\ .weak _kernel_mtxinib_table
             \\ _kernel_mtxinib_table:
             \\ .weak _kernel_mtxcb_table
             \\ _kernel_mtxcb_table:
+            
             \\ .weak _kernel_mpfinib_table
             \\ _kernel_mpfinib_table:
             \\ .weak _kernel_mpfcb_table
             \\ _kernel_mpfcb_table:
+            
             \\ .weak _kernel_cycinib_table
             \\ _kernel_cycinib_table:
             \\ .weak _kernel_cyccb_table
             \\ _kernel_cyccb_table:
+            
             \\ .weak _kernel_alminib_table
             \\ _kernel_alminib_table:
             \\ .weak _kernel_almcb_table
             \\ _kernel_almcb_table:
+            
             \\ .weak _kernel_inirtnb_table
             \\ _kernel_inirtnb_table:
+            
             \\ .weak _kernel_terrtnb_table
             \\ _kernel_terrtnb_table:
         );

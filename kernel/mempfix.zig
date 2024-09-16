@@ -475,8 +475,9 @@ pub fn ExportMpfCfg(comptime mpfinib_table: []MPFINIB) type {
 
     const tnum_mpf = mpfinib_table.len;
     return struct {
-        pub export const _kernel_mpfinib_table = mpfinib_table;
-
+        pub export const _kernel_mpfinib_table: ?*MPFINIB = if (tnum_mpf == 0) null else &mpfinib_table[0];
+        pub export const _kernel_tnum_mpf = tnum_mpf;
+        
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする
         pub export var _kernel_mpfcb_table: [

@@ -440,7 +440,8 @@ pub fn ExportFlgCfg(comptime flginib_table: []FLGINIB) type {
     const tnum_flg = flginib_table.len;
 
     return struct {
-        pub export const _kernel_flginib_table = flginib_table;
+        pub export const _kernel_flginib_table: ?*FLGINIB = if (tnum_flg == 0) null else &flginib_table[0];
+        pub export const _kernel_tnum_flg = tnum_flg;
 
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする

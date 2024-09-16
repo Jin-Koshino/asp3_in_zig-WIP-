@@ -262,7 +262,8 @@ pub fn ExportAlmCfg(comptime alminib_table: []ALMINIB) type {
     const tnum_alm = alminib_table.len;
 
     return struct {
-        pub export const _kernel_alminib_table = alminib_table;
+        pub export const _kernel_alminib_table: ?*ALMINIB = if (tnum_alm == 0) null else &alminib_table[0];
+        pub export const _kernel_tnum_alm = tnum_alm;
 
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする

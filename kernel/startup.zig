@@ -285,7 +285,7 @@ pub fn ExportIniRtnB(comptime inirtnb_table: []INIRTNB) type {
     exportCheck(@offsetOf(INIRTNB, "inirtn"), "offsetof_INIRTNB_inirtn");
 
     return struct {
-        pub export const _kernel_inirtnb_table = inirtnb_table;
+        pub export const _kernel_inirtnb_table: ?*INIRTNB = if (inirtnb_table.len == 0) null else &inirtnb_table[0];
     };
 }
 
@@ -299,7 +299,7 @@ pub fn ExportTerRtnB(comptime terrtnb_table: []TERRTNB) type {
     exportCheck(@offsetOf(TERRTNB, "terrtn"), "offsetof_TERRTNB_terrtn");
 
     return struct {
-        pub export const _kernel_terrtnb_table = terrtnb_table;
+        pub export const _kernel_terrtnb_table: ?*TERRTNB = if (terrtnb_table.len == 0) null else &terrtnb_table[0];
     };
 }
 

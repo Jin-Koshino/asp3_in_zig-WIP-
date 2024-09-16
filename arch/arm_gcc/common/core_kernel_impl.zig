@@ -586,7 +586,7 @@ pub fn ExportInhIniB(comptime inhinib_list: []interrupt.INHINIB) type {
 // 割込み要求ライン初期化ブロック
 fn ExportIniB(comptime intinib_list: []interrupt.INTINIB) type {
     return struct {
-        pub export const _kernel_intinib_table = intinib_list;
+        pub export const _kernel_intinib_table: ?*interrupt.INTINIB = if (intinib_list.len == 0) null else &intinib_list[0];
     };
 }
 

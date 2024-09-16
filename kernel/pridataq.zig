@@ -628,7 +628,8 @@ pub fn cre_pdq(comptime cpdq: T_CPDQ) ItronError!PDQINIB {
 pub fn ExportPdqCfg(comptime pdqinib_table: []PDQINIB) type {
     const tnum_pdq = pdqinib_table.len;
     return struct {
-        pub export const _kernel_pdqinib_table = pdqinib_table;
+        pub export const _kernel_pdqinib_table: ?*PDQINIB = if (tnum_pdq == 0) null else &pdqinib_table[0];
+        pub export const _kenrel_tnum_pdq = tnum_pdq;
 
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする
