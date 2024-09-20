@@ -287,7 +287,7 @@ pub fn wai_sem(semid: ID) ItronError!void {
             wobj_make_wait(p_semcb, TS_WAITING_SEM, &winfo_sem);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_sem.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
         }
     }
@@ -340,7 +340,7 @@ pub fn twai_sem(semid: ID, tmout: TMO) ItronError!void {
             wobj_make_wait_tmout(p_semcb, TS_WAITING_SEM, &winfo_sem, &tmevtb, tmout);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_sem.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
         }
     }

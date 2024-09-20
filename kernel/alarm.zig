@@ -94,7 +94,7 @@ pub const ALMINIB = struct {
 ///
 ///  アラーム通知管理ブロック
 ///
-pub const ALMCB = struct {
+pub const ALMCB = extern struct {
     p_alminib: *const ALMINIB, // 初期化ブロックへのポインタ
     almsta: bool, // アラーム通知の動作状態
     tmevtb: TMEVTB, // タイムイベントブロック

@@ -312,7 +312,7 @@ pub fn wai_flg(flgid: ID, waiptn: FLGPTN, wfmode: MODE, p_flgptn: *FLGPTN) Itron
             wobj_make_wait(p_flgcb, TS_WAITING_FLG, &winfo_flg);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_flg.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
             p_flgptn.* = winfo_flg.waiptn;
         }
@@ -372,7 +372,7 @@ pub fn twai_flg(flgid: ID, waiptn: FLGPTN, wfmode: MODE, p_flgptn: *FLGPTN, tmou
             wobj_make_wait_tmout(p_flgcb, TS_WAITING_FLG, &winfo_flg, &tmevtb, tmout);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_flg.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
             p_flgptn.* = winfo_flg.waiptn;
         }

@@ -100,7 +100,7 @@ pub const CYCINIB = struct {
 ///  次に周期通知を起動する時刻は，タイムイベントブロック（tmevtb）中
 ///  のタイムイベントの発生時刻（evttim）で保持する．
 ///
-pub const CYCCB = struct {
+pub const CYCCB = extern struct {
     p_cycinib: *const CYCINIB, // 初期化ブロックへのポインタ
     cycsta: bool, // 周期通知の動作状態
     tmevtb: TMEVTB, // タイムイベントブロック

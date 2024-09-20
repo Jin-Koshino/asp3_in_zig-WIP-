@@ -295,7 +295,7 @@ pub fn get_mpf(mpfid: ID, p_blk: **u8) ItronError!void {
             wobj_make_wait(p_mpfcb, TS_WAITING_MPF, &winfo_mpf);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_mpf.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
         }
     }
@@ -348,7 +348,7 @@ pub fn tget_mpf(mpfid: ID, p_blk: **u8, tmout: TMO) ItronError!void {
             wobj_make_wait_tmout(p_mpfcb, TS_WAITING_MPF, &winfo_mpf, &tmevtb, tmout);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_mpf.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
         }
     }

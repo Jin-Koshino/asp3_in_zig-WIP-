@@ -245,9 +245,9 @@ pub fn getMtxIdFromWinfo(p_winfo: *WINFO) ID {
 ///  ミューテックス機能の初期化
 ///
 pub fn initialize_mutex() void {
-    task.mtxhook_check_ceilpri = mutexCheckCeilpri;
-    task.mtxhook_scan_ceilmtx = mutexScanCeilMtx;
-    task.mtxhook_release_all = mutexReleaseAll;
+    task.mtxhook_check_ceilpri = &mutexCheckCeilpri;
+    task.mtxhook_scan_ceilmtx = &mutexScanCeilMtx;
+    task.mtxhook_release_all = &mutexReleaseAll;
 
     for (cfg._kernel_mtxcb_table[0..cfg._kernel_mtxinib_table.len], 0..) |*p_mtxcb, i| {
         p_mtxcb.wait_queue.initialize();
@@ -429,7 +429,7 @@ pub fn loc_mtx(mtxid: ID) ItronError!void {
             wobj_make_wait(p_mtxcb, TS_WAITING_MTX, &winfo_mtx);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_mtx.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
         }
     }
@@ -497,7 +497,7 @@ pub fn tloc_mtx(mtxid: ID, tmout: TMO) ItronError!void {
             wobj_make_wait_tmout(p_mtxcb, TS_WAITING_MTX, &winfo_mtx, &tmevtb, tmout);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_mtx.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
         }
     }

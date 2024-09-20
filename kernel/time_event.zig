@@ -134,7 +134,7 @@ pub const CBACK = *const fn (usize) void;
 ///
 ///  タイムイベントブロックのデータ型の定義
 ///
-pub const TMEVTB = struct {
+pub const TMEVTB = extern struct {
     evttim: EVTTIM, // タイムイベントの発生時刻
     index: usize, // タイムイベントヒープ中での位置
     callback: CBACK, // コールバック関数

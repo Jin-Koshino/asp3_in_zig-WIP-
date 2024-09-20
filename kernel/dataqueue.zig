@@ -360,7 +360,7 @@ pub fn snd_dtq(dtqid: ID, data: usize) ItronError!void {
             wobj_make_wait(p_dtqcb, TS_WAITING_SDTQ, &winfo_sdtq);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_sdtq.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
         }
     }
@@ -414,7 +414,7 @@ pub fn tsnd_dtq(dtqid: ID, data: usize, tmout: TMO) ItronError!void {
             wobj_make_wait_tmout(p_dtqcb, TS_WAITING_SDTQ, &winfo_sdtq, &tmevtb, tmout);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_sdtq.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
         }
     }
@@ -461,7 +461,7 @@ pub fn rcv_dtq(dtqid: ID, p_data: *usize) ItronError!void {
             wobj_make_rwait(p_dtqcb, TS_WAITING_RDTQ, &winfo_rdtq);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_rdtq.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
             p_data.* = winfo_rdtq.data;
         }
@@ -515,7 +515,7 @@ pub fn trcv_dtq(dtqid: ID, p_data: *usize, tmout: TMO) ItronError!void {
             wobj_make_rwait_tmout(p_dtqcb, TS_WAITING_RDTQ, &winfo_rdtq, &tmevtb, tmout);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_rdtq.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
             p_data.* = winfo_rdtq.data;
         }

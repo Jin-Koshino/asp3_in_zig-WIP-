@@ -401,7 +401,7 @@ pub fn snd_pdq(pdqid: ID, data: usize, datapri: PRI) ItronError!void {
             wobj_make_wait(p_pdqcb, TS_WAITING_SPDQ, &winfo_spdq);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_spdq.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
         }
     }
@@ -458,7 +458,7 @@ pub fn tsnd_pdq(pdqid: ID, data: usize, datapri: PRI, tmout: TMO) ItronError!voi
             wobj_make_wait_tmout(p_pdqcb, TS_WAITING_SPDQ, &winfo_spdq, &tmevtb, tmout);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_spdq.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
         }
     }
@@ -486,7 +486,7 @@ pub fn rcv_pdq(pdqid: ID, p_data: *usize, p_datapri: *PRI) ItronError!void {
             wobj_make_rwait(p_pdqcb, TS_WAITING_RPDQ, &winfo_rpdq);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_rpdq.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
             p_data.* = winfo_rpdq.data;
             p_datapri.* = winfo_rpdq.datapri;
@@ -541,7 +541,7 @@ pub fn trcv_pdq(pdqid: ID, p_data: *usize, p_datapri: *PRI, tmout: TMO) ItronErr
             wobj_make_rwait_tmout(p_pdqcb, TS_WAITING_RPDQ, &winfo_rpdq, &tmevtb, tmout);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_rpdq.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
             p_data.* = winfo_rpdq.data;
             p_datapri.* = winfo_rpdq.datapri;
