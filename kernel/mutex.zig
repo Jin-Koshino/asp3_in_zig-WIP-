@@ -245,9 +245,9 @@ pub fn getMtxIdFromWinfo(p_winfo: *WINFO) ID {
 ///  ミューテックス機能の初期化
 ///
 pub fn initialize_mutex() void {
-    task.mtxhook_check_ceilpri = &mutexCheckCeilpri;
-    task.mtxhook_scan_ceilmtx = &mutexScanCeilMtx;
-    task.mtxhook_release_all = &mutexReleaseAll;
+    task.mtxhook_check_ceilpri = @constCast(&mutexCheckCeilpri);
+    task.mtxhook_scan_ceilmtx = @constCast(&mutexScanCeilMtx);
+    task.mtxhook_release_all = @constCast(&mutexReleaseAll);
 
     for (cfg._kernel_mtxcb_table[0..cfg._kernel_mtxinib_table.len], 0..) |*p_mtxcb, i| {
         p_mtxcb.wait_queue.initialize();
