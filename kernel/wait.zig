@@ -257,7 +257,7 @@ pub fn wait_tmout(arg: usize) void {
     const p_tcb = @as(*TCB, @ptrFromInt(arg));
 
     wait_dequeue_wobj(p_tcb);
-    p_tcb.p_winfo.* = WINFO{ .werror = &ItronError.TimeoutError };
+    p_tcb.p_winfo.* = WINFO{ .werror = @constCast(&ItronError.TimeoutError) };
     make_non_wait(p_tcb);
     if (task.p_runtsk != task.p_schedtsk) {
         target_impl.mpcore_kernel_impl.core_kernel_impl.requestDispatchRetint();
@@ -430,7 +430,7 @@ pub fn init_wait_queue(p_wait_queue: *queue.Queue) void {
     while (!p_wait_queue.isEmpty()) {
         const p_tcb = getTCBFromQueue(p_wait_queue.deleteNext());
         wait_dequeue_tmevtb(p_tcb);
-        p_tcb.p_winfo.* = WINFO{ .werror = &ItronError.ObjectDeleted };
+        p_tcb.p_winfo.* = WINFO{ .werror = @constCast(&ItronError.ObjectDeleted) };
         make_non_wait(p_tcb);
     }
 }

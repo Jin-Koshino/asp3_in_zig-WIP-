@@ -300,7 +300,7 @@ pub fn rel_wai(tskid: ID) ItronError!void {
         } else {
             wait_dequeue_wobj(p_tcb); //［NGKI1296］
             wait_dequeue_tmevtb(p_tcb); //［NGKI1297］
-            p_tcb.p_winfo.* = WINFO{ .werror = &ItronError.ReleasedFromWaiting };
+            p_tcb.p_winfo.* = WINFO{ .werror = @constCast(&ItronError.ReleasedFromWaiting) };
             make_non_wait(p_tcb);
             requestTaskDispatch();
         }
