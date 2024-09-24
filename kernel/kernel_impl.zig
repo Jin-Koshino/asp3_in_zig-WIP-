@@ -123,22 +123,22 @@ pub const static_api = @import("static_api.zig");
 ///    @import("../" ++ CFG_FILE).genConfig({})
 ///else
 pub const cfg = struct {
-    usingnamespace task.ExternTskCfg;
-    usingnamespace semaphore.ExternSemCfg;
-    usingnamespace eventflag.ExternFlgCfg;
-    usingnamespace dataqueue.ExternDtqCfg;
-    usingnamespace pridataq.ExternPdqCfg;
-    usingnamespace mutex.ExternMtxCfg;
-    usingnamespace mempfix.ExternMpfCfg;
-    usingnamespace cyclic.ExternCycCfg;
-    usingnamespace alarm.ExternAlmCfg;
-    usingnamespace overrun.ExternOvrIniB;
-    usingnamespace interrupt.ExternIntIniB;
-    usingnamespace interrupt.ExternInhIniB;
-    usingnamespace exception.ExternExcIniB;
-    usingnamespace startup.ExternIcs;
-    usingnamespace startup.ExternIniRtnB;
-    usingnamespace startup.ExternTerRtnB;
+    pub usingnamespace task.ExternTskCfg;
+    pub usingnamespace semaphore.ExternSemCfg;
+    pub usingnamespace eventflag.ExternFlgCfg;
+    pub usingnamespace dataqueue.ExternDtqCfg;
+    pub usingnamespace pridataq.ExternPdqCfg;
+    pub usingnamespace mutex.ExternMtxCfg;
+    pub usingnamespace mempfix.ExternMpfCfg;
+    pub usingnamespace cyclic.ExternCycCfg;
+    pub usingnamespace alarm.ExternAlmCfg;
+    pub usingnamespace overrun.ExternOvrIniB;
+    pub usingnamespace interrupt.ExternIntIniB;
+    pub usingnamespace interrupt.ExternInhIniB;
+    pub usingnamespace exception.ExternExcIniB;
+    pub usingnamespace startup.ExternIcs;
+    pub usingnamespace startup.ExternIniRtnB;
+    pub usingnamespace startup.ExternTerRtnB;
     pub extern var _kernel_tmevt_heap: [1000]*time_event.TMEVTB;
     pub extern fn _kernel_initialize_object() void;
 };

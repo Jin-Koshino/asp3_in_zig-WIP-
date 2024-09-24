@@ -311,7 +311,7 @@ fn mutexScanCeilMtx(p_tcb: *TCB) bool {
 ///  p_tcbで指定されるタスクの現在優先度（に設定すべき値）を計算する．
 ///
 fn mutexCalcPriority(p_tcb: *TCB) TaskPrio {
-    var prio = p_tcb.bprio;
+    var prio = p_tcb.prios.bprio;
     var op_mtxcb = p_tcb.p_lastmtx;
 
     while (op_mtxcb) |p_mtxcb| : (op_mtxcb = p_mtxcb.p_prevmtx) {
@@ -329,9 +329,9 @@ fn mutexCalcPriority(p_tcb: *TCB) TaskPrio {
 ///  ク解除した際の現在優先度変更処理を行う．
 ///
 fn mutexDropPriority(p_tcb: *TCB, p_mtxcb: *MTXCB) void {
-    if (isCeilingMtx(p_mtxcb) and p_mtxcb.p_wobjinib.ceilpri == p_tcb.prio) {
+    if (isCeilingMtx(p_mtxcb) and p_mtxcb.p_wobjinib.ceilpri == p_tcb.prios.prio) {
         const newprio = mutexCalcPriority(p_tcb);
-        if (newprio != p_tcb.prio) {
+        if (newprio != p_tcb.prios.prio) {
             change_priority(p_tcb, newprio, true);
         }
     }
@@ -347,7 +347,7 @@ fn mutexAcquire(p_tcb: *TCB, p_mtxcb: *MTXCB) void {
     p_mtxcb.p_loctsk = p_tcb;
     p_mtxcb.p_prevmtx = p_tcb.p_lastmtx;
     p_tcb.p_lastmtx = p_mtxcb;
-    if (isCeilingMtx(p_mtxcb) and p_mtxcb.p_wobjinib.ceilpri < p_tcb.prio) {
+    if (isCeilingMtx(p_mtxcb) and p_mtxcb.p_wobjinib.ceilpri < p_tcb.prios.prio) {
         change_priority(p_tcb, @as(TaskPrio, @intCast(p_mtxcb.p_wobjinib.ceilpri)), true);
     }
 }
@@ -372,8 +372,8 @@ fn mutexRelease(p_mtxcb: *MTXCB) void {
         p_mtxcb.p_loctsk = p_tcb;
         p_mtxcb.p_prevmtx = p_tcb.p_lastmtx;
         p_tcb.p_lastmtx = p_mtxcb;
-        if (isCeilingMtx(p_mtxcb) and p_mtxcb.p_wobjinib.ceilpri < p_tcb.prio) {
-            p_tcb.prio = @as(TaskPrio, @intCast(p_mtxcb.p_wobjinib.ceilpri));
+        if (isCeilingMtx(p_mtxcb) and p_mtxcb.p_wobjinib.ceilpri < p_tcb.prios.prio) {
+            p_tcb.prios.prio = @as(TaskPrio, @intCast(p_mtxcb.p_wobjinib.ceilpri));
         }
         make_non_wait(p_tcb);
     }
@@ -414,7 +414,7 @@ pub fn loc_mtx(mtxid: ID) ItronError!void {
 
         if (task.p_runtsk.?.flags.raster) {
             return ItronError.TerminationRequestRaised;
-        } else if (isCeilingMtx(p_mtxcb) and task.p_runtsk.?.bprio < p_mtxcb.p_wobjinib.ceilpri) {
+        } else if (isCeilingMtx(p_mtxcb) and task.p_runtsk.?.prios.bprio < p_mtxcb.p_wobjinib.ceilpri) {
             return ItronError.IllegalUse;
         } else if (p_mtxcb.p_loctsk == null) {
             mutexAcquire(task.p_runtsk.?, p_mtxcb);
@@ -448,7 +448,7 @@ pub fn ploc_mtx(mtxid: ID) ItronError!void {
         target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
-        if (isCeilingMtx(p_mtxcb) and task.p_runtsk.?.bprio < p_mtxcb.p_wobjinib.ceilpri) {
+        if (isCeilingMtx(p_mtxcb) and task.p_runtsk.?.prios.bprio < p_mtxcb.p_wobjinib.ceilpri) {
             return ItronError.IllegalUse;
         } else if (p_mtxcb.p_loctsk == null) {
             mutexAcquire(task.p_runtsk.?, p_mtxcb);
@@ -479,7 +479,7 @@ pub fn tloc_mtx(mtxid: ID, tmout: TMO) ItronError!void {
 
         if (task.p_runtsk.?.flags.raster) {
             return ItronError.TerminationRequestRaised;
-        } else if (isCeilingMtx(p_mtxcb) and task.p_runtsk.?.bprio < p_mtxcb.p_wobjinib.ceilpri) {
+        } else if (isCeilingMtx(p_mtxcb) and task.p_runtsk.?.prios.bprio < p_mtxcb.p_wobjinib.ceilpri) {
             return ItronError.IllegalUse;
         } else if (p_mtxcb.p_loctsk == null) {
             mutexAcquire(task.p_runtsk.?, p_mtxcb);
@@ -656,9 +656,9 @@ fn bitMTXCB(p_mtxcb: *MTXCB) ItronError!void {
 
         // キューがタスク優先度順になっているかの検査
         if ((p_mtxinib.wobjatr & MTXPROTO_MASK) != TA_NULL) {
-            try checkBit(p_tcb.prio >= prio);
+            try checkBit(p_tcb.prios.prio >= prio);
         }
-        prio = p_tcb.prio;
+        prio = p_tcb.prios.prio;
 
         // タスク状態の検査
         //
@@ -669,7 +669,7 @@ fn bitMTXCB(p_mtxcb: *MTXCB) ItronError!void {
 
         // 優先度上限の検査
         if (isCeilingMtx(p_mtxcb)) {
-            try checkBit(p_tcb.bprio >= p_mtxinib.ceilpri);
+            try checkBit(p_tcb.prios.bprio >= p_mtxinib.ceilpri);
         }
 
         // キューの次の要素に進む

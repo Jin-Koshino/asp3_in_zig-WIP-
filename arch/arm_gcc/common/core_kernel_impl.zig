@@ -253,7 +253,7 @@ pub const TOPPERS_ISTKPT = true;
 ///
 ///  タスクコンテキストブロック
 ///
-pub const TSKCTXB = struct {
+pub const TSKCTXB = extern struct {
     sp: *u8, // スタックポインタ
     pc: *const fn () callconv(.Naked) void, // 実行再開番地
 };

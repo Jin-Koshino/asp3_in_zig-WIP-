@@ -233,8 +233,8 @@ pub fn ref_tsk(tskid: ID, pk_rtsk: *T_RTSK) ItronError!void {
             }
 
             // 現在優先度とベース優先度の取出し［NGKI1227］
-            pk_rtsk.tskpri = externalTaskPrio(p_tcb.prio);
-            pk_rtsk.tskbpri = externalTaskPrio(p_tcb.bprio);
+            pk_rtsk.tskpri = externalTaskPrio(p_tcb.prios.prio);
+            pk_rtsk.tskbpri = externalTaskPrio(p_tcb.prios.bprio);
 
             // 起床要求キューイング数の取出し［NGKI1239］
             pk_rtsk.wupcnt = p_tcb.flags.wupque;

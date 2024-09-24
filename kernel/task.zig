@@ -268,13 +268,15 @@ pub const TINIB = struct {
 ///  ・実行可能状態，待ち状態，強制待ち状態，二重待ち状態で有効：
 ///         tskctxb
 ///
-pub const TCB = struct {
+pub const TCB = extern struct {
     task_queue: queue.Queue, // タスクキュー
     p_tinib: *const TINIB, // 初期化ブロックへのポインタ
 
     tstat: u8, // タスク状態（内部表現）
-    bprio: TaskPrio, // ベース優先度（内部表現）
-    prio: TaskPrio, // 現在の優先度（内部表現）
+    prios: packed struct {
+        bprio: TaskPrio, // ベース優先度（内部表現）
+        prio: TaskPrio, // 現在の優先度（内部表現）
+    },
     flags: packed struct {
         actque: u1, // 起動要求キューイング
         wupque: u1, // 起床要求キューイング
@@ -282,6 +284,7 @@ pub const TCB = struct {
         enater: bool, // タスク終了許可状態
         staovr: if (TOPPERS_SUPPORT_OVRHDR) bool else void,
         // オーバランハンドラ動作状態
+        padding: u4, //struct全体のサイズをC ABIに対応したサイズにするためのパディング
     },
     p_winfo: *WINFO, // 待ち情報ブロックへのポインタ
     p_lastmtx: ?*mutex.MTXCB, // 最後にロックしたミューテックス */
@@ -469,13 +472,13 @@ fn searchSchedtsk() *TCB {
 ///  には，実行すべきタスクを更新する．
 ///
 pub fn make_runnable(p_tcb: *TCB) void {
-    const prio = p_tcb.prio;
+    const prio = p_tcb.prios.prio;
 
     ready_queue[prio].insertPrev(&p_tcb.task_queue);
     ready_primap.set(prio);
 
     if (dspflg) {
-        if (p_schedtsk == null or prio < p_schedtsk.?.prio) {
+        if (p_schedtsk == null or prio < p_schedtsk.?.prios.prio) {
             p_schedtsk = p_tcb;
         }
     }
@@ -488,7 +491,7 @@ pub fn make_runnable(p_tcb: *TCB) void {
 ///  には，実行すべきタスクを更新する．
 ///
 pub fn make_non_runnable(p_tcb: *TCB) void {
-    const prio = p_tcb.prio;
+    const prio = p_tcb.prios.prio;
     const p_queue = &ready_queue[prio];
 
     p_tcb.task_queue.delete();
@@ -526,8 +529,8 @@ pub fn set_dspflg() void {
 ///
 fn make_dormant(p_tcb: *TCB) void {
     p_tcb.tstat = TS_DORMANT;
-    p_tcb.bprio = @as(TaskPrio, @intCast(p_tcb.p_tinib.ipri));
-    p_tcb.prio = p_tcb.bprio;
+    p_tcb.prios.bprio = @as(TaskPrio, @intCast(p_tcb.p_tinib.ipri));
+    p_tcb.prios.prio = p_tcb.prios.bprio;
     p_tcb.flags.wupque = 0;
     p_tcb.flags.raster = false;
     p_tcb.flags.enater = true;
@@ -560,9 +563,9 @@ pub fn make_active(p_tcb: *TCB) void {
 ///  の時は最高とする．
 ///
 pub fn change_priority(p_tcb: *TCB, newprio: TaskPrio, mtxmode: bool) void {
-    const oldprio = p_tcb.prio;
+    const oldprio = p_tcb.prios.prio;
 
-    p_tcb.prio = newprio;
+    p_tcb.prios.prio = newprio;
     if (isRunnable(p_tcb.tstat)) {
         // タスクが実行できる状態の場合
         p_tcb.task_queue.delete();
@@ -582,7 +585,7 @@ pub fn change_priority(p_tcb: *TCB, newprio: TaskPrio, mtxmode: bool) void {
                     p_schedtsk = searchSchedtsk();
                 }
             } else {
-                if (newprio <= p_schedtsk.?.prio) {
+                if (newprio <= p_schedtsk.?.prios.prio) {
                     p_schedtsk = getTCBFromQueue(ready_queue[newprio].p_next);
                 }
             }
@@ -727,7 +730,7 @@ pub fn ExportTskCfg(comptime tinib_table: []TINIB, comptime torder_table: []ID) 
         pub export const _kernel_tinib_table: ?*TINIB = if (tnum_tsk == 0) null else &tinib_table[0];
         pub export const _kenrel_tnum_tsk = tnum_tsk;
         pub export const _kernel_torder_table = torder_table[0..tnum_tsk].*;
-        pub var _kernel_tcb_table: [tnum_tsk]TCB = undefined;
+        pub export var _kernel_tcb_table: [tnum_tsk]TCB = undefined;
     };
 }
 
@@ -841,7 +844,7 @@ fn bitSched() ItronError!void {
             const p_tcb = getTCBFromQueue(p_entry);
             try checkBit(validTCB(p_tcb));
             try checkBit(isRunnable(p_tcb.tstat));
-            try checkBit(p_tcb.prio == prio);
+            try checkBit(p_tcb.prios.prio == prio);
         }
     }
 }
@@ -868,10 +871,10 @@ fn bitTCB(p_tcb: *TCB) ItronError!void {
     }
 
     // ベース優先度の検査
-    try checkBit(p_tcb.bprio < TNUM_TPRI);
+    try checkBit(p_tcb.prios.bprio < TNUM_TPRI);
 
     // 現在の優先度の検査
-    try checkBit(p_tcb.prio <= p_tcb.bprio);
+    try checkBit(p_tcb.prios.prio <= p_tcb.prios.bprio);
 
     // rasterと他の状態の整合性検査
     if (p_tcb.flags.raster) {
@@ -881,8 +884,8 @@ fn bitTCB(p_tcb: *TCB) ItronError!void {
 
     // 休止状態における整合性検査
     if (isDormant(tstat)) {
-        try checkBit(p_tcb.bprio == p_tinib.ipri);
-        try checkBit(p_tcb.prio == p_tinib.ipri);
+        try checkBit(p_tcb.prios.bprio == p_tinib.ipri);
+        try checkBit(p_tcb.prios.prio == p_tinib.ipri);
         try checkBit(p_tcb.flags.actque == 0);
         try checkBit(p_tcb.flags.wupque == 0);
         try checkBit(p_tcb.flags.raster == false);
@@ -892,7 +895,7 @@ fn bitTCB(p_tcb: *TCB) ItronError!void {
 
     // 実行できる状態における整合性検査
     if (isRunnable(tstat)) {
-        try checkBit(ready_queue[p_tcb.prio].bitIncluded(&p_tcb.task_queue));
+        try checkBit(ready_queue[p_tcb.prios.prio].bitIncluded(&p_tcb.task_queue));
     }
 
     // 待ち状態における整合性検査

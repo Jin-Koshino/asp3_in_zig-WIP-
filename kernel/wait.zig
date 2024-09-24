@@ -132,10 +132,10 @@ pub const WINFO = extern union {
 ///  する．
 ///
 pub fn queue_insert_tpri(p_queue: *queue.Queue, p_tcb: *TCB) void {
-    const prio = p_tcb.prio;
+    const prio = p_tcb.prios.prio;
     var p_entry = p_queue.p_next;
     while (p_entry != p_queue) : (p_entry = p_entry.p_next) {
-        if (prio < getTCBFromQueue(p_entry).prio) {
+        if (prio < getTCBFromQueue(p_entry).prios.prio) {
             break;
         }
     }

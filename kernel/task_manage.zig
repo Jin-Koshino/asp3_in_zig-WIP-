@@ -238,7 +238,7 @@ pub fn chg_pri(tskid: ID, tskpri: PRI) ItronError!void {
         } else if ((p_tcb.p_lastmtx != null or isWaitingMtx(p_tcb.tstat)) and !task.mtxhook_check_ceilpri.?(p_tcb, newbprio)) {
             return ItronError.IllegalUse; //［NGKI1201］
         } else {
-            p_tcb.bprio = newbprio; //［NGKI1192］
+            p_tcb.prios.bprio = newbprio; //［NGKI1192］
             if (p_tcb.p_lastmtx == null or !task.mtxhook_scan_ceilmtx.?(p_tcb)) {
                 change_priority(p_tcb, newbprio, false); //［NGKI1193］
                 taskDispatch();
@@ -269,7 +269,7 @@ pub fn get_pri(tskid: ID, p_tskpri: *PRI) ItronError!void {
         if (isDormant(p_tcb.tstat)) { //［NGKI1209］
             return ItronError.ObjectStateError;
         } else { //［NGKI1210］
-            p_tskpri.* = externalTaskPrio(p_tcb.prio);
+            p_tskpri.* = externalTaskPrio(p_tcb.prios.prio);
         }
     }
     traceLog("getPriLeave", .{ null, p_tskpri });
