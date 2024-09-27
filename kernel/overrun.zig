@@ -63,7 +63,7 @@ const traceLog = kernel_impl.traceLog;
 const checkNotSupported = check.checkNotSupported;
 const checkContextUnlock = check.checkContextUnlock;
 const checkObjectState = check.checkObjectState;
-const cfg = check.cfg;
+const cfg = kernel_impl.cfg;
 const TSK_SELF = zig.TSK_SELF;
 const target_impl = kernel_impl.target_impl;
 const checkAndGetTCB = task.checkAndGetTCB;
@@ -84,7 +84,7 @@ const exportCheck = kernel_impl.exportCheck;
 ///
 ///  オーバランハンドラ初期化ブロック
 ///
-pub const OVRINIB = struct {
+pub const OVRINIB = extern struct {
     ovratr: ATR, // オーバランハンドラ属性
     ovrhdr: ?OVRHDR, // オーバランハンドラの起動番地
 };
@@ -129,7 +129,7 @@ pub fn sta_ovr(tskid: ID, ovrtim: PRCTIM) ItronError!void {
 
     traceLog("staOvrEnter", .{ tskid, ovrtim });
     errdefer |err| traceLog("staOvrLeave", .{err});
-    comptime try checkNotSupported(TOPPERS_SUPPORT_OVRHDR);
+    try checkNotSupported(TOPPERS_SUPPORT_OVRHDR);
     try checkContextUnlock();
     try checkObjectState(cfg._kernel_ovrinib.ovrhdr != null);
     if (tskid == TSK_SELF and !target_impl.mpcore_kernel_impl.core_kernel_impl.senseContext()) {
@@ -162,7 +162,7 @@ pub fn stp_ovr(tskid: ID) ItronError!void {
 
     traceLog("stpOvrEnter", .{tskid});
     errdefer |err| traceLog("stpOvrLeave", .{err});
-    comptime try checkNotSupported(TOPPERS_SUPPORT_OVRHDR);
+    try checkNotSupported(TOPPERS_SUPPORT_OVRHDR);
     try checkContextUnlock();
     try checkObjectState(cfg._kernel_ovrinib.ovrhdr != null);
     if (tskid == TSK_SELF and !target_impl.mpcore_kernel_impl.core_kernel_impl.senseContext()) {
