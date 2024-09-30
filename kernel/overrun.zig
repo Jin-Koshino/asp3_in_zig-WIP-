@@ -162,7 +162,7 @@ pub fn stp_ovr(tskid: ID) ItronError!void {
 
     traceLog("stpOvrEnter", .{tskid});
     errdefer |err| traceLog("stpOvrLeave", .{err});
-    try checkNotSupported(TOPPERS_SUPPORT_OVRHDR);
+    comptime try checkNotSupported(TOPPERS_SUPPORT_OVRHDR);
     try checkContextUnlock();
     try checkObjectState(cfg._kernel_ovrinib.ovrhdr != null);
     if (tskid == TSK_SELF and !target_impl.mpcore_kernel_impl.core_kernel_impl.senseContext()) {
