@@ -180,9 +180,11 @@ comptime {
 ///
 pub const ExternSemCfg = struct {
     ///
+    pub extern const _kernel_tmax_semid: ID;
+
     ///  セマフォ初期化ブロック（スライス）
     ///
-    pub extern const _kernel_seminib_table: []SEMINIB;
+    pub extern const _kernel_seminib_table: [100]SEMINIB;
 
     ///
     ///  セマフォ管理ブロックのエリア
@@ -196,6 +198,13 @@ pub const ExternSemCfg = struct {
 ///
 fn maxSemId() ID {
     return @intCast(TMIN_SEMID + cfg._kernel_seminib_table.len - 1);
+}
+
+///
+///  セマフォの数
+///
+fn numOfSem() usize {
+    return @intCast(cfg._kernel_tmax_semid - TMIN_SEMID + 1);
 }
 
 ///

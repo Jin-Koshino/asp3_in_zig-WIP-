@@ -210,9 +210,14 @@ comptime {
 ///
 pub const ExternPdqCfg = struct {
     ///
+    ///　優先度データキューIDの最大値
+    /// 
+    pub extern const _kernel_tmax_pdqid: ID;
+
+    ///
     ///  優先度データキュー初期化ブロック（スライス）
     ///
-    pub extern const _kernel_pdqinib_table: []PDQINIB;
+    pub extern const _kernel_pdqinib_table: [100]PDQINIB;
 
     ///
     ///  優先度データキュー管理ブロックのエリア
@@ -226,6 +231,13 @@ pub const ExternPdqCfg = struct {
 ///
 fn maxPdqId() ID {
     return @intCast(TMIN_PDQID + cfg._kernel_pdqinib_table.len - 1);
+}
+
+///
+///  優先度データキューの数
+///
+fn numOfPdq() usize {
+    return @intCast(cfg._kernel_tmax_pdqid - TMIN_PDQID + 1);
 }
 
 ///

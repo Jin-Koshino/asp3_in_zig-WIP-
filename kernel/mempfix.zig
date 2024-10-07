@@ -193,9 +193,14 @@ comptime {
 ///
 pub const ExternMpfCfg = struct {
     ///
+    ///  固定長メモリプールIDの最大値
+    ///
+    pub extern const _kernel_tmax_mpfid: ID;
+
+    ///
     ///  固定長メモリプール初期化ブロック（スライス）
     ///
-    pub extern const _kernel_mpfinib_table: []MPFINIB;
+    pub extern const _kernel_mpfinib_table: [100]MPFINIB;
 
     ///
     ///  固定長メモリプール管理ブロックのエリア
@@ -209,6 +214,13 @@ pub const ExternMpfCfg = struct {
 ///
 fn maxMpfId() ID {
     return @intCast(TMIN_MPFID + cfg._kernel_mpfinib_table.len - 1);
+}
+
+///
+///  固定長メモリプールの数
+///
+fn numOfMpf() usize {
+    return @intCast(cfg._kernel_tmax_mpfid - TMIN_MPFID + 1);
 }
 
 ///

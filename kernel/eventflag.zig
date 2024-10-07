@@ -164,9 +164,14 @@ comptime {
 ///
 pub const ExternFlgCfg = struct {
     ///
+    ///  イベントフラグIDの最大値
+    ///
+    pub extern const _kernel_tmax_flgid: ID;
+
+    ///
     ///  イベントフラグ初期化ブロック（スライス）
     ///
-    pub extern const _kernel_flginib_table: []FLGINIB;
+    pub extern const _kernel_flginib_table: [100]FLGINIB;
 
     ///
     ///  イベントフラグ管理ブロックのエリア
@@ -180,6 +185,13 @@ pub const ExternFlgCfg = struct {
 ///
 fn maxFlgId() ID {
     return @intCast(TMIN_FLGID + cfg._kernel_flginib_table.len - 1);
+}
+
+///
+///  イベントフラグの数
+///
+fn numOfFlg() usize {
+    return @intCast(cfg._kernel_tmax_flgid - TMIN_FLGID + 1);
 }
 
 ///

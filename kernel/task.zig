@@ -232,16 +232,16 @@ pub fn isWaitingWobjCB(tstat: u8) bool {
 ///  しいが，実行効率が悪くなるために採用していない．他のオブジェクト
 ///  についても同様に扱う．
 ///
-pub const TINIB = struct {
+pub const TINIB = extern struct {
     tskatr: kernel_impl.zig.t_stddef.ATR, // タスク属性
     exinf: t_stddef.EXINF, // タスクの拡張情報
     task: zig.TASK, // タスクの起動番地
     ipri: c_uint, // タスクの起動時優先度（内部表現）
     tskinictxb: // タスク初期化コンテキストブロック
-    if (@hasDecl(target_impl, "TSKINICTXB"))
+    if (@hasDecl(target_impl.mpcore_kernel_impl.core_kernel_impl, "TSKINICTXB"))
         target_impl.mpcore_kernel_impl.core_kernel_impl.TSKINICTXB
     else
-        struct {
+        extern struct {
             stksz: usize, // スタック領域のサイズ（丸めた値）
             stk: [*]u8, // スタック領域
         },
@@ -365,9 +365,14 @@ var ready_primap: prio_bitmap.PrioBitmap(TNUM_TPRI) = undefined;
 ///
 pub const ExternTskCfg = struct {
     ///
+    ///  タスクIDの最大値
+    ///
+    pub extern const _kernel_tmax_tskid: ID;
+
+    ///
     ///  タスク初期化ブロック（スライス）
     ///
-    pub extern const _kernel_tinib_table: []TINIB;
+    pub extern const _kernel_tinib_table: [100]TINIB;
 
     ///
     ///  タスク生成順序テーブル
@@ -387,6 +392,13 @@ pub const ExternTskCfg = struct {
 ///
 fn maxTskId() ID {
     return @intCast(TMIN_TSKID + cfg._kernel_tinib_table.len - 1);
+}
+
+///
+///  タスクの数
+///
+fn numOfTsk() usize {
+    return @intCast(cfg._kernel_tmax_tskid - TMIN_TSKID + 1);
 }
 
 ///

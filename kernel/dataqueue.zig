@@ -175,9 +175,14 @@ comptime {
 ///
 pub const ExternDtqCfg = struct {
     ///
+    ///  データキューIDの最大値
+    ///
+    pub extern const _kernel_tmax_dtqid: ID;
+
+    ///
     ///  データキュー初期化ブロック（スライス）
     ///
-    pub extern const _kernel_dtqinib_table: []DTQINIB;
+    pub extern const _kernel_dtqinib_table: [100]DTQINIB;
 
     ///
     ///  データキュー管理ブロックのエリア
@@ -191,6 +196,13 @@ pub const ExternDtqCfg = struct {
 ///
 fn maxDtqId() ID {
     return @intCast(TMIN_DTQID + cfg._kernel_dtqinib_table.len - 1);
+}
+
+///
+///  データキューの数
+///
+fn numOfDtq() usize {
+    return @intCast(cfg._kernel_tmax_dtqid - TMIN_DTQID + 1);
 }
 
 ///

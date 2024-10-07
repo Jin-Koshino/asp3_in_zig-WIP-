@@ -85,7 +85,7 @@ const option = kernel_impl.option;
 ///
 ///  アラーム通知初期化ブロック
 ///
-pub const ALMINIB = struct {
+pub const ALMINIB = extern struct {
     almatr: ATR, // アラーム通知属性
     exinf: EXINF, // 通知ハンドラの拡張情報
     nfyhdr: NFYHDR, // 通知ハンドラの起動番地
@@ -105,9 +105,14 @@ pub const ALMCB = extern struct {
 ///
 pub const ExternAlmCfg = struct {
     ///
+    ///  アラーム通知IDの最大値
+    ///
+    pub extern const _kernel_tmax_almid: ID;
+
+    ///
     ///  アラーム通知初期化ブロック（スライス）
     ///
-    pub extern const _kernel_alminib_table: []ALMINIB;
+    pub extern const _kernel_alminib_table: [100]ALMINIB;
 
     ///
     ///  アラーム通知管理ブロックのエリア
@@ -121,6 +126,13 @@ pub const ExternAlmCfg = struct {
 ///
 fn maxAlmId() ID {
     return @intCast(TMIN_ALMID + cfg._kernel_alminib_table.len - 1);
+}
+
+///
+///  アラーム通知の数
+///
+fn numOfAlm() usize {
+    return @intCast(cfg._kernel_tmax_almid - TMIN_ALMID + 1);
 }
 
 ///

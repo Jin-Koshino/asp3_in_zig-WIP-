@@ -183,9 +183,14 @@ comptime {
 ///
 pub const ExternMtxCfg = struct {
     ///
+    ///  ミューテックスIDの最大値
+    ///
+    pub extern const _kernel_tmax_mtxid: ID;
+
+    ///
     ///  ミューテックス初期化ブロック（スライス）
     ///
-    pub extern const _kernel_mtxinib_table: []MTXINIB;
+    pub extern const _kernel_mtxinib_table: [100]MTXINIB;
 
     ///
     ///  ミューテックス管理ブロックのエリア
@@ -199,6 +204,13 @@ pub const ExternMtxCfg = struct {
 ///
 fn maxMtxId() ID {
     return @intCast(TMIN_MTXID + cfg._kernel_mtxinib_table.len - 1);
+}
+
+///
+///  ミューテックスの数
+///
+fn numOfMtx() usize {
+    return @intCast(cfg._kernel_tmax_mtxid - TMIN_MTXID + 1);
 }
 
 ///

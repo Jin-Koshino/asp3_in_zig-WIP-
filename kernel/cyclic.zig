@@ -86,7 +86,7 @@ const option = kernel_impl.option;
 ///
 ///  周期通知初期化ブロック
 ///
-pub const CYCINIB = struct {
+pub const CYCINIB = extern struct {
     cycatr: ATR, // 周期通知属性
     exinf: EXINF, // 通知ハンドラの拡張情報
     nfyhdr: NFYHDR, // 通知ハンドラの起動番地
@@ -111,9 +111,14 @@ pub const CYCCB = extern struct {
 ///
 pub const ExternCycCfg = struct {
     ///
+    ///  周期通知IDの最大値
+    ///
+    pub extern const _kernel_tmax_cycid: ID;
+
+    ///
     ///  周期通知初期化ブロック（スライス）
     ///
-    pub extern const _kernel_cycinib_table: []CYCINIB;
+    pub extern const _kernel_cycinib_table: [100]CYCINIB;
 
     ///
     ///  周期通知管理ブロックのエリア
@@ -127,6 +132,13 @@ pub const ExternCycCfg = struct {
 ///
 fn maxCycId() ID {
     return @intCast(TMIN_CYCID + cfg._kernel_cycinib_table.len - 1);
+}
+
+///
+///  周期通知の数
+///
+fn numOfCyc() usize {
+    return @intCast(cfg._kernel_tmax_cycid - TMIN_CYCID + 1);
 }
 
 ///
