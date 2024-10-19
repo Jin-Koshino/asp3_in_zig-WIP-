@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
 ///                                 Toyohashi Univ. of Technology, JAPAN
 ///  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
@@ -125,13 +125,13 @@ pub fn adj_tim(adjtim: i32) ItronError!void {
             var previous_evttim = time_event.current_evttim;
 
             if (adjtim > 0) { //［ASPD1053］
-                time_event.current_evttim +%= @intCast(EVTTIM, adjtim);
+                time_event.current_evttim +%= @as(EVTTIM, @intCast(adjtim));
             } else {
-                time_event.current_evttim -%= @intCast(EVTTIM, -adjtim);
+                time_event.current_evttim -%= @as(EVTTIM, @intCast(-adjtim));
             }
             time_event.boundary_evttim = time_event.current_evttim -% BOUNDARY_MARGIN;
             //［ASPD1055］
-            if (adjtim > 0 and time_event.monotonic_evttim -% previous_evttim < @intCast(EVTTIM, adjtim)) {
+            if (adjtim > 0 and time_event.monotonic_evttim -% previous_evttim < @as(EVTTIM, @intCast(adjtim))) {
                 if (time_event.current_evttim < time_event.monotonic_evttim) {
                     time_event.systim_offset +%= @as(SYSTIM, 1) << @bitSizeOf(EVTTIM);
                 }

@@ -77,11 +77,11 @@ pub const dly_nse = target.dly_nse;
 ///  指定された型の単位の読出し／書込み
 ///
 fn readMemory(comptime T: type, mem: *const T) T {
-    return @ptrCast(*const volatile T, mem).*;
+    return @as(*const volatile T, @ptrCast(mem)).*;
 }
 
 fn writeMemory(comptime T: type, mem: *T, data: T) void {
-    @ptrCast(*volatile T, mem).* = data;
+    @as(*volatile T, @ptrCast(mem)).* = data;
 }
 
 ///
@@ -128,7 +128,7 @@ pub fn reh_bem(mem: *const u16) u16 {
     } else {
         return switch (endian) {
             Endian.Big => readMemory(u16, mem),
-            Endian.Little => @byteSwap(u16, readMemory(u16, mem)),
+            Endian.Little => @byteSwap(readMemory(u16, mem)),
         };
     }
 }
@@ -139,7 +139,7 @@ pub fn wrh_bem(mem: *u16, data: u16) void {
     } else {
         switch (endian) {
             Endian.Big => writeMemory(u16, mem, data),
-            Endian.Little => writeMemory(u16, mem, @byteSwap(u16, data)),
+            Endian.Little => writeMemory(u16, mem, @byteSwap(data)),
         }
     }
 }
@@ -149,7 +149,7 @@ pub fn reh_lem(mem: *const u16) u16 {
         return target.reh_lem(mem);
     } else {
         return switch (endian) {
-            Endian.Big => @byteSwap(u16, readMemory(u16, mem)),
+            Endian.Big => @byteSwap(readMemory(u16, mem)),
             Endian.Little => readMemory(u16, mem),
         };
     }
@@ -160,7 +160,7 @@ pub fn wrh_lem(mem: *u16, data: u16) void {
         target.wrh_lem(mem, data);
     } else {
         switch (endian) {
-            Endian.Big => writeMemory(u16, mem, @byteSwap(u16, data)),
+            Endian.Big => writeMemory(u16, mem, @byteSwap(data)),
             Endian.Little => writeMemory(u16, mem, data),
         }
     }
@@ -191,7 +191,7 @@ pub fn rew_bem(mem: *const u32) u32 {
     } else {
         return switch (endian) {
             Endian.Big => readMemory(u32, mem),
-            Endian.Little => @byteSwap(u32, readMemory(u32, mem)),
+            Endian.Little => @byteSwap(readMemory(u32, mem)),
         };
     }
 }
@@ -202,7 +202,7 @@ pub fn wrw_bem(mem: *u32, data: u32) void {
     } else {
         switch (endian) {
             Endian.Big => writeMemory(u32, mem, data),
-            Endian.Little => writeMemory(u32, mem, @byteSwap(u32, data)),
+            Endian.Little => writeMemory(u32, mem, @byteSwap(data)),
         }
     }
 }
@@ -212,7 +212,7 @@ pub fn rew_lem(mem: *const u32) u32 {
         return target.rew_lem(mem);
     } else {
         return switch (endian) {
-            Endian.Big => @byteSwap(u32, readMemory(u32, mem)),
+            Endian.Big => @byteSwap(readMemory(u32, mem)),
             Endian.Little => readMemory(u32, mem),
         };
     }
@@ -223,7 +223,7 @@ pub fn wrw_lem(mem: *u32, data: u32) void {
         target.wrw_lem(mem, data);
     } else {
         switch (endian) {
-            Endian.Big => writeMemory(u32, mem, @byteSwap(u32, data)),
+            Endian.Big => writeMemory(u32, mem, @byteSwap(data)),
             Endian.Little => writeMemory(u32, mem, data),
         }
     }

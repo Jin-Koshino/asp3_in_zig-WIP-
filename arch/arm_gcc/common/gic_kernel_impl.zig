@@ -129,24 +129,24 @@ const GIC_PRI_MASK = switch (GIC_PRI_LEVEL) {
 
 /// 割込み優先度マスクの外部表現への変換
 pub fn externalIpm(pri: u32) PRI {
-    return @intCast(PRI, (pri >> GIC_PRI_SHIFT)) - (GIC_PRI_LEVEL - 1);
+    return @as(PRI, @intCast((pri >> GIC_PRI_SHIFT))) - (GIC_PRI_LEVEL - 1);
 }
 
 /// 割込み優先度マスクの内部表現への変換
 pub fn internalIpm(ipm: PRI) u32 {
-    return @intCast(u32, ipm + GIC_PRI_LEVEL - 1) << GIC_PRI_SHIFT;
+    return @as(u32, @intCast(ipm + GIC_PRI_LEVEL - 1)) << GIC_PRI_SHIFT;
 }
 
 ///
 ///  CPUインタフェース関連の定義
 ///
-const GICC_CTLR = @intToPtr(*u32, GICC_BASE + 0x00);
-const GICC_PMR = @intToPtr(*u32, GICC_BASE + 0x04);
-const GICC_BPR = @intToPtr(*u32, GICC_BASE + 0x08);
-const GICC_IAR = @intToPtr(*u32, GICC_BASE + 0x0c);
-const GICC_EOIR = @intToPtr(*u32, GICC_BASE + 0x10);
-const GICC_RPR = @intToPtr(*u32, GICC_BASE + 0x14);
-const GICC_HPPIR = @intToPtr(*u32, GICC_BASE + 0x18);
+const GICC_CTLR = @as(*u32, @ptrFromInt(GICC_BASE + 0x00));
+const GICC_PMR = @as(*u32, @ptrFromInt(GICC_BASE + 0x04));
+const GICC_BPR = @as(*u32, @ptrFromInt(GICC_BASE + 0x08));
+const GICC_IAR = @as(*u32, @ptrFromInt(GICC_BASE + 0x0c));
+const GICC_EOIR = @as(*u32, @ptrFromInt(GICC_BASE + 0x10));
+const GICC_RPR = @as(*u32, @ptrFromInt(GICC_BASE + 0x14));
+const GICC_HPPIR = @as(*u32, @ptrFromInt(GICC_BASE + 0x18));
 
 ///
 ///  CPUインタフェース制御レジスタ（GICC_CTLR）の設定値（GICv1でセキュ
@@ -158,48 +158,48 @@ const GICC_CTLR_ENABLE = 0x01;
 ///
 ///  ディストリビュータ関連の定義
 ///
-const GICD_CTLR = @intToPtr(*u32, GICD_BASE + 0x000);
-const GICD_TYPER = @intToPtr(*u32, GICD_BASE + 0x004);
-const GICD_IIDR = @intToPtr(*u32, GICD_BASE + 0x008);
+const GICD_CTLR = @as(*u32, @ptrFromInt(GICD_BASE + 0x000));
+const GICD_TYPER = @as(*u32, @ptrFromInt(GICD_BASE + 0x004));
+const GICD_IIDR = @as(*u32, @ptrFromInt(GICD_BASE + 0x008));
 fn GICD_IGROUPR(n: c_uint) *u32 {
-    return @intToPtr(*u32, GICD_BASE + 0x080 + n * 4);
+    return @as(*u32, @ptrFromInt(GICD_BASE + 0x080 + n * 4));
 }
 fn GICD_ISENABLER(n: c_uint) *u32 {
-    return @intToPtr(*u32, GICD_BASE + 0x100 + n * 4);
+    return @as(*u32, @ptrFromInt(GICD_BASE + 0x100 + n * 4));
 }
 fn GICD_ICENABLER(n: c_uint) *u32 {
-    return @intToPtr(*u32, GICD_BASE + 0x180 + n * 4);
+    return @as(*u32, @ptrFromInt(GICD_BASE + 0x180 + n * 4));
 }
 fn GICD_ISPENDR(n: c_uint) *u32 {
-    return @intToPtr(*u32, GICD_BASE + 0x200 + n * 4);
+    return @as(*u32, @ptrFromInt(GICD_BASE + 0x200 + n * 4));
 }
 fn GICD_ICPENDR(n: c_uint) *u32 {
-    return @intToPtr(*u32, GICD_BASE + 0x280 + n * 4);
+    return @as(*u32, @ptrFromInt(GICD_BASE + 0x280 + n * 4));
 }
 fn GICD_ISACTIVER(n: c_uint) *u32 {
-    return @intToPtr(*u32, GICD_BASE + 0x300 + n * 4);
+    return @as(*u32, @ptrFromInt(GICD_BASE + 0x300 + n * 4));
 }
 fn GICD_ICACTIVER(n: c_uint) *u32 {
-    return @intToPtr(*u32, GICD_BASE + 0x380 + n * 4);
+    return @as(*u32, @ptrFromInt(GICD_BASE + 0x380 + n * 4));
 }
 fn GICD_IPRIORITYR(n: c_uint) *u32 {
-    return @intToPtr(*u32, GICD_BASE + 0x400 + n * 4);
+    return @as(*u32, @ptrFromInt(GICD_BASE + 0x400 + n * 4));
 }
 fn GICD_ITARGETSR(n: c_uint) *u32 {
-    return @intToPtr(*u32, GICD_BASE + 0x800 + n * 4);
+    return @as(*u32, @ptrFromInt(GICD_BASE + 0x800 + n * 4));
 }
 fn GICD_ICFGR(n: c_uint) *u32 {
-    return @intToPtr(*u32, GICD_BASE + 0xc00 + n * 4);
+    return @as(*u32, @ptrFromInt(GICD_BASE + 0xc00 + n * 4));
 }
 fn GICD_NSCAR(n: c_uint) *u32 {
-    return @intToPtr(*u32, GICD_BASE + 0xe00 + n * 4);
+    return @as(*u32, @ptrFromInt(GICD_BASE + 0xe00 + n * 4));
 }
-const GICD_SGIR = @intToPtr(*u32, GICD_BASE + 0xf00);
+const GICD_SGIR = @as(*u32, @ptrFromInt(GICD_BASE + 0xf00));
 fn GICD_CPENDSGIR(n: c_uint) *u32 {
-    return @intToPtr(*u32, GICD_BASE + 0xf10 + n * 4);
+    return @as(*u32, @ptrFromInt(GICD_BASE + 0xf10 + n * 4));
 }
 fn GICD_SPENDSGIR(n: c_uint) *u32 {
-    return @intToPtr(*u32, GICD_BASE + 0xf20 + n * 4);
+    return @as(*u32, @ptrFromInt(GICD_BASE + 0xf20 + n * 4));
 }
 
 ///
@@ -270,28 +270,28 @@ pub fn gicc_terminate() void {
 ///  割込み禁止（割込みイネーブルのクリア）
 ///
 fn gicd_disable_int(intno: INTNO) void {
-    sil.swrw_mem(GICD_ICENABLER(intno / 32), @as(u32, 1) << @intCast(u5, intno % 32));
+    sil.swrw_mem(GICD_ICENABLER(intno / 32), @as(u32, 1) << @as(u5, @intCast(intno % 32)));
 }
 
 ///
 ///  割込み許可（割込みイネーブルのセット）
 ///
 fn gicd_enable_int(intno: INTNO) void {
-    sil.swrw_mem(GICD_ISENABLER(intno / 32), @as(u32, 1) << @intCast(u5, intno % 32));
+    sil.swrw_mem(GICD_ISENABLER(intno / 32), @as(u32, 1) << @as(u5, @intCast(intno % 32)));
 }
 
 ///
 ///  割込みペンディングのクリア
 ///
 fn gicd_clear_pending(intno: INTNO) void {
-    sil.swrw_mem(GICD_ICPENDR(intno / 32), @as(u32, 1) << @intCast(u5, intno % 32));
+    sil.swrw_mem(GICD_ICPENDR(intno / 32), @as(u32, 1) << @as(u5, @intCast(intno % 32)));
 }
 
 ///
 ///  割込みペンディングのセット
 ///
 fn gicd_set_pending(intno: INTNO) void {
-    sil.swrw_mem(GICD_ISPENDR(intno / 32), @as(u32, 1) << @intCast(u5, intno % 32));
+    sil.swrw_mem(GICD_ISPENDR(intno / 32), @as(u32, 1) << @as(u5, @intCast(intno % 32)));
 }
 
 ///
@@ -299,7 +299,7 @@ fn gicd_set_pending(intno: INTNO) void {
 ///
 fn gicd_probe_pending(intno: INTNO) bool {
     return (sil.rew_mem(GICD_ISPENDR(intno / 32)) &
-        @as(u32, 1) << @intCast(u5, intno % 32)) != 0;
+        @as(u32, 1) << @as(u5, @intCast(intno % 32))) != 0;
 }
 
 ///
@@ -316,8 +316,8 @@ pub fn gicd_config(intno: INTNO, conf: u32) void {
     if (intno >= GIC_INTNO_PPI0) {
         var reg = sil.rew_mem(GICD_ICFGR(intno / 16));
         var shift: c_uint = (intno % 16) * 2;
-        reg &= ~(@as(u32, 0x03) << @intCast(u5, shift));
-        reg |= (conf << @intCast(u5, shift));
+        reg &= ~(@as(u32, 0x03) << @as(u5, @intCast(shift)));
+        reg |= (conf << @as(u5, @intCast(shift)));
         sil.wrw_mem(GICD_ICFGR(intno / 16), reg);
     }
 }
@@ -328,8 +328,8 @@ pub fn gicd_config(intno: INTNO, conf: u32) void {
 pub fn gicd_set_priority(intno: INTNO, pri: u32) void {
     var reg = sil.rew_mem(GICD_IPRIORITYR(intno / 4));
     var shift: c_uint = (intno % 4) * 8;
-    reg &= ~(@as(u32, 0xff) << @intCast(u5, shift));
-    reg |= (pri << @intCast(u5, @intCast(u5, shift)));
+    reg &= ~(@as(u32, 0xff) << @as(u5, @intCast(shift)));
+    reg |= (pri << @as(u5, @intCast(@as(u5, @intCast(shift)))));
     sil.wrw_mem(GICD_IPRIORITYR(intno / 4), reg);
 }
 
@@ -346,8 +346,8 @@ pub fn gicd_set_priority(intno: INTNO, pri: u32) void {
 pub fn gicd_set_target(intno: INTNO, affinity: u32) void {
     var reg = sil.rew_mem(GICD_ITARGETSR(intno / 4));
     var shift: c_uint = (intno % 4) * 8;
-    reg &= ~(@as(u32, 0xff) << @intCast(u5, shift));
-    reg |= (affinity << @intCast(u5, shift));
+    reg &= ~(@as(u32, 0xff) << @as(u5, @intCast(shift)));
+    reg |= (affinity << @as(u5, @intCast(shift)));
     sil.wrw_mem(GICD_ITARGETSR(intno / 4), reg);
 }
 
@@ -559,7 +559,7 @@ fn config_int(intno: INTNO, intatr: ATR, intpri: PRI) void {
 
     // 割込み優先度とターゲットプロセッサを設定
     gicd_set_priority(intno, internalIpm(intpri));
-    gicd_set_target(intno, @as(u32, 1) << @intCast(u5, arm.get_my_prcidx()));
+    gicd_set_target(intno, @as(u32, 1) << @as(u5, @intCast(arm.get_my_prcidx())));
 
     // 割込みを許可
     if ((intatr & TA_ENAINT) != 0) {
@@ -592,7 +592,7 @@ pub fn irc_begin_int() callconv(.Naked) void {
         asm volatile (
             \\  ldr r0, [r1, %[offset_hppir]]
             :
-            : [offset_hppir] "i" (@ptrToInt(GICC_HPPIR) - GICC_BASE),
+            : [offset_hppir] "i" (@intFromPtr(GICC_HPPIR) - GICC_BASE),
         );
     }
     asm volatile (
@@ -600,7 +600,7 @@ pub fn irc_begin_int() callconv(.Naked) void {
         \\  lsl r4, r3, #22            // 下位10ビットを取り出す
         \\  lsr r4, r4, #22
         :
-        : [offset_iar] "i" (@ptrToInt(GICC_IAR) - GICC_BASE),
+        : [offset_iar] "i" (@intFromPtr(GICC_IAR) - GICC_BASE),
     );
     if (GIC_PL390_ERRATA) { // GIC 390 Errata 801120への対策
         asm volatile (
@@ -623,8 +623,8 @@ pub fn irc_begin_int() callconv(.Naked) void {
                 arm.asm_data_sync_barrier("r0") ++ "\n" ++
                 \\ .Lirc_begin_int_errata_2:
             :
-            : [offset_isactiver0] "i" (@ptrToInt(GICD_ISACTIVER(0)) - GICD_BASE),
-              [offset_ipriorityr0] "i" (@ptrToInt(GICD_IPRIORITYR(0)) - GICD_BASE),
+            : [offset_isactiver0] "i" (@intFromPtr(GICD_ISACTIVER(0)) - GICD_BASE),
+              [offset_ipriorityr0] "i" (@intFromPtr(GICD_IPRIORITYR(0)) - GICD_BASE),
         );
     }
     asm volatile (
@@ -642,9 +642,9 @@ pub fn irc_begin_int() callconv(.Naked) void {
             \\ // r4に割込み番号を入れた状態でリターンする．
             \\  bx lr
         :
-        : [offset_pmr] "i" (@ptrToInt(GICC_PMR) - GICC_BASE),
-          [offset_eoir] "i" (@ptrToInt(GICC_EOIR) - GICC_BASE),
-          [offset_rpr] "i" (@ptrToInt(GICC_RPR) - GICC_BASE),
+        : [offset_pmr] "i" (@intFromPtr(GICC_PMR) - GICC_BASE),
+          [offset_eoir] "i" (@intFromPtr(GICC_EOIR) - GICC_BASE),
+          [offset_rpr] "i" (@intFromPtr(GICC_RPR) - GICC_BASE),
     );
     unreachable;
 }
@@ -659,7 +659,7 @@ pub fn irc_end_int() callconv(.Naked) void {
         \\  str r2, [r1]           // 割込み優先度マスク（GICC_PMR）を元に戻す
         \\  bx lr
         :
-        : [gicc_pmr] "{r1}" (@ptrToInt(GICC_PMR)),
+        : [gicc_pmr] "{r1}" (@intFromPtr(GICC_PMR)),
     );
     unreachable;
 }
@@ -680,7 +680,7 @@ pub fn irc_get_intpri() callconv(.Naked) void {
         :
         : [gic_pri_shift] "n" (@as(u32, GIC_PRI_SHIFT)),
           [gic_pri_mask] "n" (@as(u32, GIC_PRI_MASK)),
-          [gicc_pmr] "{r1}" (@ptrToInt(GICC_PMR)),
+          [gicc_pmr] "{r1}" (@intFromPtr(GICC_PMR)),
     );
     unreachable;
 }
@@ -699,7 +699,7 @@ pub fn irc_begin_exc() callconv(.Naked) void {
         \\  str r2, [sp]           // irc_end_excで用いる情報を保存
         \\  bx lr
         :
-        : [gicc_pmr] "{r1}" (@ptrToInt(GICC_PMR)),
+        : [gicc_pmr] "{r1}" (@intFromPtr(GICC_PMR)),
     );
     unreachable;
 }
@@ -714,7 +714,7 @@ pub fn irc_end_exc() callconv(.Naked) void {
         \\  str r2, [r1]           // 割込み優先度マスク（GICC_PMR）を元に戻す
         \\  bx lr
         :
-        : [gicc_pmr] "{r1}" (@ptrToInt(GICC_PMR)),
+        : [gicc_pmr] "{r1}" (@intFromPtr(GICC_PMR)),
     );
     unreachable;
 }

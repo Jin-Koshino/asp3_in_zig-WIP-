@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
 ///                                 Toyohashi Univ. of Technology, JAPAN
 ///  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
@@ -113,7 +113,7 @@ const DTQMB = struct {
 ///  （WOBJINIB）を拡張（オブジェクト指向言語の継承に相当）したもので，
 ///  最初のフィールドが共通になっている．
 ///
-pub const DTQINIB = struct {
+pub const DTQINIB = extern struct {
     wobjatr: ATR, // データキュー属性
     dtqcnt: c_uint, // データキューの容量
     p_dtqmb: ?[*]DTQMB, // データキュー管理領域
@@ -131,7 +131,7 @@ comptime {
 ///  （WOBJCB）を拡張（オブジェクト指向言語の継承に相当）したもので，
 ///  最初の2つのフィールドが共通になっている．
 ///
-const DTQCB = struct {
+const DTQCB = extern struct {
     swait_queue: queue.Queue, // データキュー送信待ちキュー
     p_wobjinib: *const DTQINIB, // 初期化ブロックへのポインタ
     rwait_queue: queue.Queue, // データキュー受信待ちキュー
@@ -152,13 +152,13 @@ comptime {
 ///  （WINFO_WOBJ）を拡張（オブジェクト指向言語の継承に相当）したもの
 ///  で，最初の2つのフィールドが共通になっている．
 ///
-const WINFO_SDTQ = struct {
+const WINFO_SDTQ = extern struct {
     winfo: WINFO, // 標準の待ち情報ブロック
     p_wobjcb: *DTQCB, // 待っているデータキューの管理ブロック
     data: usize, // 送信データ
 };
 
-const WINFO_RDTQ = struct {
+const WINFO_RDTQ = extern struct {
     winfo: WINFO, // 標準の待ち情報ブロック
     p_wobjcb: *DTQCB, // 待っているデータキューの管理ブロック
     data: usize, // 受信データ
@@ -175,9 +175,14 @@ comptime {
 ///
 pub const ExternDtqCfg = struct {
     ///
+    ///  データキューIDの最大値
+    ///
+    pub extern const _kernel_tmax_dtqid: ID;
+
+    ///
     ///  データキュー初期化ブロック（スライス）
     ///
-    pub extern const _kernel_dtqinib_table: []DTQINIB;
+    pub extern const _kernel_dtqinib_table: [100]DTQINIB;
 
     ///
     ///  データキュー管理ブロックのエリア
@@ -190,14 +195,21 @@ pub const ExternDtqCfg = struct {
 ///  データキューIDの最大値
 ///
 fn maxDtqId() ID {
-    return @intCast(ID, TMIN_DTQID + cfg._kernel_dtqinib_table.len - 1);
+    return @intCast(TMIN_DTQID + cfg._kernel_dtqinib_table.len - 1);
+}
+
+///
+///  データキューの数
+///
+fn numOfDtq() usize {
+    return @intCast(cfg._kernel_tmax_dtqid - TMIN_DTQID + 1);
 }
 
 ///
 ///  データキューIDからデータキュー管理ブロックを取り出すための関数
 ///
 fn indexDtq(dtqid: ID) usize {
-    return @intCast(usize, dtqid - TMIN_DTQID);
+    return @intCast(dtqid - TMIN_DTQID);
 }
 fn checkAndGetDtqCB(dtqid: ID) ItronError!*DTQCB {
     try checkId(TMIN_DTQID <= dtqid and dtqid <= maxDtqId());
@@ -208,7 +220,7 @@ fn checkAndGetDtqCB(dtqid: ID) ItronError!*DTQCB {
 ///  データキュー管理ブロックからデータキューIDを取り出すための関数
 ///
 pub fn getDtqIdFromDtqCB(p_dtqcb: *DTQCB) ID {
-    return @intCast(ID, (@ptrToInt(p_dtqcb) - @ptrToInt(&cfg._kernel_dtqcb_table)) / @sizeOf(DTQCB)) + TMIN_DTQID;
+    return @as(ID, @intCast((@intFromPtr(p_dtqcb) - @intFromPtr(&cfg._kernel_dtqcb_table)) / @sizeOf(DTQCB))) + TMIN_DTQID;
 }
 
 ///
@@ -235,7 +247,7 @@ pub fn getDtqIdFromWinfoRDtq(p_winfo: *WINFO) ID {
 ///  データキュー機能の初期化
 ///
 pub fn initialize_dataqueue() void {
-    for (cfg._kernel_dtqcb_table[0..cfg._kernel_dtqinib_table.len]) |*p_dtqcb, i| {
+    for (cfg._kernel_dtqcb_table[0..cfg._kernel_dtqinib_table.len], 0..) |*p_dtqcb, i| {
         p_dtqcb.swait_queue.initialize();
         p_dtqcb.p_wobjinib = &cfg._kernel_dtqinib_table[i];
         p_dtqcb.rwait_queue.initialize();
@@ -360,7 +372,7 @@ pub fn snd_dtq(dtqid: ID, data: usize) ItronError!void {
             wobj_make_wait(p_dtqcb, TS_WAITING_SDTQ, &winfo_sdtq);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_sdtq.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
         }
     }
@@ -414,7 +426,7 @@ pub fn tsnd_dtq(dtqid: ID, data: usize, tmout: TMO) ItronError!void {
             wobj_make_wait_tmout(p_dtqcb, TS_WAITING_SDTQ, &winfo_sdtq, &tmevtb, tmout);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_sdtq.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
         }
     }
@@ -461,7 +473,7 @@ pub fn rcv_dtq(dtqid: ID, p_data: *usize) ItronError!void {
             wobj_make_rwait(p_dtqcb, TS_WAITING_RDTQ, &winfo_rdtq);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_rdtq.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
             p_data.* = winfo_rdtq.data;
         }
@@ -515,7 +527,7 @@ pub fn trcv_dtq(dtqid: ID, p_data: *usize, tmout: TMO) ItronError!void {
             wobj_make_rwait_tmout(p_dtqcb, TS_WAITING_RDTQ, &winfo_rdtq, &tmevtb, tmout);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_rdtq.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
             p_data.* = winfo_rdtq.data;
         }
@@ -592,11 +604,12 @@ pub fn cre_dtq(comptime cdtq: T_CDTQ) ItronError!DTQINIB {
 ///  データキューに関するコンフィギュレーションデータの生成（静的APIの
 ///  処理）
 ///
-pub fn ExportDtqCfg(dtqinib_table: []DTQINIB) type {
+pub fn ExportDtqCfg(comptime dtqinib_table: []DTQINIB) type {
     const tnum_dtq = dtqinib_table.len;
-    defer _ = tnum_dtq;
+
     return struct {
-        pub export const _kernel_dtqinib_table = dtqinib_table;
+        pub export const _kernel_dtqinib_table: ?*DTQINIB = if (tnum_dtq == 0) null else &dtqinib_table[0];
+        pub export const _kernel_tnum_dtq = tnum_dtq;
 
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする

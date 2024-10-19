@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
 ///                                 Toyohashi Univ. of Technology, JAPAN
 ///  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
@@ -185,14 +185,14 @@ fn inhnoToIntno(inhno: INHNO) ?INTNO {
     if (@hasDecl(target_impl, "inhnoToIntno")) {
         return target_impl.inhnoToIntno(inhno);
     } else {
-        return @intCast(INTNO, inhno);
+        return @intCast(inhno);
     }
 }
 pub fn intnoToInhno(intno: INTNO) INHNO {
     if (@hasDecl(target_impl, "intnoToInhno")) {
         return target_impl.intnoToInhno(intno);
     } else {
-        return @intCast(INHNO, intno);
+        return @intCast(intno);
     }
 }
 
@@ -274,10 +274,10 @@ pub fn initialize_interrupt() void {
 ///  割込みの禁止［NGKI3555］
 ///
 pub fn dis_int(intno: INTNO) ItronError!void {
-    traceLog("disIntEnter", .{ intno });
-    errdefer |err| traceLog("disIntLeave", .{ err });
-    comptime try checkNotSupported(TOPPERS_SUPPORT_DIS_INT);    //［NGKI3093］
-    try checkParameter(validIntnoDisInt(intno));    //［NGKI3083］［NGKI3087］
+    traceLog("disIntEnter", .{intno});
+    errdefer |err| traceLog("disIntLeave", .{err});
+    comptime try checkNotSupported(TOPPERS_SUPPORT_DIS_INT); //［NGKI3093］
+    try checkParameter(validIntnoDisInt(intno)); //［NGKI3083］［NGKI3087］
     {
         var locked = target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock();
         if (!locked) {
@@ -497,7 +497,7 @@ pub fn cfg_int(intno: INTNO, cint: T_CINT) ItronError!INTINIB {
 ///
 ///  割込み要求ライン初期化ブロックの生成（静的APIの処理）
 ///
-pub fn ExportIntIniB(intinib_table: []INTINIB) type {
+pub fn ExportIntIniB(comptime intinib_table: []INTINIB) type {
     return struct {
         export const _kernel_intinib_table = intinib_table;
     };
@@ -543,7 +543,7 @@ pub fn def_inh(inhno: INHNO, dinh: T_DINH, comptime cfg_data: *static_api.CfgDat
 ///
 ///  割込みハンドラ初期化ブロックの生成（静的APIの処理）
 ///
-pub fn ExportInhIniB(inhinib_table: []INHINIB) type {
+pub fn ExportInhIniB(comptime inhinib_table: []INHINIB) type {
     // チェック処理用の定義の生成
     exportCheck(@sizeOf(INHINIB), "sizeof_INHINIB");
     exportCheck(@sizeOf(INHNO), "sizeof_INHNO");
@@ -610,7 +610,7 @@ const c_api = struct {
 fn GenInterruptHandler(comptime isrcfg_table: []ISRCFG) type {
     return struct {
         pub fn handler() callconv(.C) void {
-            inline for (isrcfg_table) |isrcfg, i| {
+            inline for (isrcfg_table, 0..) |isrcfg, i| {
                 if (i > 0) {
                     if (c_api.sns_loc() != 0) {
                         _ = c_api.unl_cpu();
@@ -661,7 +661,7 @@ pub fn generateInhForIsr(isrcfg_table: []ISRCFG, comptime cfg_data: *static_api.
         }
 
         // ISR優先度順にソート
-        std.sort.sort(ISRCFG, &isrcfg_table_intno, {}, isrcfgLessThan);
+        std.sort.insertion(ISRCFG, &isrcfg_table_intno, {}, isrcfgLessThan);
 
         // ISRを呼び出す割込みハンドラの生成
         cfg_data.addInh(INHINIB{

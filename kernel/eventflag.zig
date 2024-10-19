@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
 ///                                 Toyohashi Univ. of Technology, JAPAN
 ///  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
@@ -108,7 +108,7 @@ const option = kernel_impl.option;
 ///  （WOBJINIB）を拡張（オブジェクト指向言語の継承に相当）したもので，
 ///  最初のフィールドが共通になっている．
 ///
-pub const FLGINIB = struct {
+pub const FLGINIB = extern struct {
     wobjatr: ATR, // イベントフラグ属性
     iflgptn: FLGPTN, // イベントフラグのビットパターンの初期値
 };
@@ -125,7 +125,7 @@ comptime {
 ///  （WOBJCB）を拡張（オブジェクト指向言語の継承に相当）したもので，
 ///  最初の2つのフィールドが共通になっている．
 ///
-const FLGCB = struct {
+const FLGCB = extern struct {
     wait_queue: queue.Queue, // イベントフラグ待ちキュー
     p_wobjinib: *const FLGINIB, // 初期化ブロックへのポインタ
     flgptn: FLGPTN, // イベントフラグ現在パターン
@@ -147,7 +147,7 @@ comptime {
 ///  解除時のパターンを入れる（1つのフィールドを2つの目的に兼用してい
 ///  る）．
 ///
-const WINFO_FLG = struct {
+const WINFO_FLG = extern struct {
     winfo: WINFO, // 標準の待ち情報ブロック
     p_wobjcb: *FLGCB, // 待っているイベントフラグの管理ブロック
     waiptn: FLGPTN, // 待ちパターン／待ち解除時のパターン
@@ -164,9 +164,14 @@ comptime {
 ///
 pub const ExternFlgCfg = struct {
     ///
+    ///  イベントフラグIDの最大値
+    ///
+    pub extern const _kernel_tmax_flgid: ID;
+
+    ///
     ///  イベントフラグ初期化ブロック（スライス）
     ///
-    pub extern const _kernel_flginib_table: []FLGINIB;
+    pub extern const _kernel_flginib_table: [100]FLGINIB;
 
     ///
     ///  イベントフラグ管理ブロックのエリア
@@ -179,14 +184,21 @@ pub const ExternFlgCfg = struct {
 ///  イベントフラグIDの最大値
 ///
 fn maxFlgId() ID {
-    return @intCast(ID, TMIN_FLGID + cfg._kernel_flginib_table.len - 1);
+    return @intCast(TMIN_FLGID + cfg._kernel_flginib_table.len - 1);
+}
+
+///
+///  イベントフラグの数
+///
+fn numOfFlg() usize {
+    return @intCast(cfg._kernel_tmax_flgid - TMIN_FLGID + 1);
 }
 
 ///
 ///  イベントフラグIDからイベントフラグ管理ブロックを取り出すための関数
 ///
 fn indexFlg(flgid: ID) usize {
-    return @intCast(usize, flgid - TMIN_FLGID);
+    return @intCast(flgid - TMIN_FLGID);
 }
 fn checkAndGetFlgCB(flgid: ID) ItronError!*FLGCB {
     try checkId(TMIN_FLGID <= flgid and flgid <= maxFlgId());
@@ -197,7 +209,7 @@ fn checkAndGetFlgCB(flgid: ID) ItronError!*FLGCB {
 ///  イベントフラグ管理ブロックからイベントフラグIDを取り出すための関数
 ///
 fn getFlgIdFromFlgCB(p_flgcb: *FLGCB) ID {
-    return @intCast(ID, (@ptrToInt(p_flgcb) - @ptrToInt(&cfg._kernel_flgcb_table)) / @sizeOf(FLGCB)) + TMIN_FLGID;
+    return @as(ID, @intCast((@intFromPtr(p_flgcb) - @intFromPtr(&cfg._kernel_flgcb_table)) / @sizeOf(FLGCB))) + TMIN_FLGID;
 }
 
 ///
@@ -218,7 +230,7 @@ pub fn getFlgIdFromWinfo(p_winfo: *WINFO) ID {
 ///  イベントフラグ機能の初期化
 ///
 pub fn initialize_eventflag() void {
-    for (cfg._kernel_flgcb_table[0..cfg._kernel_flginib_table.len]) |*p_flgcb, i| {
+    for (cfg._kernel_flgcb_table[0..cfg._kernel_flginib_table.len], 0..) |*p_flgcb, i| {
         p_flgcb.wait_queue.initialize();
         p_flgcb.p_wobjinib = &cfg._kernel_flginib_table[i];
         p_flgcb.flgptn = p_flgcb.p_wobjinib.iflgptn;
@@ -312,7 +324,7 @@ pub fn wai_flg(flgid: ID, waiptn: FLGPTN, wfmode: MODE, p_flgptn: *FLGPTN) Itron
             wobj_make_wait(p_flgcb, TS_WAITING_FLG, &winfo_flg);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_flg.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
             p_flgptn.* = winfo_flg.waiptn;
         }
@@ -372,7 +384,7 @@ pub fn twai_flg(flgid: ID, waiptn: FLGPTN, wfmode: MODE, p_flgptn: *FLGPTN, tmou
             wobj_make_wait_tmout(p_flgcb, TS_WAITING_FLG, &winfo_flg, &tmevtb, tmout);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_flg.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
             p_flgptn.* = winfo_flg.waiptn;
         }
@@ -436,11 +448,12 @@ pub fn cre_flg(cflg: T_CFLG) ItronError!FLGINIB {
 ///  イベントフラグに関するコンフィギュレーションデータの生成（静的API
 ///  の処理）
 ///
-pub fn ExportFlgCfg(flginib_table: []FLGINIB) type {
+pub fn ExportFlgCfg(comptime flginib_table: []FLGINIB) type {
     const tnum_flg = flginib_table.len;
-    defer _ = tnum_flg;
+
     return struct {
-        pub export const _kernel_flginib_table = flginib_table;
+        pub export const _kernel_flginib_table: ?*FLGINIB = if (tnum_flg == 0) null else &flginib_table[0];
+        pub export const _kernel_tnum_flg = tnum_flg;
 
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする

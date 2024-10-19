@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
 ///                                 Toyohashi Univ. of Technology, JAPAN
 ///  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
@@ -178,7 +178,7 @@ pub fn slp_tsk() ItronError!void {
             traceLog("taskStateChange", .{p_selftsk});
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
         }
     }
@@ -187,7 +187,7 @@ pub fn slp_tsk() ItronError!void {
 
 ///
 ///  起床待ち（タイムアウトあり）［NGKI1253］
-/// 
+///
 pub fn tslp_tsk(tmout: TMO) ItronError!void {
     var winfo: WINFO = undefined;
     var tmevtb: TMEVTB = undefined;
@@ -212,7 +212,7 @@ pub fn tslp_tsk(tmout: TMO) ItronError!void {
             traceLog("taskStateChange", .{p_selftsk});
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
         }
     }
@@ -300,7 +300,7 @@ pub fn rel_wai(tskid: ID) ItronError!void {
         } else {
             wait_dequeue_wobj(p_tcb); //［NGKI1296］
             wait_dequeue_tmevtb(p_tcb); //［NGKI1297］
-            p_tcb.p_winfo.* = WINFO{ .werror = ItronError.ReleasedFromWaiting };
+            p_tcb.p_winfo.* = WINFO{ .werror = @constCast(&ItronError.ReleasedFromWaiting) };
             make_non_wait(p_tcb);
             requestTaskDispatch();
         }
@@ -405,12 +405,12 @@ pub fn dly_tsk(dlytim: RELTIM) ItronError!void {
             p_selftsk.p_winfo = &winfo;
             winfo.p_tmevtb = &tmevtb;
             tmevtb.callback = wait_tmout_ok;
-            tmevtb.arg = @ptrToInt(task.p_runtsk);
+            tmevtb.arg = @intFromPtr(task.p_runtsk);
             tmevtb_enqueue_reltim(&tmevtb, dlytim);
             traceLog("taskStateChange", .{p_selftsk});
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
         }
     }

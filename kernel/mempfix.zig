@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
 ///                                 Toyohashi Univ. of Technology, JAPAN
 ///  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
@@ -137,7 +137,7 @@ const INDEX_ALLOC = ~@as(c_uint, 1); // 割当て済みのブロック
 ///  （WOBJINIB）を拡張（オブジェクト指向言語の継承に相当）したもので，
 ///  最初のフィールドが共通になっている．
 ///
-pub const MPFINIB = struct {
+pub const MPFINIB = extern struct {
     wobjatr: ATR, // 固定長メモリプール属性
     blkcnt: c_uint, // メモリブロック数
     blksz: c_uint, // メモリブロックのサイズ（丸めた値）
@@ -157,7 +157,7 @@ comptime {
 ///  （WOBJCB）を拡張（オブジェクト指向言語の継承に相当）したもので，
 ///  最初の2つのフィールドが共通になっている．
 ///
-const MPFCB = struct {
+const MPFCB = extern struct {
     wait_queue: queue.Queue, // 固定長メモリプール待ちキュー
     p_wobjinib: *const MPFINIB, // 初期化ブロックへのポインタ
     fblkcnt: c_uint, // 未割当てブロック数
@@ -177,7 +177,7 @@ comptime {
 ///  （WINFO_WOBJ）を拡張（オブジェクト指向言語の継承に相当）したもの
 ///  で，最初の2つのフィールドが共通になっている．
 ///
-const WINFO_MPF = struct {
+const WINFO_MPF = extern struct {
     winfo: WINFO, // 標準の待ち情報ブロック
     p_wobjcb: *MPFCB, // 待っている固定長メモリプールの管理ブロック
     blk: [*]u8, // 獲得したメモリブロック
@@ -193,9 +193,14 @@ comptime {
 ///
 pub const ExternMpfCfg = struct {
     ///
+    ///  固定長メモリプールIDの最大値
+    ///
+    pub extern const _kernel_tmax_mpfid: ID;
+
+    ///
     ///  固定長メモリプール初期化ブロック（スライス）
     ///
-    pub extern const _kernel_mpfinib_table: []MPFINIB;
+    pub extern const _kernel_mpfinib_table: [100]MPFINIB;
 
     ///
     ///  固定長メモリプール管理ブロックのエリア
@@ -208,14 +213,21 @@ pub const ExternMpfCfg = struct {
 ///  固定長メモリプールIDの最大値
 ///
 fn maxMpfId() ID {
-    return @intCast(ID, TMIN_MPFID + cfg._kernel_mpfinib_table.len - 1);
+    return @intCast(TMIN_MPFID + cfg._kernel_mpfinib_table.len - 1);
+}
+
+///
+///  固定長メモリプールの数
+///
+fn numOfMpf() usize {
+    return @intCast(cfg._kernel_tmax_mpfid - TMIN_MPFID + 1);
 }
 
 ///
 ///  固定長メモリプールIDから固定長メモリプール管理ブロックを取り出すための関数
 ///
 fn indexMpf(mpfid: ID) usize {
-    return @intCast(usize, mpfid - TMIN_MPFID);
+    return @intCast(mpfid - TMIN_MPFID);
 }
 fn checkAndGetMpfCB(mpfid: ID) ItronError!*MPFCB {
     try checkId(TMIN_MPFID <= mpfid and mpfid <= maxMpfId());
@@ -226,7 +238,7 @@ fn checkAndGetMpfCB(mpfid: ID) ItronError!*MPFCB {
 ///  固定長メモリプール管理ブロックから固定長メモリプールIDを取り出すための関数
 ///
 fn getMpfIdFromMpfCB(p_mpfcb: *MPFCB) ID {
-    return @intCast(ID, (@ptrToInt(p_mpfcb) - @ptrToInt(&cfg._kernel_mpfcb_table)) / @sizeOf(MPFCB)) + TMIN_MPFID;
+    return @as(ID, @intCast((@intFromPtr(p_mpfcb) - @intFromPtr(&cfg._kernel_mpfcb_table)) / @sizeOf(MPFCB))) + TMIN_MPFID;
 }
 
 ///
@@ -247,7 +259,7 @@ pub fn getMpfIdFromWinfo(p_winfo: *WINFO) ID {
 ///  固定長メモリプール機能の初期化
 ///
 pub fn initialize_mempfix() void {
-    for (cfg._kernel_mpfcb_table[0..cfg._kernel_mpfinib_table.len]) |*p_mpfcb, i| {
+    for (cfg._kernel_mpfcb_table[0..cfg._kernel_mpfinib_table.len], 0..) |*p_mpfcb, i| {
         p_mpfcb.wait_queue.initialize();
         p_mpfcb.p_wobjinib = &cfg._kernel_mpfinib_table[i];
         p_mpfcb.fblkcnt = p_mpfcb.p_wobjinib.blkcnt;
@@ -289,13 +301,13 @@ pub fn get_mpf(mpfid: ID, p_blk: **u8) ItronError!void {
         if (task.p_runtsk.?.flags.raster) {
             return ItronError.TerminationRequestRaised;
         } else if (p_mpfcb.fblkcnt > 0) {
-            getMpfBlock(p_mpfcb, @ptrCast(*[*]u8, p_blk));
+            getMpfBlock(p_mpfcb, @as(*[*]u8, @ptrCast(p_blk)));
         } else {
             var winfo_mpf: WINFO_MPF = undefined;
             wobj_make_wait(p_mpfcb, TS_WAITING_MPF, &winfo_mpf);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_mpf.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
         }
     }
@@ -315,7 +327,7 @@ pub fn pget_mpf(mpfid: ID, p_blk: **u8) ItronError!void {
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (p_mpfcb.fblkcnt > 0) {
-            getMpfBlock(p_mpfcb, @ptrCast(*[*]u8, p_blk));
+            getMpfBlock(p_mpfcb, @as(*[*]u8, @ptrCast(p_blk)));
         } else {
             return ItronError.TimeoutError;
         }
@@ -339,7 +351,7 @@ pub fn tget_mpf(mpfid: ID, p_blk: **u8, tmout: TMO) ItronError!void {
         if (task.p_runtsk.?.flags.raster) {
             return ItronError.TerminationRequestRaised;
         } else if (p_mpfcb.fblkcnt > 0) {
-            getMpfBlock(p_mpfcb, @ptrCast(*[*]u8, p_blk));
+            getMpfBlock(p_mpfcb, @as(*[*]u8, @ptrCast(p_blk)));
         } else if (tmout == TMO_POL) {
             return ItronError.TimeoutError;
         } else {
@@ -348,7 +360,7 @@ pub fn tget_mpf(mpfid: ID, p_blk: **u8, tmout: TMO) ItronError!void {
             wobj_make_wait_tmout(p_mpfcb, TS_WAITING_MPF, &winfo_mpf, &tmevtb, tmout);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_mpf.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
         }
     }
@@ -363,11 +375,11 @@ pub fn rel_mpf(mpfid: ID, blk: *u8) ItronError!void {
     errdefer |err| traceLog("relMpfLeave", .{err});
     try checkContextTaskUnlock();
     const p_mpfcb = try checkAndGetMpfCB(mpfid);
-    try checkParameter(@ptrToInt(p_mpfcb.p_wobjinib.mpf) <= @ptrToInt(blk));
-    var blkoffset = @ptrToInt(blk) - @ptrToInt(p_mpfcb.p_wobjinib.mpf);
+    try checkParameter(@intFromPtr(p_mpfcb.p_wobjinib.mpf) <= @intFromPtr(blk));
+    var blkoffset = @intFromPtr(blk) - @intFromPtr(p_mpfcb.p_wobjinib.mpf);
     try checkParameter(blkoffset % p_mpfcb.p_wobjinib.blksz == 0);
     try checkParameter(blkoffset / p_mpfcb.p_wobjinib.blksz < p_mpfcb.unused);
-    var blkidx = @intCast(c_uint, blkoffset / p_mpfcb.p_wobjinib.blksz);
+    var blkidx = @as(c_uint, @intCast(blkoffset / p_mpfcb.p_wobjinib.blksz));
     try checkParameter(p_mpfcb.p_wobjinib.p_mpfmb[blkidx].next == INDEX_ALLOC);
     {
         target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
@@ -468,15 +480,16 @@ pub fn cre_mpf(comptime cmpf: T_CMPF) ItronError!MPFINIB {
 ///  固定長メモリプールに関するコンフィギュレーションデータの取り込み
 ///  （静的APIの処理）
 ///
-pub fn ExportMpfCfg(mpfinib_table: []MPFINIB) type {
+pub fn ExportMpfCfg(comptime mpfinib_table: []MPFINIB) type {
     // チェック処理用の定義の生成
     exportCheck(@sizeOf(MPFINIB), "sizeof_MPFINIB");
     exportCheck(@offsetOf(MPFINIB, "mpf"), "offsetof_MPFINIB_mpf");
 
     const tnum_mpf = mpfinib_table.len;
     return struct {
-        pub export const _kernel_mpfinib_table = mpfinib_table;
-
+        pub export const _kernel_mpfinib_table: ?*MPFINIB = if (tnum_mpf == 0) null else &mpfinib_table[0];
+        pub export const _kernel_tnum_mpf = tnum_mpf;
+        
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする
         pub export var _kernel_mpfcb_table: [

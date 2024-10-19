@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2020 by Embedded and Real-Time Systems Laboratory
 ///                 Graduate School of Informatics, Nagoya Univ., JAPAN
 ///
@@ -350,9 +350,9 @@ pub const CfgData = struct {
     fn addItem(comptime T: type, comptime p_list: *LIST(T)) *T {
         comptime var item: T = undefined;
         item.p_next = null;
-        if (p_list.tail) |tail| {
-            tail.p_next = &item;
-        } else {
+        if (p_list.tail) |tail| {   //p_list.tailがnullでない場合
+            tail.p_next = &item;    //p_listの最後尾にitemを追加
+        } else {    //p_list.tailがnull(p_listが空)の場合
             p_list.head = &item;
         }
         p_list.tail = &item;
@@ -408,7 +408,7 @@ pub const CfgData = struct {
         comptime var i: usize = 0;
         comptime var p_item = self.tsk_list.head;
         inline while (p_item) |item| : (p_item = item.p_next) {
-            torder_table[i] = @intCast(ID, i + 1);
+            torder_table[i] = @as(ID, @intCast(i + 1));
             i += 1;
         }
         return &torder_table;
@@ -604,7 +604,7 @@ pub const CfgData = struct {
         comptime var p_isr = addItem(T_ISR, &p_self.isr_list);
         p_isr.name = isr_name;
         p_isr.cfg.cisr = comptime interrupt.cre_isr(cisr, p_self) catch |err| reportError("CRE_ISR", err);
-        p_isr.cfg.isrid = comptime @intCast(ID, p_self.isr_list.length);
+        p_isr.cfg.isrid = comptime @as(ID, @intCast(p_self.isr_list.length));
         p_isr.cfg.genflag = false;
     }
 
@@ -789,13 +789,13 @@ pub fn GenCfgData(comptime cfg_data: *CfgData) type {
     exportCheck(0x12345678, "TOPPERS_magic_number");
     exportCheck(decl(u32, target_impl, "CHECK_USIZE_ALIGN", 1), "CHECK_USIZE_ALIGN");
     exportCheck(decl(u32, target_impl, "CHECK_USIZE_ALIGN", 1), "CHECK_USIZE_ALIGN");
-    exportCheck(@boolToInt(isTrue(target_impl, "CHECK_USIZE_NONNULL")), "CHECK_USIZE_NONNULL");
+    exportCheck(@intFromBool(isTrue(target_impl, "CHECK_USIZE_NONNULL")), "CHECK_USIZE_NONNULL");
     exportCheck(decl(u32, target_impl, "CHECK_FUNC_ALIGN", 1), "CHECK_FUNC_ALIGN");
-    exportCheck(@boolToInt(isTrue(target_impl, "CHECK_FUNC_NONNULL")), "CHECK_FUNC_NONNULL");
+    exportCheck(@intFromBool(isTrue(target_impl, "CHECK_FUNC_NONNULL")), "CHECK_FUNC_NONNULL");
     exportCheck(decl(u32, target_impl, "CHECK_STACK_ALIGN", 1), "CHECK_STACK_ALIGN");
-    exportCheck(@boolToInt(isTrue(target_impl, "CHECK_STACK_NONNULL")), "CHECK_STACK_NONNULL");
+    exportCheck(@intFromBool(isTrue(target_impl, "CHECK_STACK_NONNULL")), "CHECK_STACK_NONNULL");
     exportCheck(decl(u32, target_impl, "CHECK_MPF_ALIGN", 1), "CHECK_MPF_ALIGN");
-    exportCheck(@boolToInt(isTrue(target_impl, "CHECK_MPF_NONNULL")), "CHECK_MPF_NONNULL");
+    exportCheck(@intFromBool(isTrue(target_impl, "CHECK_MPF_NONNULL")), "CHECK_MPF_NONNULL");
 
     exportCheck(@sizeOf(usize), "sizeof_usize");
     exportCheck(@sizeOf(c_uint), "sizeof_UINT");

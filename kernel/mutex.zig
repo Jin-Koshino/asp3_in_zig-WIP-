@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
 ///                 Graduate School of Informatics, Nagoya Univ., JAPAN
 ///
@@ -132,7 +132,7 @@ const validTCB = task.validTCB;
 ///  （WOBJINIB）を拡張（オブジェクト指向言語の継承に相当）したもので，
 ///  最初のフィールドが共通になっている．
 ///
-pub const MTXINIB = struct {
+pub const MTXINIB = extern struct {
     wobjatr: ATR, // ミューテックス属性
     ceilpri: c_uint, // ミューテックスの上限優先度（内部表現）
 };
@@ -149,7 +149,7 @@ comptime {
 ///  （WOBJCB）を拡張（オブジェクト指向言語の継承に相当）したもので，
 ///  最初の2つのフィールドが共通になっている．
 ///
-pub const MTXCB = struct {
+pub const MTXCB = extern struct {
     wait_queue: queue.Queue, // ミューテックス待ちキュー
     p_wobjinib: *const MTXINIB, // 初期化ブロックへのポインタ
     p_loctsk: ?*TCB, // ミューテックスをロックしているタスク
@@ -183,9 +183,14 @@ comptime {
 ///
 pub const ExternMtxCfg = struct {
     ///
+    ///  ミューテックスIDの最大値
+    ///
+    pub extern const _kernel_tmax_mtxid: ID;
+
+    ///
     ///  ミューテックス初期化ブロック（スライス）
     ///
-    pub extern const _kernel_mtxinib_table: []MTXINIB;
+    pub extern const _kernel_mtxinib_table: [100]MTXINIB;
 
     ///
     ///  ミューテックス管理ブロックのエリア
@@ -198,7 +203,14 @@ pub const ExternMtxCfg = struct {
 ///  ミューテックスIDの最大値
 ///
 fn maxMtxId() ID {
-    return @intCast(ID, TMIN_MTXID + cfg._kernel_mtxinib_table.len - 1);
+    return @intCast(TMIN_MTXID + cfg._kernel_mtxinib_table.len - 1);
+}
+
+///
+///  ミューテックスの数
+///
+fn numOfMtx() usize {
+    return @intCast(cfg._kernel_tmax_mtxid - TMIN_MTXID + 1);
 }
 
 ///
@@ -213,7 +225,7 @@ fn isCeilingMtx(p_mtxcb: *MTXCB) bool {
 ///  ミューテックスIDからミューテックス管理ブロックを取り出すための関数
 ///
 fn indexMtx(mtxid: ID) usize {
-    return @intCast(usize, mtxid - TMIN_MTXID);
+    return @intCast(mtxid - TMIN_MTXID);
 }
 fn checkAndGetMtxCB(mtxid: ID) ItronError!*MTXCB {
     try checkId(TMIN_MTXID <= mtxid and mtxid <= maxMtxId());
@@ -224,7 +236,7 @@ fn checkAndGetMtxCB(mtxid: ID) ItronError!*MTXCB {
 ///  ミューテックス管理ブロックからミューテックスIDを取り出すための関数
 ///
 pub fn getMtxIdFromMtxCB(p_mtxcb: *MTXCB) ID {
-    return @intCast(ID, (@ptrToInt(p_mtxcb) - @ptrToInt(&cfg._kernel_mtxcb_table)) / @sizeOf(MTXCB)) + TMIN_MTXID;
+    return @as(ID, @intCast((@intFromPtr(p_mtxcb) - @intFromPtr(&cfg._kernel_mtxcb_table)) / @sizeOf(MTXCB))) + TMIN_MTXID;
 }
 
 ///
@@ -245,11 +257,11 @@ pub fn getMtxIdFromWinfo(p_winfo: *WINFO) ID {
 ///  ミューテックス機能の初期化
 ///
 pub fn initialize_mutex() void {
-    task.mtxhook_check_ceilpri = mutexCheckCeilpri;
-    task.mtxhook_scan_ceilmtx = mutexScanCeilMtx;
-    task.mtxhook_release_all = mutexReleaseAll;
+    task.mtxhook_check_ceilpri = @constCast(&mutexCheckCeilpri);
+    task.mtxhook_scan_ceilmtx = @constCast(&mutexScanCeilMtx);
+    task.mtxhook_release_all = @constCast(&mutexReleaseAll);
 
-    for (cfg._kernel_mtxcb_table[0..cfg._kernel_mtxinib_table.len]) |*p_mtxcb, i| {
+    for (cfg._kernel_mtxcb_table[0..cfg._kernel_mtxinib_table.len], 0..) |*p_mtxcb, i| {
         p_mtxcb.wait_queue.initialize();
         p_mtxcb.p_wobjinib = &cfg._kernel_mtxinib_table[i];
         p_mtxcb.p_loctsk = null;
@@ -311,12 +323,12 @@ fn mutexScanCeilMtx(p_tcb: *TCB) bool {
 ///  p_tcbで指定されるタスクの現在優先度（に設定すべき値）を計算する．
 ///
 fn mutexCalcPriority(p_tcb: *TCB) TaskPrio {
-    var prio = p_tcb.bprio;
+    var prio = p_tcb.prios.bprio;
     var op_mtxcb = p_tcb.p_lastmtx;
 
     while (op_mtxcb) |p_mtxcb| : (op_mtxcb = p_mtxcb.p_prevmtx) {
         if (isCeilingMtx(p_mtxcb) and p_mtxcb.p_wobjinib.ceilpri < prio) {
-            prio = @intCast(TaskPrio, p_mtxcb.p_wobjinib.ceilpri);
+            prio = @as(TaskPrio, @intCast(p_mtxcb.p_wobjinib.ceilpri));
         }
     }
     return prio;
@@ -329,9 +341,9 @@ fn mutexCalcPriority(p_tcb: *TCB) TaskPrio {
 ///  ク解除した際の現在優先度変更処理を行う．
 ///
 fn mutexDropPriority(p_tcb: *TCB, p_mtxcb: *MTXCB) void {
-    if (isCeilingMtx(p_mtxcb) and p_mtxcb.p_wobjinib.ceilpri == p_tcb.prio) {
+    if (isCeilingMtx(p_mtxcb) and p_mtxcb.p_wobjinib.ceilpri == p_tcb.prios.prio) {
         const newprio = mutexCalcPriority(p_tcb);
-        if (newprio != p_tcb.prio) {
+        if (newprio != p_tcb.prios.prio) {
             change_priority(p_tcb, newprio, true);
         }
     }
@@ -347,8 +359,8 @@ fn mutexAcquire(p_tcb: *TCB, p_mtxcb: *MTXCB) void {
     p_mtxcb.p_loctsk = p_tcb;
     p_mtxcb.p_prevmtx = p_tcb.p_lastmtx;
     p_tcb.p_lastmtx = p_mtxcb;
-    if (isCeilingMtx(p_mtxcb) and p_mtxcb.p_wobjinib.ceilpri < p_tcb.prio) {
-        change_priority(p_tcb, @intCast(TaskPrio, p_mtxcb.p_wobjinib.ceilpri), true);
+    if (isCeilingMtx(p_mtxcb) and p_mtxcb.p_wobjinib.ceilpri < p_tcb.prios.prio) {
+        change_priority(p_tcb, @as(TaskPrio, @intCast(p_mtxcb.p_wobjinib.ceilpri)), true);
     }
 }
 
@@ -372,8 +384,8 @@ fn mutexRelease(p_mtxcb: *MTXCB) void {
         p_mtxcb.p_loctsk = p_tcb;
         p_mtxcb.p_prevmtx = p_tcb.p_lastmtx;
         p_tcb.p_lastmtx = p_mtxcb;
-        if (isCeilingMtx(p_mtxcb) and p_mtxcb.p_wobjinib.ceilpri < p_tcb.prio) {
-            p_tcb.prio = @intCast(TaskPrio, p_mtxcb.p_wobjinib.ceilpri);
+        if (isCeilingMtx(p_mtxcb) and p_mtxcb.p_wobjinib.ceilpri < p_tcb.prios.prio) {
+            p_tcb.prios.prio = @as(TaskPrio, @intCast(p_mtxcb.p_wobjinib.ceilpri));
         }
         make_non_wait(p_tcb);
     }
@@ -414,7 +426,7 @@ pub fn loc_mtx(mtxid: ID) ItronError!void {
 
         if (task.p_runtsk.?.flags.raster) {
             return ItronError.TerminationRequestRaised;
-        } else if (isCeilingMtx(p_mtxcb) and task.p_runtsk.?.bprio < p_mtxcb.p_wobjinib.ceilpri) {
+        } else if (isCeilingMtx(p_mtxcb) and task.p_runtsk.?.prios.bprio < p_mtxcb.p_wobjinib.ceilpri) {
             return ItronError.IllegalUse;
         } else if (p_mtxcb.p_loctsk == null) {
             mutexAcquire(task.p_runtsk.?, p_mtxcb);
@@ -429,7 +441,7 @@ pub fn loc_mtx(mtxid: ID) ItronError!void {
             wobj_make_wait(p_mtxcb, TS_WAITING_MTX, &winfo_mtx);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_mtx.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
         }
     }
@@ -448,7 +460,7 @@ pub fn ploc_mtx(mtxid: ID) ItronError!void {
         target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
-        if (isCeilingMtx(p_mtxcb) and task.p_runtsk.?.bprio < p_mtxcb.p_wobjinib.ceilpri) {
+        if (isCeilingMtx(p_mtxcb) and task.p_runtsk.?.prios.bprio < p_mtxcb.p_wobjinib.ceilpri) {
             return ItronError.IllegalUse;
         } else if (p_mtxcb.p_loctsk == null) {
             mutexAcquire(task.p_runtsk.?, p_mtxcb);
@@ -479,7 +491,7 @@ pub fn tloc_mtx(mtxid: ID, tmout: TMO) ItronError!void {
 
         if (task.p_runtsk.?.flags.raster) {
             return ItronError.TerminationRequestRaised;
-        } else if (isCeilingMtx(p_mtxcb) and task.p_runtsk.?.bprio < p_mtxcb.p_wobjinib.ceilpri) {
+        } else if (isCeilingMtx(p_mtxcb) and task.p_runtsk.?.prios.bprio < p_mtxcb.p_wobjinib.ceilpri) {
             return ItronError.IllegalUse;
         } else if (p_mtxcb.p_loctsk == null) {
             mutexAcquire(task.p_runtsk.?, p_mtxcb);
@@ -497,7 +509,7 @@ pub fn tloc_mtx(mtxid: ID, tmout: TMO) ItronError!void {
             wobj_make_wait_tmout(p_mtxcb, TS_WAITING_MTX, &winfo_mtx, &tmevtb, tmout);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_mtx.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
         }
     }
@@ -543,7 +555,7 @@ pub fn ini_mtx(mtxid: ID) ItronError!void {
         init_wait_queue(&p_mtxcb.wait_queue);
         if (p_mtxcb.p_loctsk) |p_loctsk| {
             p_mtxcb.p_loctsk = null;
-            var pp_prevmtx = @ptrCast(*?*MTXCB, &p_loctsk.p_lastmtx);
+            var pp_prevmtx = @as(*?*MTXCB, @ptrCast(&p_loctsk.p_lastmtx));
             while (pp_prevmtx.*) |p_prevmtx| : (pp_prevmtx = &p_prevmtx.p_prevmtx) {
                 if (p_prevmtx == p_mtxcb) {
                     pp_prevmtx.* = p_mtxcb.p_prevmtx;
@@ -607,10 +619,11 @@ pub fn cre_mtx(cmtx: T_CMTX) ItronError!MTXINIB {
 ///  ミューテックスに関するコンフィギュレーションデータの取り込み（静
 ///  的APIの処理）
 ///
-pub fn ExportMtxCfg(mtxinib_table: []MTXINIB) type {
+pub fn ExportMtxCfg(comptime mtxinib_table: []MTXINIB) type {
     const tnum_mtx = mtxinib_table.len;
     return struct {
-        pub export const _kernel_mtxinib_table = mtxinib_table;
+        pub export const _kernel_mtxinib_table: ?*MTXINIB = if (tnum_mtx == 0) null else &mtxinib_table[0];
+        pub export const _kernel_tnum_mtx = tnum_mtx;
 
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする
@@ -627,7 +640,7 @@ pub fn ExportMtxCfg(mtxinib_table: []MTXINIB) type {
 ///  ミューテックス管理ブロックのポインタのチェック
 ///
 pub fn validMTXCB(p_mtxcb: *MTXCB) bool {
-    if ((@ptrToInt(p_mtxcb) - @ptrToInt(&cfg._kernel_mtxcb_table)) % @sizeOf(MTXCB) != 0) {
+    if ((@intFromPtr(p_mtxcb) - @intFromPtr(&cfg._kernel_mtxcb_table)) % @sizeOf(MTXCB) != 0) {
         return false;
     }
     const mtxid = getMtxIdFromMtxCB(p_mtxcb);
@@ -655,9 +668,9 @@ fn bitMTXCB(p_mtxcb: *MTXCB) ItronError!void {
 
         // キューがタスク優先度順になっているかの検査
         if ((p_mtxinib.wobjatr & MTXPROTO_MASK) != TA_NULL) {
-            try checkBit(p_tcb.prio >= prio);
+            try checkBit(p_tcb.prios.prio >= prio);
         }
-        prio = p_tcb.prio;
+        prio = p_tcb.prios.prio;
 
         // タスク状態の検査
         //
@@ -668,7 +681,7 @@ fn bitMTXCB(p_mtxcb: *MTXCB) ItronError!void {
 
         // 優先度上限の検査
         if (isCeilingMtx(p_mtxcb)) {
-            try checkBit(p_tcb.bprio >= p_mtxinib.ceilpri);
+            try checkBit(p_tcb.prios.bprio >= p_mtxinib.ceilpri);
         }
 
         // キューの次の要素に進む
@@ -688,7 +701,7 @@ fn bitMTXCB(p_mtxcb: *MTXCB) ItronError!void {
 ///
 pub fn bitMutex() ItronError!void {
     // ミューテックス毎の整合性検査
-    for (cfg._kernel_mtxcb_table[0..cfg._kernel_mtxinib_table.len]) |*p_mtxcb, i| {
+    for (cfg._kernel_mtxcb_table[0..cfg._kernel_mtxinib_table.len], 0..) |*p_mtxcb, i| {
         defer _ = i;
         try bitMTXCB(p_mtxcb);
     }

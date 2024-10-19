@@ -117,18 +117,18 @@ pub const ACVCT = struct { // アクセス許可ベクタ
 ///  EXINF型への強制変換
 ///
 fn sintToUsize(sint: anytype) usize {
-    return @bitCast(usize, @intCast(isize, sint));
+    return @as(usize, @bitCast(@as(isize, @intCast(sint))));
 }
 pub fn castToExinf(exinf: anytype) EXINF {
     return switch (@typeInfo(@TypeOf(exinf))) {
         .Null => null,
-        .Bool => @intToPtr(EXINF, @boolToInt(exinf)),
-        .Int => |int| @intToPtr(EXINF, if (int.signedness == .signed) sintToUsize(exinf) else exinf),
-        .ComptimeInt => @intToPtr(EXINF, if (exinf < 0) sintToUsize(exinf) else exinf),
-        .Enum => @intToPtr(EXINF, @enumToInt(arg)),
-        .Pointer => |pointer| @ptrCast(EXINF, if (pointer.size == .Slice) exinf.ptr else exinf),
-        .Array => @ptrCast(EXINF, &exinf),
-        .Optional => if (exinf) |_exinf| castToExinf(_exinf) else @intToPtr(EXINF, 0),
+        .Bool => @as(EXINF, @ptrFromInt(@intFromBool(exinf))),
+        .Int => |int| @as(EXINF, @ptrFromInt(if (int.signedness == .signed) sintToUsize(exinf) else exinf)),
+        .ComptimeInt => @as(EXINF, @ptrFromInt(if (exinf < 0) sintToUsize(exinf) else exinf)),
+        .Enum => @as(EXINF, @ptrFromInt(@intFromEnum(arg))),
+        .Pointer => |pointer| @as(EXINF, @ptrCast(if (pointer.size == .Slice) exinf.ptr else exinf)),
+        .Array => @as(EXINF, @ptrCast(&exinf)),
+        .Optional => if (exinf) |_exinf| castToExinf(_exinf) else @as(EXINF, @ptrFromInt(0)),
         else => @compileError("unsupported data type for castToExinf."),
     };
 }
@@ -138,17 +138,17 @@ pub fn castToExinf(exinf: anytype) EXINF {
 ///
 pub fn exinfToPtr(comptime T: type, exinf: EXINF) T {
     if (@typeInfo(T) == .Pointer) {
-        return @intToPtr(T, @ptrToInt(exinf));
+        return @ptrFromInt(@intFromPtr(exinf));
     } else {
         @compileError("unsupported data type for exinfToPtr.");
     }
 }
 pub fn exinfToInt(comptime T: type, exinf: EXINF) T {
     if (@typeInfo(T) == .Int) {
-        return @intCast(T, if (@typeInfo(T).Int.signedness == .signed)
-            @bitCast(isize, @ptrToInt(exinf))
+        return @intCast(if (@typeInfo(T).Int.signedness == .signed)
+            @as(isize, @bitCast(@intFromPtr(exinf)))
         else
-            @ptrToInt(exinf));
+            @intFromPtr(exinf));
     } else {
         @compileError("unsupported data type for exinfToInt.");
     }
@@ -200,10 +200,10 @@ pub const TMO_NBLK = std.math.maxInt(TMO) - 1; // ノンブロッキング
 ///  エラーコード生成・分解マクロ
 ///
 pub fn ERCD(mercd: ER, sercd: ER) ER {
-    return @intCast(ER, (@bitCast(c_uint, sercd) << 8) | @intCast(u8, @bitCast(c_uint, mercd)));
+    return @intCast((@as(c_uint, @bitCast(sercd)) << 8) | @as(u8, @intCast(@as(c_uint, @bitCast(mercd)))));
 }
 pub fn MERCD(ercd: ER) ER {
-    return @intCast(ER, @truncate(i8, ercd));
+    return @intCast(@as(u8, @truncate(ercd)));
 }
 pub fn SERCD(ercd: ER) ER {
     return ercd >> 8;
@@ -217,7 +217,7 @@ pub const TACP_SHARED = ~@as(ACPTN, 0); // すべてのドメインからアク�
 
 // アクセス許可パターン生成マクロ
 pub fn TACP(domid: ID) ACPTN { // domidだけにアクセスを許可
-    return @as(ACPTN, 1) << @intCast(u5, domid - 1);
+    return @as(ACPTN, 1) << @as(u5, @intCast(domid - 1));
 }
 
 ///

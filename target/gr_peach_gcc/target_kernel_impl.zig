@@ -193,7 +193,7 @@ pub fn initialize() void {
     port_initialize();
 
     // ベクタテーブルの設定
-    arm.CP15_WRITE_VBAR(@intCast(u32, @ptrToInt(vector_table)));
+    arm.CP15_WRITE_VBAR(@as(u32, @intCast(@intFromPtr(vector_table))));
 
     // LEDを青色に点灯させる
     gr_peach.set_led(gr_peach.LED_BLUE, true);

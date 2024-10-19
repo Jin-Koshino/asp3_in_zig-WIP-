@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
 ///                                 Toyohashi Univ. of Technology, JAPAN
 ///  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
@@ -144,7 +144,7 @@ const PDQMB = struct {
 ///  （WOBJINIB）を拡張（オブジェクト指向言語の継承に相当）したもので，
 ///  最初のフィールドが共通になっている．
 ///
-pub const PDQINIB = struct {
+pub const PDQINIB = extern struct {
     wobjatr: ATR, // 優先度データキュー属性
     pdqcnt: c_uint, // 優先度データキューの容量
     maxdpri: PRI, // データ優先度の最大値
@@ -163,7 +163,7 @@ comptime {
 ///  （WOBJCB）を拡張（オブジェクト指向言語の継承に相当）したもので，
 ///  最初の2つのフィールドが共通になっている．
 ///
-const PDQCB = struct {
+const PDQCB = extern struct {
     swait_queue: queue.Queue, // 優先度データキュー送信待ちキュー
     p_wobjinib: *const PDQINIB, // 初期化ブロックへのポインタ
     rwait_queue: queue.Queue, // 優先度データキュー受信待ちキュー
@@ -185,14 +185,14 @@ comptime {
 ///  （WINFO_WOBJ）を拡張（オブジェクト指向言語の継承に相当）したもの
 ///  で，最初の2つのフィールドが共通になっている．
 ///
-const WINFO_SPDQ = struct {
+const WINFO_SPDQ = extern struct {
     winfo: WINFO, // 標準の待ち情報ブロック
     p_wobjcb: *PDQCB, // 待っている優先度データキューの管理ブロック
     data: usize, // 送信データ
     datapri: PRI, // データ優先度
 };
 
-const WINFO_RPDQ = struct {
+const WINFO_RPDQ = extern struct {
     winfo: WINFO, // 標準の待ち情報ブロック
     p_wobjcb: *PDQCB, // 待っている優先度データキューの管理ブロック
     data: usize, // 受信データ
@@ -210,9 +210,14 @@ comptime {
 ///
 pub const ExternPdqCfg = struct {
     ///
+    ///　優先度データキューIDの最大値
+    /// 
+    pub extern const _kernel_tmax_pdqid: ID;
+
+    ///
     ///  優先度データキュー初期化ブロック（スライス）
     ///
-    pub extern const _kernel_pdqinib_table: []PDQINIB;
+    pub extern const _kernel_pdqinib_table: [100]PDQINIB;
 
     ///
     ///  優先度データキュー管理ブロックのエリア
@@ -225,14 +230,21 @@ pub const ExternPdqCfg = struct {
 ///  優先度データIDの最大値
 ///
 fn maxPdqId() ID {
-    return @intCast(ID, TMIN_PDQID + cfg._kernel_pdqinib_table.len - 1);
+    return @intCast(TMIN_PDQID + cfg._kernel_pdqinib_table.len - 1);
+}
+
+///
+///  優先度データキューの数
+///
+fn numOfPdq() usize {
+    return @intCast(cfg._kernel_tmax_pdqid - TMIN_PDQID + 1);
 }
 
 ///
 ///  優先度データキューIDから優先度データキュー管理ブロックを取り出すための関数
 ///
 pub fn indexPdq(pdqid: ID) usize {
-    return @intCast(usize, pdqid - TMIN_PDQID);
+    return @intCast(pdqid - TMIN_PDQID);
 }
 pub fn checkAndGetPdqCB(pdqid: ID) ItronError!*PDQCB {
     try checkId(TMIN_PDQID <= pdqid and pdqid <= maxPdqId());
@@ -243,7 +255,7 @@ pub fn checkAndGetPdqCB(pdqid: ID) ItronError!*PDQCB {
 ///  優先度データキュー管理ブロックから優先度データキューIDを取り出すための関数
 ///
 fn getPdqIdFromPdqCB(p_pdqcb: *PDQCB) ID {
-    return @intCast(ID, (@ptrToInt(p_pdqcb) - @ptrToInt(&cfg._kernel_pdqcb_table)) / @sizeOf(PDQCB)) + TMIN_PDQID;
+    return @as(ID, @intCast((@intFromPtr(p_pdqcb) - @intFromPtr(&cfg._kernel_pdqcb_table)) / @sizeOf(PDQCB))) + TMIN_PDQID;
 }
 
 ///
@@ -277,7 +289,7 @@ fn validDataPri(datapri: PRI, maxdpri: PRI) bool {
 ///  優先度データキュー機能の初期化
 ///
 pub fn initialize_pridataq() void {
-    for (cfg._kernel_pdqcb_table[0..cfg._kernel_pdqinib_table.len]) |*p_pdqcb, i| {
+    for (cfg._kernel_pdqcb_table[0..cfg._kernel_pdqinib_table.len], 0..) |*p_pdqcb, i| {
         p_pdqcb.swait_queue.initialize();
         p_pdqcb.p_wobjinib = &cfg._kernel_pdqinib_table[i];
         p_pdqcb.rwait_queue.initialize();
@@ -401,7 +413,7 @@ pub fn snd_pdq(pdqid: ID, data: usize, datapri: PRI) ItronError!void {
             wobj_make_wait(p_pdqcb, TS_WAITING_SPDQ, &winfo_spdq);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_spdq.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
         }
     }
@@ -458,7 +470,7 @@ pub fn tsnd_pdq(pdqid: ID, data: usize, datapri: PRI, tmout: TMO) ItronError!voi
             wobj_make_wait_tmout(p_pdqcb, TS_WAITING_SPDQ, &winfo_spdq, &tmevtb, tmout);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_spdq.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
         }
     }
@@ -486,7 +498,7 @@ pub fn rcv_pdq(pdqid: ID, p_data: *usize, p_datapri: *PRI) ItronError!void {
             wobj_make_rwait(p_pdqcb, TS_WAITING_RPDQ, &winfo_rpdq);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_rpdq.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
             p_data.* = winfo_rpdq.data;
             p_datapri.* = winfo_rpdq.datapri;
@@ -541,7 +553,7 @@ pub fn trcv_pdq(pdqid: ID, p_data: *usize, p_datapri: *PRI, tmout: TMO) ItronErr
             wobj_make_rwait_tmout(p_pdqcb, TS_WAITING_RPDQ, &winfo_rpdq, &tmevtb, tmout);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_rpdq.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
             p_data.* = winfo_rpdq.data;
             p_datapri.* = winfo_rpdq.datapri;
@@ -625,10 +637,11 @@ pub fn cre_pdq(comptime cpdq: T_CPDQ) ItronError!PDQINIB {
 ///  優先度データキューに関するコンフィギュレーションデータの生成（静
 ///  的APIの処理）
 ///
-pub fn ExportPdqCfg(pdqinib_table: []PDQINIB) type {
+pub fn ExportPdqCfg(comptime pdqinib_table: []PDQINIB) type {
     const tnum_pdq = pdqinib_table.len;
     return struct {
-        pub export const _kernel_pdqinib_table = pdqinib_table;
+        pub export const _kernel_pdqinib_table: ?*PDQINIB = if (tnum_pdq == 0) null else &pdqinib_table[0];
+        pub export const _kenrel_tnum_pdq = tnum_pdq;
 
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする

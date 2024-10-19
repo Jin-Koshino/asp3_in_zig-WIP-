@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
 ///                 Graduate School of Informatics, Nagoya Univ., JAPAN
 ///
@@ -219,7 +219,7 @@ pub fn ref_tsk(tskid: ID, pk_rtsk: *T_RTSK) ItronError!void {
 
                 // タイムアウトするまでの時間の取出し
                 if (p_tcb.p_winfo.p_tmevtb) |p_tmevtb| {
-                    pk_rtsk.lefttmo = @intCast(TMO, tmevt_lefttim(p_tmevtb));
+                    pk_rtsk.lefttmo = @as(TMO, @intCast(tmevt_lefttim(p_tmevtb)));
                 } //［NGKI1233］［NGKI1235］
                 else {
                     pk_rtsk.lefttmo = TMO_FEVR; //［NGKI1234］
@@ -233,17 +233,17 @@ pub fn ref_tsk(tskid: ID, pk_rtsk: *T_RTSK) ItronError!void {
             }
 
             // 現在優先度とベース優先度の取出し［NGKI1227］
-            pk_rtsk.tskpri = externalTaskPrio(p_tcb.prio);
-            pk_rtsk.tskbpri = externalTaskPrio(p_tcb.bprio);
+            pk_rtsk.tskpri = externalTaskPrio(p_tcb.prios.prio);
+            pk_rtsk.tskbpri = externalTaskPrio(p_tcb.prios.bprio);
 
             // 起床要求キューイング数の取出し［NGKI1239］
             pk_rtsk.wupcnt = p_tcb.flags.wupque;
 
             // タスク終了要求状態の取出し［NGKI3467］
-            pk_rtsk.raster = @boolToInt(p_tcb.flags.raster);
+            pk_rtsk.raster = @intFromBool(p_tcb.flags.raster);
 
             // タスク終了禁止状態の取出し［NGKI3468］
-            pk_rtsk.dister = @boolToInt(!p_tcb.flags.enater);
+            pk_rtsk.dister = @intFromBool(!p_tcb.flags.enater);
         }
 
         // 起動要求キューイング数の取出し［NGKI1238］

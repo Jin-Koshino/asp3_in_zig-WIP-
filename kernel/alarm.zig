@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
 ///                                 Toyohashi Univ. of Technology, JAPAN
 ///  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
@@ -85,7 +85,7 @@ const option = kernel_impl.option;
 ///
 ///  アラーム通知初期化ブロック
 ///
-pub const ALMINIB = struct {
+pub const ALMINIB = extern struct {
     almatr: ATR, // アラーム通知属性
     exinf: EXINF, // 通知ハンドラの拡張情報
     nfyhdr: NFYHDR, // 通知ハンドラの起動番地
@@ -94,7 +94,7 @@ pub const ALMINIB = struct {
 ///
 ///  アラーム通知管理ブロック
 ///
-pub const ALMCB = struct {
+pub const ALMCB = extern struct {
     p_alminib: *const ALMINIB, // 初期化ブロックへのポインタ
     almsta: bool, // アラーム通知の動作状態
     tmevtb: TMEVTB, // タイムイベントブロック
@@ -105,9 +105,14 @@ pub const ALMCB = struct {
 ///
 pub const ExternAlmCfg = struct {
     ///
+    ///  アラーム通知IDの最大値
+    ///
+    pub extern const _kernel_tmax_almid: ID;
+
+    ///
     ///  アラーム通知初期化ブロック（スライス）
     ///
-    pub extern const _kernel_alminib_table: []ALMINIB;
+    pub extern const _kernel_alminib_table: [100]ALMINIB;
 
     ///
     ///  アラーム通知管理ブロックのエリア
@@ -120,14 +125,21 @@ pub const ExternAlmCfg = struct {
 ///  アラーム通知IDの最大値
 ///
 fn maxAlmId() ID {
-    return @intCast(ID, TMIN_ALMID + cfg._kernel_alminib_table.len - 1);
+    return @intCast(TMIN_ALMID + cfg._kernel_alminib_table.len - 1);
+}
+
+///
+///  アラーム通知の数
+///
+fn numOfAlm() usize {
+    return @intCast(cfg._kernel_tmax_almid - TMIN_ALMID + 1);
 }
 
 ///
 ///  アラーム通知IDからアラーム通知管理ブロックを取り出すための関数
 ///
 fn indexAlm(almid: ID) usize {
-    return @intCast(usize, almid - TMIN_ALMID);
+    return @intCast(almid - TMIN_ALMID);
 }
 fn checkAndGetAlmCB(almid: ID) ItronError!*ALMCB {
     try checkId(TMIN_ALMID <= almid and almid <= maxAlmId());
@@ -138,11 +150,11 @@ fn checkAndGetAlmCB(almid: ID) ItronError!*ALMCB {
 ///  アラーム通知機能の初期化
 ///
 pub fn initialize_alarm() void {
-    for (cfg._kernel_almcb_table[0..cfg._kernel_alminib_table.len]) |*p_almcb, i| {
+    for (cfg._kernel_almcb_table[0..cfg._kernel_alminib_table.len], 0..) |*p_almcb, i| {
         p_almcb.p_alminib = &cfg._kernel_alminib_table[i];
         p_almcb.almsta = false;
         p_almcb.tmevtb.callback = callAlarm;
-        p_almcb.tmevtb.arg = @ptrToInt(p_almcb);
+        p_almcb.tmevtb.arg = @intFromPtr(p_almcb);
     }
 }
 
@@ -215,7 +227,7 @@ pub fn ref_alm(almid: ID, pk_ralm: *T_RALM) ItronError!void {
 ///  アラーム通知起動ルーチン
 ///
 fn callAlarm(arg: usize) void {
-    const p_almcb = @intToPtr(*ALMCB, arg);
+    const p_almcb = @as(*ALMCB, @ptrFromInt(arg));
 
     // アラーム通知を停止状態にする．
     p_almcb.almsta = false;
@@ -252,7 +264,7 @@ pub fn cre_alm(comptime calm: T_CALM) ItronError!ALMINIB {
 ///  アラーム通知に関するコンフィギュレーションデータの生成（静的APIの
 ///  処理）
 ///
-pub fn ExportAlmCfg(alminib_table: []ALMINIB) type {
+pub fn ExportAlmCfg(comptime alminib_table: []ALMINIB) type {
     // チェック処理用の定義の生成
     exportCheck(@sizeOf(ALMINIB), "sizeof_ALMINIB");
     exportCheck(@offsetOf(ALMINIB, "almatr"), "offsetof_ALMINIB_almatr");
@@ -260,9 +272,10 @@ pub fn ExportAlmCfg(alminib_table: []ALMINIB) type {
     exportCheck(@offsetOf(ALMINIB, "nfyhdr"), "offsetof_ALMINIB_nfyhdr");
 
     const tnum_alm = alminib_table.len;
-    defer _ = tnum_alm;
+
     return struct {
-        pub export const _kernel_alminib_table = alminib_table;
+        pub export const _kernel_alminib_table: ?*ALMINIB = if (tnum_alm == 0) null else &alminib_table[0];
+        pub export const _kernel_tnum_alm = tnum_alm;
 
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする

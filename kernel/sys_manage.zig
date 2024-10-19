@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
 ///                                 Toyohashi Univ. of Technology, JAPAN
 ///  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
@@ -108,7 +108,7 @@ pub fn rot_rdq(tskpri: PRI) ItronError!void {
     errdefer |err| traceLog("rotRdqLeave", .{err});
     try checkContextUnlock(); //［NGKI2684］
     if (tskpri == TPRI_SELF and !target_impl.mpcore_kernel_impl.core_kernel_impl.senseContext()) {
-        prio = task.p_runtsk.?.bprio; //［NGKI2689］
+        prio = task.p_runtsk.?.prios.bprio; //［NGKI2689］
     } else {
         try checkParameter(validTaskPri(tskpri)); //［NGKI2685］
         prio = internalTaskPrio(tskpri);
@@ -150,7 +150,7 @@ pub fn get_lod(tskpri: PRI, p_load: *c_uint) ItronError!void {
     errdefer |err| traceLog("getLodLeave", .{ err, p_load });
     try checkContextTaskUnlock(); //［NGKI3624］［NGKI3625］
     if (tskpri == TPRI_SELF) {
-        prio = task.p_runtsk.?.bprio; //［NGKI3631］
+        prio = task.p_runtsk.?.prios.bprio; //［NGKI3631］
     } else {
         try checkParameter(validTaskPri(tskpri)); //［NGKI3626］
         prio = internalTaskPrio(tskpri);
@@ -179,7 +179,7 @@ pub fn get_nth(tskpri: PRI, nth: c_uint, p_tskid: *ID) ItronError!void {
     errdefer |err| traceLog("getNthLeave", .{ err, p_tskid });
     try checkContextTaskUnlock(); //［NGKI3642］［NGKI3643］
     if (tskpri == TPRI_SELF) {
-        prio = task.p_runtsk.?.bprio; //［NGKI3650］
+        prio = task.p_runtsk.?.prios.bprio; //［NGKI3650］
     } else {
         try checkParameter(validTaskPri(tskpri)); //［NGKI3644］
         prio = internalTaskPrio(tskpri);

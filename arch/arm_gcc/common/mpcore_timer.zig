@@ -118,8 +118,7 @@ const TMRWDG_HRT_PARAM = struct {
     WDG_FREQ: u32 = 1,
 };
 
-pub fn TMRWDG_HRT(param: TMRWDG_HRT_PARAM) type {
-    _ = param;
+pub fn TMRWDG_HRT(comptime param: TMRWDG_HRT_PARAM) type {
     return struct {
         ///
         ///  高分解能タイマ割込みハンドラ登録のための定数
@@ -189,7 +188,7 @@ pub fn TMRWDG_HRT(param: TMRWDG_HRT_PARAM) type {
         pub fn get_current() HRTCNT {
             // ウォッチドッグのカウント値を読み出し，ダウンカウンタである
             // ため，WDG_LR_VALUEから引き，WDG_FREQで除した値を返す．
-            return @intCast(HRTCNT, (param.WDG_LR_VALUE - sil.rew_mem(mpcore.WDG_CNT)) / param.WDG_FREQ);
+            return @as(HRTCNT, @intCast((param.WDG_LR_VALUE - sil.rew_mem(mpcore.WDG_CNT)) / param.WDG_FREQ));
         }
 
         ///
@@ -274,7 +273,7 @@ pub fn GTC_HRT(param: GTC_HRT_PARAM) type {
                 count_u = sil.rew_mem(mpcore.GTC_COUNT_U);
                 if (count_u == prev_count_u) break;
             }
-            return (@intCast(u64, count_u) << 32) | @intCast(u64, count_l);
+            return (@as(u64, @intCast(count_u)) << 32) | @as(u64, @intCast(count_l));
         }
 
         ///
@@ -285,8 +284,8 @@ pub fn GTC_HRT(param: GTC_HRT_PARAM) type {
             var cvr_u: u32 = undefined;
             var reg: u32 = undefined;
 
-            cvr_l = @truncate(u32, cvr);
-            cvr_u = @intCast(u32, cvr >> 32);
+            cvr_l = @truncate(cvr);
+            cvr_u = @as(u32, @intCast(cvr >> 32));
 
             // コンパレータをディスエーブル
             reg = sil.rew_mem(mpcore.GTC_CTRL);
@@ -341,7 +340,7 @@ pub fn GTC_HRT(param: GTC_HRT_PARAM) type {
         pub fn get_current() HRTCNT {
             // グローバルタイマのカウント値（64ビット）を読み出し，
             // mpcore.GTC_FREQで除し，HRTCNTのビット数に切り詰めた値を返す．
-            return (@truncate(HRTCNT, get_count() / param.GTC_FREQ));
+            return (@truncate(get_count() / param.GTC_FREQ));
         }
 
         ///
@@ -353,7 +352,7 @@ pub fn GTC_HRT(param: GTC_HRT_PARAM) type {
         pub fn set_event(hrtcnt: HRTCNT) void {
             // コンパレータ値を，(現在のカウント値＋hrtcnt×mpcore.GTC_FREQ)
             // に設定し，コンパレータと割込みをイネーブルする．
-            return gtc_set_cvr(get_count() + @intCast(u64, hrtcnt) * param.GTC_FREQ);
+            return gtc_set_cvr(get_count() + @as(u64, @intCast(hrtcnt)) * param.GTC_FREQ);
         }
 
         ///
@@ -464,7 +463,7 @@ pub fn WDG_OVRTIMER(param: WDG_OVRTIMER_PARAM) type {
         ///
         pub fn stop() PRCTIM {
             // ウォッチドッグの現在値の読出し
-            const ovrtim = @intCast(PRCTIM, sil.rew_mem(mpcore.WDG_CNT) / param.WDG_FREQ);
+            const ovrtim = @as(PRCTIM, @intCast(sil.rew_mem(mpcore.WDG_CNT) / param.WDG_FREQ));
 
             // ウォッチドッグを停止する．
             sil.wrw_mem(mpcore.WDG_CTRL, sil.rew_mem(mpcore.WDG_CTRL) & ~@as(u32, mpcore.WDG_CTRL_ENABLE));
@@ -477,7 +476,7 @@ pub fn WDG_OVRTIMER(param: WDG_OVRTIMER_PARAM) type {
         pub fn get_current() PRCTIM {
             // ウォッチドッグのカウント値を読み出し，mpcore.WDG_FREQで除し
             // た値を返す．
-            return @intCast(PRCTIM, sil.rew_mem(mpcore.WDG_CNT) / param.WDG_FREQ);
+            return @as(PRCTIM, @intCast(sil.rew_mem(mpcore.WDG_CNT) / param.WDG_FREQ));
         }
 
         ///

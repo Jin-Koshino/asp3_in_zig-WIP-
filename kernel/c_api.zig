@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2020-2021 by Embedded and Real-Time Systems Laboratory
 ///                 Graduate School of Informatics, Nagoya Univ., JAPAN
 ///
@@ -56,13 +56,13 @@ const T_RTSK = zig.T_RTSK;
 const task_refer = kernel_impl.task_refer;
 const task_sync = kernel_impl.task_sync;
 const TMO = t_stddef.TMO;
-const RELTIM= t_stddef.RELTIM;
+const RELTIM = t_stddef.RELTIM;
 const task_term = kernel_impl.task_term;
 const semaphore = kernel_impl.semaphore;
 const T_RSEM = zig.T_RSEM;
 const FLGPTN = zig.FLGPTN;
 const eventflag = kernel_impl.eventflag;
-const MODE= t_stddef.MODE;
+const MODE = t_stddef.MODE;
 const T_RFLG = zig.T_RFLG;
 const dataqueue = kernel_impl.dataqueue;
 const T_RDTQ = zig.T_RDTQ;
@@ -122,7 +122,7 @@ fn callService(result: ItronError!void) ER {
 // 返値をER_UINT型に変換
 fn callServiceUint(result: ItronError!c_uint) ER_UINT {
     if (result) |retval| {
-        return @intCast(ER_UINT, @intCast(u31, retval));
+        return @as(ER_UINT, @intCast(@as(u31, @intCast(retval))));
     } else |err| {
         return errorcode.itronErrorCode(err);
     }
@@ -131,7 +131,7 @@ fn callServiceUint(result: ItronError!c_uint) ER_UINT {
 // 返値をER_BOOL型に変換
 fn callServiceBool(result: ItronError!bool) ER_BOOL {
     if (result) |retval| {
-        return @intCast(ER_BOOL, @boolToInt(retval));
+        return @as(ER_BOOL, @intCast(@intFromBool(retval)));
     } else |err| {
         return errorcode.itronErrorCode(err);
     }
@@ -238,7 +238,7 @@ export fn ena_ter() ER {
 
 // sns_terのC言語API
 export fn sns_ter() c_int {
-    return @boolToInt(task_term.sns_ter());
+    return @intFromBool(task_term.sns_ter());
 }
 
 // ter_tskのC言語API
@@ -428,17 +428,17 @@ export fn ref_mtx(mtxid: ID, pk_rmtx: *T_RMTX) ER {
 
 // get_mpfのC言語API
 export fn get_mpf(mpfid: ID, p_blk: **anyopaque) ER {
-    return callService(mempfix.get_mpf(mpfid, @ptrCast(**u8, p_blk)));
+    return callService(mempfix.get_mpf(mpfid, @as(**u8, @ptrCast(p_blk))));
 }
 
 // pget_mpfのC言語API
 export fn pget_mpf(mpfid: ID, p_blk: **anyopaque) ER {
-    return callService(mempfix.pget_mpf(mpfid, @ptrCast(**u8, p_blk)));
+    return callService(mempfix.pget_mpf(mpfid, @as(**u8, @ptrCast(p_blk))));
 }
 
 // tget_mpfのC言語API
 export fn tget_mpf(mpfid: ID, p_blk: **anyopaque, tmout: TMO) ER {
-    return callService(mempfix.tget_mpf(mpfid, @ptrCast(**u8, p_blk), tmout));
+    return callService(mempfix.tget_mpf(mpfid, @as(**u8, @ptrCast(p_blk)), tmout));
 }
 
 // rel_mpfのC言語API
@@ -563,27 +563,27 @@ export fn ena_dsp() ER {
 
 // sns_ctxのC言語API
 export fn sns_ctx() c_int {
-    return @boolToInt(sys_manage.sns_ctx());
+    return @intFromBool(sys_manage.sns_ctx());
 }
 
 // sns_locのC言語API
 export fn sns_loc() c_int {
-    return @boolToInt(sys_manage.sns_loc());
+    return @intFromBool(sys_manage.sns_loc());
 }
 
 // sns_dspのC言語API
 export fn sns_dsp() c_int {
-    return @boolToInt(sys_manage.sns_dsp());
+    return @intFromBool(sys_manage.sns_dsp());
 }
 
 // sns_dpnのC言語API
 export fn sns_dpn() c_int {
-    return @boolToInt(sys_manage.sns_dpn());
+    return @intFromBool(sys_manage.sns_dpn());
 }
 
 // sns_kerのC言語API
 export fn sns_ker() c_int {
-    return @boolToInt(sys_manage.sns_ker());
+    return @intFromBool(sys_manage.sns_ker());
 }
 
 // ext_kerのC言語API
@@ -629,7 +629,7 @@ export fn get_ipm(p_intpri: *PRI) ER {
 
 // xsns_dpnのC言語API
 export fn xsns_dpn(p_excinf: *anyopaque) c_int {
-    return @boolToInt(exception.xsns_dpn(p_excinf));
+    return @intFromBool(exception.xsns_dpn(p_excinf));
 }
 
 ///
@@ -728,36 +728,45 @@ comptime {
             \\ _kernel_seminib_table:
             \\ .weak _kernel_semcb_table
             \\ _kernel_semcb_table:
+            
             \\ .weak _kernel_flginib_table
             \\ _kernel_flginib_table:
             \\ .weak _kernel_flgcb_table
             \\ _kernel_flgcb_table:
+            
             \\ .weak _kernel_dtqinib_table
             \\ _kernel_dtqinib_table:
             \\ .weak _kernel_dtqcb_table
             \\ _kernel_dtqcb_table:
+            
             \\ .weak _kernel_pdqinib_table
             \\ _kernel_pdqinib_table:
             \\ .weak _kernel_pdqcb_table
             \\ _kernel_pdqcb_table:
+            
             \\ .weak _kernel_mtxinib_table
             \\ _kernel_mtxinib_table:
             \\ .weak _kernel_mtxcb_table
             \\ _kernel_mtxcb_table:
+            
             \\ .weak _kernel_mpfinib_table
             \\ _kernel_mpfinib_table:
             \\ .weak _kernel_mpfcb_table
             \\ _kernel_mpfcb_table:
+            
             \\ .weak _kernel_cycinib_table
             \\ _kernel_cycinib_table:
             \\ .weak _kernel_cyccb_table
             \\ _kernel_cyccb_table:
+            
             \\ .weak _kernel_alminib_table
             \\ _kernel_alminib_table:
             \\ .weak _kernel_almcb_table
             \\ _kernel_almcb_table:
+            
             \\ .weak _kernel_inirtnb_table
             \\ _kernel_inirtnb_table:
+            
             \\ .weak _kernel_terrtnb_table
             \\ _kernel_terrtnb_table:
         );

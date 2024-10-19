@@ -101,14 +101,14 @@ pub const EXCNO = c_uint; // CPU例外ハンドラ番号
 ///
 ///  処理単位の型定義
 ///
-pub const TASK = fn (exinf: t_stddef.EXINF) callconv(.C) void;
-pub const TMEHDR = fn (exinf: t_stddef.EXINF) callconv(.C) void;
-pub const OVRHDR = fn (tskid: t_stddef.ID, exinf: t_stddef.EXINF) callconv(.C) void;
-pub const ISR = fn (exinf: t_stddef.EXINF) callconv(.C) void;
-pub const INTHDR = fn () callconv(.C) void;
-pub const EXCHDR = fn (p_excinf: *anyopaque) callconv(.C) void;
-pub const INIRTN = fn (exinf: t_stddef.EXINF) callconv(.C) void;
-pub const TERRTN = fn (exinf: t_stddef.EXINF) callconv(.C) void;
+pub const TASK = *const fn (exinf: t_stddef.EXINF) callconv(.C) void;
+pub const TMEHDR = *const fn (exinf: t_stddef.EXINF) callconv(.C) void;
+pub const OVRHDR = *const fn (tskid: t_stddef.ID, exinf: t_stddef.EXINF) callconv(.C) void;
+pub const ISR = *const fn (exinf: t_stddef.EXINF) callconv(.C) void;
+pub const INTHDR = *const fn () callconv(.C) void;
+pub const EXCHDR = *const fn (p_excinf: *anyopaque) callconv(.C) void;
+pub const INIRTN = *const fn (exinf: t_stddef.EXINF) callconv(.C) void;
+pub const TERRTN = *const fn (exinf: t_stddef.EXINF) callconv(.C) void;
 
 ///
 ///  パケット形式の定義

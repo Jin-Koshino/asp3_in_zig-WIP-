@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
 ///                                 Toyohashi Univ. of Technology, JAPAN
 ///  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
@@ -119,8 +119,8 @@ const TA_TPRI = zig.TA_TPRI;
 ///  ている．そのため，wercdへエラーコードを設定するのは，タイムイベン
 ///  トブロックを登録解除した後にしなければならない．
 ///
-pub const WINFO = union {
-    werror: ?ItronError, // 待ち解除時のエラー
+pub const WINFO = extern union {
+    werror: ?*ItronError, // 待ち解除時のエラー
     p_tmevtb: ?*TMEVTB, // 待ち状態用のタイムイベントブロック
 };
 
@@ -132,10 +132,10 @@ pub const WINFO = union {
 ///  する．
 ///
 pub fn queue_insert_tpri(p_queue: *queue.Queue, p_tcb: *TCB) void {
-    const prio = p_tcb.prio;
+    const prio = p_tcb.prios.prio;
     var p_entry = p_queue.p_next;
     while (p_entry != p_queue) : (p_entry = p_entry.p_next) {
-        if (prio < getTCBFromQueue(p_entry).prio) {
+        if (prio < getTCBFromQueue(p_entry).prios.prio) {
             break;
         }
     }
@@ -174,8 +174,8 @@ pub fn make_wait_tmout(tstat: u8, p_winfo: *WINFO, p_tmevtb: *TMEVTB, tmout: TMO
         assert(tmout <= TMAX_RELTIM);
         p_winfo.p_tmevtb = p_tmevtb;
         p_tmevtb.callback = wait_tmout;
-        p_tmevtb.arg = @ptrToInt(task.p_runtsk);
-        tmevtb_enqueue_reltim(p_tmevtb, @intCast(RELTIM, tmout));
+        p_tmevtb.arg = @intFromPtr(task.p_runtsk);
+        tmevtb_enqueue_reltim(p_tmevtb, @as(RELTIM, @intCast(tmout)));
     }
 }
 
@@ -254,10 +254,10 @@ pub fn wait_complete(p_tcb: *TCB) void {
 ///  のもので，割込みハンドラから呼び出されることを想定している．
 ///
 pub fn wait_tmout(arg: usize) void {
-    const p_tcb = @intToPtr(*TCB, arg);
+    const p_tcb = @as(*TCB, @ptrFromInt(arg));
 
     wait_dequeue_wobj(p_tcb);
-    p_tcb.p_winfo.* = WINFO{ .werror = ItronError.TimeoutError };
+    p_tcb.p_winfo.* = WINFO{ .werror = @constCast(&ItronError.TimeoutError) };
     make_non_wait(p_tcb);
     if (task.p_runtsk != task.p_schedtsk) {
         target_impl.mpcore_kernel_impl.core_kernel_impl.requestDispatchRetint();
@@ -270,7 +270,7 @@ pub fn wait_tmout(arg: usize) void {
 }
 
 pub fn wait_tmout_ok(arg: usize) void {
-    const p_tcb = @intToPtr(*TCB, arg);
+    const p_tcb = @as(*TCB, @ptrFromInt(arg));
 
     p_tcb.p_winfo.* = WINFO{ .werror = null };
     make_non_wait(p_tcb);
@@ -313,7 +313,7 @@ pub fn wait_tskid(p_wait_queue: *queue.Queue) ID {
 ///
 ///  同期・通信オブジェクトの初期化ブロックの共通部分
 ///
-pub const WOBJINIB = struct {
+pub const WOBJINIB = extern struct {
     wobjatr: ATR, // オブジェクト属性
 };
 
@@ -327,7 +327,7 @@ pub fn checkWobjIniB(comptime T: type) void {
 ///
 ///  同期・通信オブジェクトの管理ブロックの共通部分
 ///
-pub const WOBJCB = struct {
+pub const WOBJCB = extern struct {
     wait_queue: queue.Queue, // 待ちキュー
     p_wobjinib: *const WOBJINIB, // 初期化ブロックへのポインタ
 };
@@ -346,7 +346,7 @@ pub fn checkWobjCB(comptime T: type) void {
 ///
 ///  同期・通信オブジェクトの待ち情報ブロックの共通部分
 ///
-pub const WINFO_WOBJ = struct {
+pub const WINFO_WOBJ = extern struct {
     winfo: WINFO, // 標準の待ち情報ブロック
     p_wobjcb: *WOBJCB, // 待ちオブジェクトの管理ブロック
 };
@@ -374,21 +374,21 @@ fn wobj_queue_insert(p_wobjcb: *WOBJCB) void {
 
 ///
 ///  同期・通信オブジェクトに対する待ち状態への遷移
-///  
+///
 ///  実行中のタスクを待ち状態に遷移させ，同期・通信オブジェクトの待ち
 ///  キューにつなぐ．また，待ち情報ブロック（WINFO）のp_wobjcbを設定す
 ///  る．wobj_make_wait_tmoutは，タイムイベントブロックの登録も行う．
 ///
 pub fn wobj_make_wait(p_wobjcb: anytype, tstat: u8, p_winfo_wobj: anytype) void {
     make_wait(tstat, &p_winfo_wobj.winfo);
-    wobj_queue_insert(@ptrCast(*WOBJCB, p_wobjcb));
+    wobj_queue_insert(@as(*WOBJCB, @ptrCast(p_wobjcb)));
     p_winfo_wobj.p_wobjcb = p_wobjcb;
     traceLog("taskStateChange", .{task.p_runtsk.?});
 }
 
 pub fn wobj_make_wait_tmout(p_wobjcb: anytype, tstat: u8, p_winfo_wobj: anytype, p_tmevtb: *TMEVTB, tmout: TMO) void {
     make_wait_tmout(tstat, &p_winfo_wobj.winfo, p_tmevtb, tmout);
-    wobj_queue_insert(@ptrCast(*WOBJCB, p_wobjcb));
+    wobj_queue_insert(@as(*WOBJCB, @ptrCast(p_wobjcb)));
     p_winfo_wobj.p_wobjcb = p_wobjcb;
     traceLog("taskStateChange", .{task.p_runtsk.?});
 }
@@ -430,7 +430,7 @@ pub fn init_wait_queue(p_wait_queue: *queue.Queue) void {
     while (!p_wait_queue.isEmpty()) {
         const p_tcb = getTCBFromQueue(p_wait_queue.deleteNext());
         wait_dequeue_tmevtb(p_tcb);
-        p_tcb.p_winfo.* = WINFO{ .werror = ItronError.ObjectDeleted };
+        p_tcb.p_winfo.* = WINFO{ .werror = @constCast(&ItronError.ObjectDeleted) };
         make_non_wait(p_tcb);
     }
 }

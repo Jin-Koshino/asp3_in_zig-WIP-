@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
 ///                 Graduate School of Informatics, Nagoya Univ., JAPAN
 ///
@@ -63,7 +63,7 @@ const traceLog = kernel_impl.traceLog;
 const checkNotSupported = check.checkNotSupported;
 const checkContextUnlock = check.checkContextUnlock;
 const checkObjectState = check.checkObjectState;
-const cfg = check.cfg;
+const cfg = kernel_impl.cfg;
 const TSK_SELF = zig.TSK_SELF;
 const target_impl = kernel_impl.target_impl;
 const checkAndGetTCB = task.checkAndGetTCB;
@@ -84,7 +84,7 @@ const exportCheck = kernel_impl.exportCheck;
 ///
 ///  オーバランハンドラ初期化ブロック
 ///
-pub const OVRINIB = struct {
+pub const OVRINIB = extern struct {
     ovratr: ATR, // オーバランハンドラ属性
     ovrhdr: ?OVRHDR, // オーバランハンドラの起動番地
 };
@@ -260,7 +260,7 @@ pub fn defineOverrun(dovr: T_DOVR) ItronError!OVRINIB {
 ///
 ///  オーバランハンドラ初期化ブロックの生成（静的APIの処理）
 ///
-pub fn ExportOvrIniB(_ovrinib: ?OVRINIB) type {
+pub fn ExportOvrIniB(comptime _ovrinib: ?OVRINIB) type {
     // チェック処理用の定義の生成
     exportCheck(@sizeOf(OVRHDR), "sizeof_OVRHDR");
     exportCheck(@offsetOf(OVRINIB, "ovrhdr"), "offsetof_OVRINIB_ovrhdr");

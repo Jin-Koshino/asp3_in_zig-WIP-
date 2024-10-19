@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
 ///                                 Toyohashi Univ. of Technology, JAPAN
 ///  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
@@ -86,7 +86,7 @@ const option = kernel_impl.option;
 ///
 ///  周期通知初期化ブロック
 ///
-pub const CYCINIB = struct {
+pub const CYCINIB = extern struct {
     cycatr: ATR, // 周期通知属性
     exinf: EXINF, // 通知ハンドラの拡張情報
     nfyhdr: NFYHDR, // 通知ハンドラの起動番地
@@ -100,7 +100,7 @@ pub const CYCINIB = struct {
 ///  次に周期通知を起動する時刻は，タイムイベントブロック（tmevtb）中
 ///  のタイムイベントの発生時刻（evttim）で保持する．
 ///
-pub const CYCCB = struct {
+pub const CYCCB = extern struct {
     p_cycinib: *const CYCINIB, // 初期化ブロックへのポインタ
     cycsta: bool, // 周期通知の動作状態
     tmevtb: TMEVTB, // タイムイベントブロック
@@ -111,9 +111,14 @@ pub const CYCCB = struct {
 ///
 pub const ExternCycCfg = struct {
     ///
+    ///  周期通知IDの最大値
+    ///
+    pub extern const _kernel_tmax_cycid: ID;
+
+    ///
     ///  周期通知初期化ブロック（スライス）
     ///
-    pub extern const _kernel_cycinib_table: []CYCINIB;
+    pub extern const _kernel_cycinib_table: [100]CYCINIB;
 
     ///
     ///  周期通知管理ブロックのエリア
@@ -126,14 +131,21 @@ pub const ExternCycCfg = struct {
 ///  周期通知IDの最大値
 ///
 fn maxCycId() ID {
-    return @intCast(ID, TMIN_CYCID + cfg._kernel_cycinib_table.len - 1);
+    return @intCast(TMIN_CYCID + cfg._kernel_cycinib_table.len - 1);
+}
+
+///
+///  周期通知の数
+///
+fn numOfCyc() usize {
+    return @intCast(cfg._kernel_tmax_cycid - TMIN_CYCID + 1);
 }
 
 ///
 ///  周期通知IDから周期通知管理ブロックを取り出すための関数
 ///
 fn indexCyc(cycid: ID) usize {
-    return @intCast(usize, cycid - TMIN_CYCID);
+    return @intCast(cycid - TMIN_CYCID);
 }
 fn checkAndGetCycCB(cycid: ID) ItronError!*CYCCB {
     try checkId(TMIN_CYCID <= cycid and cycid <= maxCycId());
@@ -144,15 +156,15 @@ fn checkAndGetCycCB(cycid: ID) ItronError!*CYCCB {
 ///  周期通知機能の初期化
 ///
 pub fn initialize_cyclic() void {
-    for (cfg._kernel_cyccb_table[0..cfg._kernel_cycinib_table.len]) |*p_cyccb, i| {
+    for (cfg._kernel_cyccb_table[0..cfg._kernel_cycinib_table.len], 0..) |*p_cyccb, i| {
         p_cyccb.p_cycinib = &cfg._kernel_cycinib_table[i];
         p_cyccb.tmevtb.callback = callCyclic;
-        p_cyccb.tmevtb.arg = @ptrToInt(p_cyccb);
+        p_cyccb.tmevtb.arg = @intFromPtr(p_cyccb);
         if ((p_cyccb.p_cycinib.cycatr & TA_STA) != 0) {
             // 初回の起動のためのタイムイベントを登録する［ASPD1035］
             // ［ASPD1062］．
             p_cyccb.cycsta = true;
-            p_cyccb.tmevtb.evttim = @intCast(EVTTIM, p_cyccb.p_cycinib.cycphs);
+            p_cyccb.tmevtb.evttim = @as(EVTTIM, @intCast(p_cyccb.p_cycinib.cycphs));
             tmevtb_register(&p_cyccb.tmevtb);
         } else {
             p_cyccb.cycsta = false;
@@ -230,7 +242,7 @@ pub fn ref_cyc(cycid: ID, pk_rcyc: *T_RCYC) ItronError!void {
 ///  周期通知起動ルーチン
 ///
 fn callCyclic(arg: usize) void {
-    const p_cyccb = @intToPtr(*CYCCB, arg);
+    const p_cyccb = @as(*CYCCB, @ptrFromInt(arg));
 
     // 次回の起動のためのタイムイベントを登録する［ASPD1037］．
     p_cyccb.tmevtb.evttim += p_cyccb.p_cycinib.cyctim; //［ASPD1038］
@@ -277,7 +289,7 @@ pub fn cre_cyc(comptime ccyc: T_CCYC) ItronError!CYCINIB {
 ///
 ///  周期通知に関するコンフィギュレーションデータのの生成（静的APIの処理）
 ///
-pub fn ExportCycCfg(cycinib_table: []CYCINIB) type {
+pub fn ExportCycCfg(comptime cycinib_table: []CYCINIB) type {
     // チェック処理用の定義の生成
     exportCheck(@sizeOf(CYCINIB), "sizeof_CYCINIB");
     exportCheck(@offsetOf(CYCINIB, "cycatr"), "offsetof_CYCINIB_cycatr");
@@ -286,7 +298,8 @@ pub fn ExportCycCfg(cycinib_table: []CYCINIB) type {
 
     const tnum_cyc = cycinib_table.len;
     return struct {
-        pub export const _kernel_cycinib_table = cycinib_table;
+        pub export const _kernel_cycinib_table: ?*CYCINIB = if (tnum_cyc == 0) null else &cycinib_table[0];
+        pub export const _kernel_tnum_cyc = tnum_cyc;
 
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする

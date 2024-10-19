@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
 ///                                 Toyohashi Univ. of Technology, JAPAN
 ///  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
@@ -129,12 +129,12 @@ fn EVTTIM_LE(t1: EVTTIM, t2: EVTTIM) bool {
 ///
 ///  コールバック関数のデータ型の定義
 ///
-pub const CBACK = fn (usize) void;
+pub const CBACK = *const fn (usize) void;
 
 ///
 ///  タイムイベントブロックのデータ型の定義
 ///
-pub const TMEVTB = struct {
+pub const TMEVTB = extern struct {
     evttim: EVTTIM, // タイムイベントの発生時刻
     index: usize, // タイムイベントヒープ中での位置
     callback: CBACK, // コールバック関数
@@ -388,10 +388,10 @@ pub fn update_current_evttim() void {
     current_hrtcnt = new_hrtcnt; //［ASPD1016］
 
     previous_evttim = current_evttim;
-    current_evttim +%= @intCast(EVTTIM, hrtcnt_advance); //［ASPD1015］
+    current_evttim +%= @as(EVTTIM, @intCast(hrtcnt_advance)); //［ASPD1015］
     boundary_evttim = current_evttim -% BOUNDARY_MARGIN; //［ASPD1011］
 
-    if (monotonic_evttim -% previous_evttim < @intCast(EVTTIM, hrtcnt_advance)) {
+    if (monotonic_evttim -% previous_evttim < @as(EVTTIM, @intCast(hrtcnt_advance))) {
         if (current_evttim < monotonic_evttim) { //［ASPD1045］
             systim_offset +%= @as(SYSTIM, 1) << @bitSizeOf(EVTTIM);
         }
@@ -424,7 +424,7 @@ pub fn set_hrt_event() void {
     } else if (EVTTIM_LE(top_evttim(), current_evttim)) {
         target_timer.hrt.raise_event(); //［ASPD1017］
     } else {
-        const hrtcnt = @intCast(HRTCNT, top_evttim() -% current_evttim);
+        const hrtcnt = @as(HRTCNT, @intCast(top_evttim() -% current_evttim));
         if (HRTCNT_BOUND == null or hrtcnt <= HRTCNT_BOUND.?) {
             target_timer.hrt.set_event(hrtcnt); //［ASPD1006］
         } else { //［ASPD1002］
@@ -521,7 +521,7 @@ pub fn tmevt_lefttim(p_tmevtb: *TMEVTB) RELTIM {
         // タイムイベントの発生時刻を過ぎている場合には0を返す［NGKI0552］．
         return 0;
     } else {
-        return @intCast(RELTIM, evttim -% current_evttim_ub);
+        return @as(RELTIM, @intCast(evttim -% current_evttim_ub));
     }
 }
 

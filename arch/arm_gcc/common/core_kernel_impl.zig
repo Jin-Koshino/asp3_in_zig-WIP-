@@ -253,9 +253,9 @@ pub const TOPPERS_ISTKPT = true;
 ///
 ///  タスクコンテキストブロック
 ///
-pub const TSKCTXB = struct {
+pub const TSKCTXB = extern struct {
     sp: *u8, // スタックポインタ
-    pc: fn () callconv(.Naked) void, // 実行再開番地
+    pc: *const fn () callconv(.Naked) void, // 実行再開番地
 };
 
 ///
@@ -565,7 +565,7 @@ pub const ExternIntIniB = struct {
 ///
 extern fn _kernel_default_int_handler() void;
 
-pub fn ExportInhIniB(inhinib_list: []interrupt.INHINIB) type {
+pub fn ExportInhIniB(comptime inhinib_list: []interrupt.INHINIB) type {
     // チェック処理用の定義の生成
     exportCheck(TNUM_INHNO, "TNUM_INHNO");
     exportCheck(@sizeOf(INTHDR), "sizeof_INTHDR");
@@ -584,14 +584,14 @@ pub fn ExportInhIniB(inhinib_list: []interrupt.INHINIB) type {
 ///
 
 // 割込み要求ライン初期化ブロック
-fn ExportIniB(intinib_list: []interrupt.INTINIB) type {
+fn ExportIniB(comptime intinib_list: []interrupt.INTINIB) type {
     return struct {
-        pub export const _kernel_intinib_table = intinib_list;
+        pub export const _kernel_intinib_table: ?*interrupt.INTINIB = if (intinib_list.len == 0) null else &intinib_list[0];
     };
 }
 
 // 割込み要求ライン設定テーブル
-fn ExportCfg(intinib_list: []interrupt.INTINIB) type {
+fn ExportCfg(comptime intinib_list: []interrupt.INTINIB) type {
     comptime var intcfg_table = [1]bool{false} ** TNUM_INTNO;
     for (intinib_list) |intinib| {
         intcfg_table[intinib.intno] = true;
@@ -601,8 +601,8 @@ fn ExportCfg(intinib_list: []interrupt.INTINIB) type {
     };
 }
 
-pub fn ExportIntIniB(intinib_list: []interrupt.INTINIB) type {
-    _ = intinib_list;
+pub fn ExportIntIniB(comptime intinib_list: []interrupt.INTINIB) type {
+
     return struct {
         pub usingnamespace if (isTrue(target_impl.mpcore_kernel_impl.gic_kernel_impl, "USE_INTINIB_TABLE"))
             ExportIniB(intinib_list)
@@ -916,13 +916,13 @@ pub const ExternExcIniB = struct {
 ///
 extern fn _kernel_default_exc_handler(p_excinf: *T_EXCINF, excno: EXCNO) void;
 
-pub fn ExportExcIniB(excinib_list: []exception.EXCINIB) type {
+pub fn ExportExcIniB(comptime excinib_list: []exception.EXCINIB) type {
     // チェック処理用の定義の生成
     exportCheck(TNUM_EXCNO, "TNUM_EXCNO");
     exportCheck(@sizeOf(EXCHDR), "sizeof_EXCHDR");
 
     comptime var exc_table =
-        [1]EXCHDR{@ptrCast(EXCHDR, _kernel_default_exc_handler)} ** TNUM_EXCNO;
+        [1]EXCHDR{@as(EXCHDR, @ptrCast(&_kernel_default_exc_handler))} ** TNUM_EXCNO;
     for (excinib_list) |excinib| {
         exc_table[excinib.excno] = excinib.exchdr;
     }
@@ -960,7 +960,7 @@ pub fn exc_sense_context(p_excinf: *T_EXCINF) bool {
 ///  CPU例外の発生した時の割込み優先度マスクの参照
 ///
 pub fn exc_get_intpri(p_excinf: *T_EXCINF) PRI {
-    return @intCast(PRI, p_excinf.intpri);
+    return @as(PRI, @intCast(p_excinf.intpri));
 }
 
 ///
@@ -1720,7 +1720,7 @@ fn arm_mmu_initialize() void {
     }
 
     // 変換テーブルとして，section_tableを使用する．
-    reg = @intCast(u32, @ptrToInt(&section_table)) | TTBR_CONFIG;
+    reg = @as(u32, @intCast(@intFromPtr(&section_table))) | TTBR_CONFIG;
     arm.CP15_WRITE_TTBR0(reg);
 
     // ドメインアクセス制御の設定
@@ -2089,6 +2089,6 @@ pub const CoreExportDefs = struct {
     ///  この関数自身はリンクされず，最終的な実行ファイルには残らない．
     ///
     export fn _kernel_vector_table() callconv(.Naked) usize {
-        return @ptrToInt(vector_table);
+        return @intFromPtr(vector_table);
     }
 };

@@ -42,22 +42,22 @@ comptime {
 ///  OSタイマレジスタの番地の定義
 ///
 fn OSTM_CMP(base: usize) *u32 {
-    return @intToPtr(*u32, base + 0x00);
+    return @as(*u32, @ptrFromInt(base + 0x00));
 }
 fn OSTM_CNT(base: usize) *u32 {
-    return @intToPtr(*u32, base + 0x04);
+    return @as(*u32, @ptrFromInt(base + 0x04));
 }
 fn OSTM_TE(base: usize) *u8 {
-    return @intToPtr(*u8, base + 0x10);
+    return @as(*u8, @ptrFromInt(base + 0x10));
 }
 fn OSTM_TS(base: usize) *u8 {
-    return @intToPtr(*u8, base + 0x14);
+    return @as(*u8, @ptrFromInt(base + 0x14));
 }
 fn OSTM_TT(base: usize) *u8 {
-    return @intToPtr(*u8, base + 0x18);
+    return @as(*u8, @ptrFromInt(base + 0x18));
 }
 fn OSTM_CTL(base: usize) *u8 {
-    return @intToPtr(*u8, base + 0x20);
+    return @as(*u8, @ptrFromInt(base + 0x20));
 }
 
 ///
@@ -131,7 +131,7 @@ pub const hrt = struct {
 
         // μ秒単位に変換（クロックが33.33…MHzである前提）
         const cnt1 = cnt / 1000000000;
-        return @intCast(HRTCNT, (cnt - cnt1 * 999999999) * 3 / 100 + cnt1 * 30000000);
+        return @as(HRTCNT, @intCast((cnt - cnt1 * 999999999) * 3 / 100 + cnt1 * 30000000));
     }
 
     ///
@@ -141,7 +141,7 @@ pub const hrt = struct {
     ///  発生させるように設定する．
     ///
     pub fn set_event(hrtcnt: HRTCNT) void {
-        const cnt = @intCast(u32, hrtcnt * 33 + hrtcnt / 3 + 1);
+        const cnt = @as(u32, @intCast(hrtcnt * 33 + hrtcnt / 3 + 1));
 
         // 現在のカウント値を読み，hrtcnt後に割込みが発生するように設定する．
         const current = sil.rew_mem(OSTM_CNT(rza1.OSTM0_BASE));
@@ -213,7 +213,7 @@ pub const ovrtimer = struct {
     ///  オーバランタイマの動作開始
     ///
     pub fn start(ovrtim: PRCTIM) void {
-        const cnt = @intCast(u32, ovrtim * 33 + ovrtim / 3 + 1);
+        const cnt = @as(u32, @intCast(ovrtim * 33 + ovrtim / 3 + 1));
         sil.wrw_mem(OSTM_CMP(rza1.OSTM1_BASE), cnt);
         sil.wrb_mem(OSTM_TS(rza1.OSTM1_BASE), OSTM_TS_START);
     }
@@ -231,7 +231,7 @@ pub const ovrtimer = struct {
             return 0;
         } else {
             const cnt = sil.rew_mem(OSTM_CNT(rza1.OSTM1_BASE));
-            return @intCast(PRCTIM, (cnt + 34) / 5 * 3 / 20);
+            return @as(PRCTIM, @intCast((cnt + 34) / 5 * 3 / 20));
         }
     }
 
@@ -244,7 +244,7 @@ pub const ovrtimer = struct {
             return 0;
         } else {
             const cnt = sil.rew_mem(OSTM_CNT(rza1.OSTM1_BASE));
-            return @intCast(PRCTIM, (cnt + 34) / 5 * 3 / 20);
+            return @as(PRCTIM, @intCast((cnt + 34) / 5 * 3 / 20));
         }
     }
 

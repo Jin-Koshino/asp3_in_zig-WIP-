@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
 ///                                 Toyohashi Univ. of Technology, JAPAN
 ///  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
@@ -180,7 +180,7 @@ pub fn ras_ter(tskid: ID) ItronError!void {
                 if (isWaiting(p_tcb.tstat)) {
                     wait_dequeue_wobj(p_tcb); //［NGKI3479］
                     wait_dequeue_tmevtb(p_tcb);
-                    p_tcb.p_winfo.* = WINFO{ .werror = ItronError.TerminationRequestRaised };
+                    p_tcb.p_winfo.* = WINFO{ .werror = @constCast(&ItronError.TerminationRequestRaised) };
                 } //［NGKI3480］
                 p_tcb.tstat = TS_RUNNABLE; //［NGKI3606］
                 traceLog("taskStateChange", .{p_tcb});

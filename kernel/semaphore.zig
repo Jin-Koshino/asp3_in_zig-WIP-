@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
 ///                                 Toyohashi Univ. of Technology, JAPAN
 ///  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
@@ -129,7 +129,7 @@ const TMAX_MAXSEM = zig.TMAX_MAXSEM;
 ///  （WOBJINIB）を拡張（オブジェクト指向言語の継承に相当）したもので，
 ///  最初のフィールドが共通になっている．
 ///
-pub const SEMINIB = struct {
+pub const SEMINIB = extern struct {
     wobjatr: t_stddef.ATR, // セマフォ属性
     isemcnt: u32, // セマフォの資源数の初期値
     maxsem: u32, // セマフォの最大資源数
@@ -147,7 +147,7 @@ comptime {
 ///  （WOBJCB）を拡張（オブジェクト指向言語の継承に相当）したもので，
 ///  最初の2つのフィールドが共通になっている．
 ///
-const SEMCB = struct {
+const SEMCB = extern struct {
     wait_queue: queue.Queue, // セマフォ待ちキュー
     p_wobjinib: *const SEMINIB, // 初期化ブロックへのポインタ
     semcnt: u32, // セマフォ現在カウント値
@@ -165,7 +165,7 @@ comptime {
 ///  （WINFO_WOBJ）を拡張（オブジェクト指向言語の継承に相当）したもの
 ///  で，すべてのフィールドが共通になっている．
 ///
-const WINFO_SEM = struct {
+const WINFO_SEM = extern struct {
     winfo: WINFO, // 標準の待ち情報ブロック
     p_wobjcb: *SEMCB, // 待っているセマフォの管理ブロック
 };
@@ -180,9 +180,11 @@ comptime {
 ///
 pub const ExternSemCfg = struct {
     ///
+    pub extern const _kernel_tmax_semid: ID;
+
     ///  セマフォ初期化ブロック（スライス）
     ///
-    pub extern const _kernel_seminib_table: []SEMINIB;
+    pub extern const _kernel_seminib_table: [100]SEMINIB;
 
     ///
     ///  セマフォ管理ブロックのエリア
@@ -195,14 +197,21 @@ pub const ExternSemCfg = struct {
 ///  セマフォIDの最大値
 ///
 fn maxSemId() ID {
-    return @intCast(ID, TMIN_SEMID + cfg._kernel_seminib_table.len - 1);
+    return @intCast(TMIN_SEMID + cfg._kernel_seminib_table.len - 1);
+}
+
+///
+///  セマフォの数
+///
+fn numOfSem() usize {
+    return @intCast(cfg._kernel_tmax_semid - TMIN_SEMID + 1);
 }
 
 ///
 ///  セマフォIDからセマフォ管理ブロックを取り出すための関数
 ///
 fn indexSem(semid: ID) usize {
-    return @intCast(usize, semid - TMIN_SEMID);
+    return @intCast(semid - TMIN_SEMID);
 }
 fn checkAndGetSemCB(semid: ID) ItronError!*SEMCB {
     try checkId(TMIN_SEMID <= semid and semid <= maxSemId());
@@ -213,7 +222,7 @@ fn checkAndGetSemCB(semid: ID) ItronError!*SEMCB {
 ///  セマフォ管理ブロックからセマフォIDを取り出すための関数
 ///
 fn getSemIdFromSemCB(p_semcb: *SEMCB) ID {
-    return @intCast(ID, (@ptrToInt(p_semcb) - @ptrToInt(&cfg._kernel_semcb_table)) / @sizeOf(SEMCB)) + TMIN_SEMID;
+    return @as(ID, @intCast((@intFromPtr(p_semcb) - @intFromPtr(&cfg._kernel_semcb_table)) / @sizeOf(SEMCB))) + TMIN_SEMID;
 }
 
 ///
@@ -234,7 +243,7 @@ pub fn getSemIdFromWinfo(p_winfo: *WINFO) ID {
 ///  セマフォ機能の初期化
 ///
 pub fn initialize_semaphore() void {
-    for (cfg._kernel_semcb_table[0..cfg._kernel_seminib_table.len]) |*p_semcb, i| {
+    for (cfg._kernel_semcb_table[0..cfg._kernel_seminib_table.len], 0..) |*p_semcb, i| {
         p_semcb.wait_queue.initialize();
         p_semcb.p_wobjinib = &cfg._kernel_seminib_table[i];
         p_semcb.semcnt = p_semcb.p_wobjinib.isemcnt;
@@ -287,7 +296,7 @@ pub fn wai_sem(semid: ID) ItronError!void {
             wobj_make_wait(p_semcb, TS_WAITING_SEM, &winfo_sem);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_sem.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
         }
     }
@@ -340,7 +349,7 @@ pub fn twai_sem(semid: ID, tmout: TMO) ItronError!void {
             wobj_make_wait_tmout(p_semcb, TS_WAITING_SEM, &winfo_sem, &tmevtb, tmout);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_sem.winfo.werror) |werror| {
-                return werror;
+                return werror.*;
             }
         }
     }
@@ -411,10 +420,11 @@ pub fn cre_sem(csem: T_CSEM) ItronError!SEMINIB {
 ///
 ///  セマフォに関するコンフィギュレーションデータの生成（静的APIの処理）
 ///
-pub fn ExportSemCfg(seminib_table: []SEMINIB) type {
+pub fn ExportSemCfg(comptime seminib_table: []SEMINIB) type {
     const tnum_sem = seminib_table.len;
     return struct {
-        pub export const _kernel_seminib_table = seminib_table;
+        pub export const _kernel_seminib_table: ?*SEMINIB = if(tnum_sem == 0) null else &seminib_table[0];
+        pub export const _kernel_tnum_sem = tnum_sem;
 
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする

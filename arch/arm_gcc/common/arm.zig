@@ -48,7 +48,7 @@ const builtin = @import("builtin");
 ///
 pub const Feature = std.Target.arm.Feature;
 pub fn isEnabled(feature: Feature) bool {
-    return builtin.cpu.features.isEnabled(@enumToInt(feature));
+    return builtin.cpu.features.isEnabled(@intFromEnum(feature));
 }
 
 ///
@@ -924,12 +924,12 @@ pub fn v7_invalidate_dcache() void {
         const no_levels = (clidr >> 24) & 0x07;
         var level: u32 = 0;
         while (level < no_levels) : (level += 1) {
-            if (((clidr >> @intCast(u5, level * 3)) & 0x07) >= 0x02) {
+            if (((clidr >> @as(u5, @intCast(level * 3))) & 0x07) >= 0x02) {
                 CP15_WRITE_CSSELR(level << 1);
                 inst_sync_barrier();
                 const ccsidr = CP15_READ_CCSIDR();
                 const no_sets = ((ccsidr >> 13) & 0x7fff) + 1;
-                const shift_set = @intCast(u5, (ccsidr & 0x07) + 4);
+                const shift_set = @as(u5, @intCast((ccsidr & 0x07) + 4));
                 const no_ways = ((ccsidr >> 3) & 0x3ff) + 1;
                 if (no_ways == 1) {
                     var set: u32 = 0;
@@ -938,7 +938,7 @@ pub fn v7_invalidate_dcache() void {
                         CP15_WRITE_DCISW(setlevel);
                     }
                 } else {
-                    const shift_way = @intCast(u5, @clz(u32, no_ways - 1));
+                    const shift_way = @as(u5, @intCast(@clz(no_ways - 1)));
                     var way: u32 = 0;
                     while (way < no_ways) : (way += 1) {
                         const waylevel = (way << shift_way) | (level << 1);
@@ -966,12 +966,12 @@ pub fn v7_clean_and_invalidate_dcache() void {
         const no_levels = (clidr >> 24) & 0x07;
         var level: u32 = 0;
         while (level < no_levels) : (level += 1) {
-            if (((clidr >> @intCast(u5, level * 3)) & 0x07) >= 0x02) {
+            if (((clidr >> @as(u5, @intCast(level * 3))) & 0x07) >= 0x02) {
                 CP15_WRITE_CSSELR(level << 1);
                 inst_sync_barrier();
                 const ccsidr = CP15_READ_CCSIDR();
                 const no_sets = ((ccsidr >> 13) & 0x7fff) + 1;
-                const shift_set = @intCast(u5, (ccsidr & 0x07) + 4);
+                const shift_set = @as(u5, @intCast((ccsidr & 0x07) + 4));
                 const no_ways = ((ccsidr >> 3) & 0x3ff) + 1;
                 if (no_ways == 1) {
                     var set: u32 = 0;
@@ -980,7 +980,7 @@ pub fn v7_clean_and_invalidate_dcache() void {
                         CP15_WRITE_DCCISW(setlevel);
                     }
                 } else {
-                    const shift_way = @intCast(u5, @clz(u32, no_ways - 1));
+                    const shift_way = @as(u5, @intCast(@clz(no_ways - 1)));
                     var way: u32 = 0;
                     while (way < no_ways) : (way += 1) {
                         const waylevel = (way << shift_way) | (level << 1);

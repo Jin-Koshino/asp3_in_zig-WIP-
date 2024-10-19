@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
 ///                                 Toyohashi Univ. of Technology, JAPAN
 ///  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
@@ -278,35 +278,35 @@ pub fn attachTerminateRoutine(ater: T_ATER) ItronError!TERRTNB {
 ///
 ///  初期化ルーチンブロックの生成（静的APIの処理）
 ///
-pub fn ExportIniRtnB(inirtnb_table: []INIRTNB) type {
+pub fn ExportIniRtnB(comptime inirtnb_table: []INIRTNB) type {
     // チェック処理用の定義の生成
     exportCheck(@sizeOf(INIRTNB), "sizeof_INIRTNB");
     exportCheck(@sizeOf(INIRTN), "sizeof_INIRTN");
     exportCheck(@offsetOf(INIRTNB, "inirtn"), "offsetof_INIRTNB_inirtn");
 
     return struct {
-        pub export const _kernel_inirtnb_table = inirtnb_table;
+        pub export const _kernel_inirtnb_table: ?*INIRTNB = if (inirtnb_table.len == 0) null else &inirtnb_table[0];
     };
 }
 
 ///
 ///  終了処理ルーチンブロックの生成（静的APIの処理）
 ///
-pub fn ExportTerRtnB(terrtnb_table: []TERRTNB) type {
+pub fn ExportTerRtnB(comptime terrtnb_table: []TERRTNB) type {
     // チェック処理用の定義の生成
     exportCheck(@sizeOf(TERRTNB), "sizeof_TERRTNB");
     exportCheck(@sizeOf(TERRTN), "sizeof_TERRTN");
     exportCheck(@offsetOf(TERRTNB, "terrtn"), "offsetof_TERRTNB_terrtn");
 
     return struct {
-        pub export const _kernel_terrtnb_table = terrtnb_table;
+        pub export const _kernel_terrtnb_table: ?*TERRTNB = if (terrtnb_table.len == 0) null else &terrtnb_table[0];
     };
 }
 
 ///
 ///  非タスクコンテキスト用スタック領域関係のデータの生成（静的APIの処理）
 ///
-pub fn ExportIcs(dics: T_DICS) type {
+pub fn ExportIcs(comptime dics: T_DICS) type {
     const istksz = TOPPERS_ROUND_SZ(dics.istksz, STACK_ALIGN);
     return struct {
         pub export const _kernel_istksz: usize = istksz;

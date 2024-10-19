@@ -111,8 +111,8 @@ pub fn config_int(intno: INTNO, intatr: ATR, intpri: PRI) void {
     // 割込みをコンフィギュレーション
     if (rza1.INTNO_IRQ0 <= intno and intno <= rza1.INTNO_IRQ7) {
         var reg = sil.reh_mem(rza1.RZA1_ICR1);
-        reg &= ~(@as(u16, 0x03) << @intCast(u4, (intno - rza1.INTNO_IRQ0) * 2));
-        reg |= (@intCast(u16, intatr >> 2) << @intCast(u4, (intno - rza1.INTNO_IRQ0) * 2));
+        reg &= ~(@as(u16, 0x03) << @as(u4, @intCast((intno - rza1.INTNO_IRQ0) * 2)));
+        reg |= (@as(u16, @intCast(intatr >> 2)) << @as(u4, @intCast((intno - rza1.INTNO_IRQ0) * 2)));
         sil.wrh_mem(rza1.RZA1_ICR1, reg);
     }
 
@@ -133,7 +133,7 @@ pub fn config_int(intno: INTNO, intatr: ATR, intpri: PRI) void {
 
     // 割込み優先度とターゲットプロセッサを設定
     mpcore.gicd_set_priority(intno, mpcore.internalIpm(intpri));
-    mpcore.gicd_set_target(intno, @as(u32, 1) << @intCast(u5, arm.get_my_prcidx()));
+    mpcore.gicd_set_target(intno, @as(u32, 1) << @as(u5, @intCast(arm.get_my_prcidx())));
 
     // 割込みを許可
     if ((intatr & TA_ENAINT) != 0) {
