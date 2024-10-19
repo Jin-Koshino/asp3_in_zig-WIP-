@@ -2,7 +2,8 @@
 TOPPERS/ASP3 Kernel written in Zig Programming Language
 
 このレポジトリは、TOPPERS Projectのレポジトリ[asp3_in_zig](https://github.com/toppers/asp3_in_zig)からJin-Koshinoがforkしたものです。
-
+masterブランチのコミットは変更作業が完了していないため、ビルド時にエラーが発生します。
+現在サンプルプログラムを実行可能なコミットは、タグ"v0.9.1-ct11mpcore"が付けられたコミットです。ct11mpcoreをターゲットとした場合にのみサンプルプログラムを実行可能です。
 
 ビルド&実行方法（例）
 
