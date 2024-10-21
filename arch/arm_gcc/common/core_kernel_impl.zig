@@ -550,9 +550,15 @@ pub const ExternInhIniB = struct {
 ///
 pub const ExternIntIniB = struct {
     ///
-    ///  割込み要求ライン初期化ブロック（スライス）
+    ///  設定する割込み要求ラインの数
     ///
-    pub extern const _kernel_intinib_table: []interrupt.INTINIB;
+    pub extern const _kernel_tnum_cfg_intno: c_uint;
+
+    ///
+    ///  割込み要求ライン初期化ブロックのエリア
+    ///
+    // zigの不具合と思われる現象の回避（*c を大きい数字に置き換えた）
+    pub extern const _kernel_intinib_table: [100]interrupt.INTINIB;
 
     ///
     ///  割込み要求ライン設定テーブル

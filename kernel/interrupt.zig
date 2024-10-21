@@ -215,7 +215,7 @@ const TARGET_ISRATR = decl(ATR, target_impl, "TARGET_ISRATR", 0);
 ///  割込み要求ライン初期化ブロック
 ///
 pub const INTINIB =
-    if (@hasDecl(target_impl, "INTINIB")) target_impl.INTINIB else struct {
+    if (@hasDecl(target_impl, "INTINIB")) target_impl.INTINIB else extern struct {
     intno: INTNO, // 割込み番号
     intatr: ATR, // 割込み属性
     intpri: PRI, // 割込み優先度
@@ -225,7 +225,7 @@ pub const INTINIB =
 ///  割込みハンドラ初期化ブロック
 ///
 pub const INHINIB =
-    if (@hasDecl(target_impl, "INHINIB")) target_impl.INHINIB else struct {
+    if (@hasDecl(target_impl, "INHINIB")) target_impl.INHINIB else extern struct {
     inhno: INHNO, // 割込みハンドラ番号
     inhatr: ATR, // 割込みハンドラ属性
     inthdr: INTHDR, // 割込みハンドラの先頭の番地
