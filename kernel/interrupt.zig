@@ -276,7 +276,7 @@ pub fn initialize_interrupt() void {
 pub fn dis_int(intno: INTNO) ItronError!void {
     traceLog("disIntEnter", .{intno});
     errdefer |err| traceLog("disIntLeave", .{err});
-    comptime try checkNotSupported(TOPPERS_SUPPORT_DIS_INT); //［NGKI3093］
+    try comptime checkNotSupported(TOPPERS_SUPPORT_DIS_INT); //［NGKI3093］
     try checkParameter(validIntnoDisInt(intno)); //［NGKI3083］［NGKI3087］
     {
         var locked = target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock();
@@ -304,7 +304,7 @@ pub fn dis_int(intno: INTNO) ItronError!void {
 pub fn ena_int(intno: INTNO) ItronError!void {
     traceLog("enaIntEnter", .{intno});
     errdefer |err| traceLog("enaIntLeave", .{err});
-    comptime try checkNotSupported(TOPPERS_SUPPORT_DIS_INT); //［NGKI3106］
+    try comptime checkNotSupported(TOPPERS_SUPPORT_DIS_INT); //［NGKI3106］
     try checkParameter(validIntnoDisInt(intno)); //［NGKI3096］［NGKI3100］
 
     {
@@ -333,7 +333,7 @@ pub fn ena_int(intno: INTNO) ItronError!void {
 pub fn clr_int(intno: INTNO) ItronError!void {
     traceLog("clrIntEnter", .{intno});
     errdefer |err| traceLog("clrIntLeave", .{err});
-    comptime try checkNotSupported(TOPPERS_SUPPORT_CLR_INT); //［NGKI3927］
+    try comptime checkNotSupported(TOPPERS_SUPPORT_CLR_INT); //［NGKI3927］
     try checkParameter(validIntnoClrInt(intno)); //［NGKI3921］［NGKI3930］
 
     {
@@ -362,7 +362,7 @@ pub fn clr_int(intno: INTNO) ItronError!void {
 pub fn ras_int(intno: INTNO) ItronError!void {
     traceLog("rasIntEnter", .{intno});
     errdefer |err| traceLog("rasIntLeave", .{err});
-    comptime try checkNotSupported(TOPPERS_SUPPORT_RAS_INT); //［NGKI3939］
+    try comptime checkNotSupported(TOPPERS_SUPPORT_RAS_INT); //［NGKI3939］
     try checkParameter(validIntnoRasInt(intno)); //［NGKI3933］［NGKI3942］
 
     {
@@ -391,7 +391,7 @@ pub fn ras_int(intno: INTNO) ItronError!void {
 pub fn prb_int(intno: INTNO) ItronError!bool {
     traceLog("prbIntEnter", .{intno});
     errdefer |err| traceLog("prbIntLeave", .{err});
-    comptime try checkNotSupported(TOPPERS_SUPPORT_PRB_INT); //［NGKI3951］
+    try comptime checkNotSupported(TOPPERS_SUPPORT_PRB_INT); //［NGKI3951］
     try checkParameter(validIntnoPrbInt(intno)); //［NGKI3945］［NGKI3952］
     {
         var locked = target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock();

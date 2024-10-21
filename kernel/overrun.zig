@@ -129,7 +129,7 @@ pub fn sta_ovr(tskid: ID, ovrtim: PRCTIM) ItronError!void {
 
     traceLog("staOvrEnter", .{ tskid, ovrtim });
     errdefer |err| traceLog("staOvrLeave", .{err});
-    comptime try checkNotSupported(TOPPERS_SUPPORT_OVRHDR);
+    try comptime checkNotSupported(TOPPERS_SUPPORT_OVRHDR);
     try checkContextUnlock();
     try checkObjectState(cfg._kernel_ovrinib.ovrhdr != null);
     if (tskid == TSK_SELF and !target_impl.mpcore_kernel_impl.core_kernel_impl.senseContext()) {
@@ -162,7 +162,7 @@ pub fn stp_ovr(tskid: ID) ItronError!void {
 
     traceLog("stpOvrEnter", .{tskid});
     errdefer |err| traceLog("stpOvrLeave", .{err});
-    comptime try checkNotSupported(TOPPERS_SUPPORT_OVRHDR);
+    try comptime checkNotSupported(TOPPERS_SUPPORT_OVRHDR);
     try checkContextUnlock();
     try checkObjectState(cfg._kernel_ovrinib.ovrhdr != null);
     if (tskid == TSK_SELF and !target_impl.mpcore_kernel_impl.core_kernel_impl.senseContext()) {
@@ -192,7 +192,7 @@ pub fn ref_ovr(tskid: ID, pk_rovr: *T_ROVR) ItronError!void {
 
     traceLog("refOvrEnter", .{ tskid, pk_rovr });
     errdefer |err| traceLog("refOvrLeave", .{ err, pk_rovr });
-    comptime try checkNotSupported(TOPPERS_SUPPORT_OVRHDR);
+    try comptime checkNotSupported(TOPPERS_SUPPORT_OVRHDR);
     try checkContextTaskUnlock();
     try checkObjectState(cfg._kernel_ovrinib.ovrhdr != null);
     if (tskid == TSK_SELF) {
