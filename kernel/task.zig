@@ -378,13 +378,13 @@ pub const ExternTskCfg = struct {
     ///  タスク生成順序テーブル
     ///
     // Zigの制限事項の回避：十分に大きいサイズの配列とする
-    pub extern const _kernel_torder_table: [1000]ID;
+    pub extern const _kernel_torder_table: [100]ID;
 
     ///
     ///  TCBのエリア
     ///
     // Zigの制限事項の回避：十分に大きいサイズの配列とする
-    pub extern var _kernel_tcb_table: [1000]TCB;
+    pub extern var _kernel_tcb_table: [100]TCB;
 };
 
 ///

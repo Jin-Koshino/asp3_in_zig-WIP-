@@ -223,7 +223,7 @@ pub const ExternPdqCfg = struct {
     ///  優先度データキュー管理ブロックのエリア
     ///
     // Zigの制限事項の回避：十分に大きいサイズの配列とする
-    pub extern var _kernel_pdqcb_table: [1000]PDQCB;
+    pub extern var _kernel_pdqcb_table: [100]PDQCB;
 };
 
 ///

@@ -124,7 +124,7 @@ pub const ExternCycCfg = struct {
     ///  周期通知管理ブロックのエリア
     ///
     // Zigの制限事項の回避：十分に大きいサイズの配列とする
-    pub extern var _kernel_cyccb_table: [1000]CYCCB;
+    pub extern var _kernel_cyccb_table: [100]CYCCB;
 };
 
 ///

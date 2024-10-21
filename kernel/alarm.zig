@@ -118,7 +118,7 @@ pub const ExternAlmCfg = struct {
     ///  アラーム通知管理ブロックのエリア
     ///
     // Zigの制限事項の回避：十分に大きいサイズの配列とする
-    pub extern var _kernel_almcb_table: [1000]ALMCB;
+    pub extern var _kernel_almcb_table: [100]ALMCB;
 };
 
 ///

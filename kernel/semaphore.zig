@@ -190,7 +190,7 @@ pub const ExternSemCfg = struct {
     ///  セマフォ管理ブロックのエリア
     ///
     // Zigの制限事項の回避：十分に大きいサイズの配列とする
-    pub extern var _kernel_semcb_table: [1000]SEMCB;
+    pub extern var _kernel_semcb_table: [100]SEMCB;
 };
 
 ///

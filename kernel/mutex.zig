@@ -196,7 +196,7 @@ pub const ExternMtxCfg = struct {
     ///  ミューテックス管理ブロックのエリア
     ///
     // Zigの制限事項の回避：十分に大きいサイズの配列とする
-    pub extern var _kernel_mtxcb_table: [1000]MTXCB;
+    pub extern var _kernel_mtxcb_table: [100]MTXCB;
 };
 
 ///

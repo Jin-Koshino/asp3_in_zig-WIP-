@@ -206,7 +206,7 @@ pub const ExternMpfCfg = struct {
     ///  固定長メモリプール管理ブロックのエリア
     ///
     // Zigの制限事項の回避：十分に大きいサイズの配列とする
-    pub extern var _kernel_mpfcb_table: [1000]MPFCB;
+    pub extern var _kernel_mpfcb_table: [100]MPFCB;
 };
 
 ///

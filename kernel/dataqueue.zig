@@ -188,7 +188,7 @@ pub const ExternDtqCfg = struct {
     ///  データキュー管理ブロックのエリア
     ///
     // Zigの制限事項の回避：十分に大きいサイズの配列とする
-    pub extern var _kernel_dtqcb_table: [1000]DTQCB;
+    pub extern var _kernel_dtqcb_table: [100]DTQCB;
 };
 
 ///

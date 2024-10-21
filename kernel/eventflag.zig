@@ -177,7 +177,7 @@ pub const ExternFlgCfg = struct {
     ///  イベントフラグ管理ブロックのエリア
     ///
     // Zigの制限事項の回避：十分に大きいサイズの配列とする
-    pub extern var _kernel_flgcb_table: [1000]FLGCB;
+    pub extern var _kernel_flgcb_table: [100]FLGCB;
 };
 
 ///
