@@ -186,7 +186,7 @@ pub fn traceLog(comptime log_type: []const u8, args: anytype) void {
 ///  アラインメントも含めてポインタをキャスト
 ///
 pub fn ptrAlignCast(comptime T: type, ptr: anytype) T {
-    return @ptrCast(@as(@alignOf(T), @alignCast(ptr)));
+    return @ptrCast(@alignCast(ptr));
 }
 
 ///
