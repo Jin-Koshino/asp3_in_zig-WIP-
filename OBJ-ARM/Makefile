@@ -466,7 +466,7 @@ endif
 #
 .PHONY: $(APPL_ZIGOBJS)
 $(APPL_ZIGOBJS): $(OBJDIR)/%.o: %.zig
-	zig build-obj -femit-bin=$@ $(ZIGFLAGS) $<
+	zig build-obj -freference-trace -femit-bin=$@ $(ZIGFLAGS) $<
 
 $(SYSSVC_COBJS): $(OBJDIR)/%.o: %.c
 	$(CC) -c -o $@ -MD -MP -MF $(DEPDIR)/$*.d $(CFLAGS) $(SYSSVC_CFLAGS) $<

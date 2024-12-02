@@ -247,7 +247,7 @@ pub fn indexPdq(pdqid: ID) usize {
     return @intCast(pdqid - TMIN_PDQID);
 }
 pub fn checkAndGetPdqCB(pdqid: ID) ItronError!*PDQCB {
-    try checkId(TMIN_PDQID <= pdqid and pdqid <= maxPdqId());
+    try checkId(TMIN_PDQID <= pdqid and pdqid <= cfg._kernel_tmax_pdqid);
     return &cfg._kernel_pdqcb_table[indexPdq(pdqid)];
 }
 
@@ -289,7 +289,7 @@ fn validDataPri(datapri: PRI, maxdpri: PRI) bool {
 ///  優先度データキュー機能の初期化
 ///
 pub fn initialize_pridataq() void {
-    for (cfg._kernel_pdqcb_table[0..cfg._kernel_pdqinib_table.len], 0..) |*p_pdqcb, i| {
+    for (cfg._kernel_pdqcb_table[0..numOfPdq()], 0..) |*p_pdqcb, i| {
         p_pdqcb.swait_queue.initialize();
         p_pdqcb.p_wobjinib = &cfg._kernel_pdqinib_table[i];
         p_pdqcb.rwait_queue.initialize();
@@ -640,11 +640,16 @@ pub fn cre_pdq(comptime cpdq: T_CPDQ) ItronError!PDQINIB {
 pub fn ExportPdqCfg(comptime pdqinib_table: []PDQINIB) type {
     const tnum_pdq = pdqinib_table.len;
     return struct {
-        pub export const _kernel_pdqinib_table: ?*PDQINIB = if (tnum_pdq == 0) null else &pdqinib_table[0];
-        pub export const _kenrel_tnum_pdq = tnum_pdq;
+    pub export const _kernel_tmax_pdqid: ID = tnum_pdq;
 
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする
+        pub export const _kernel_pdqinib_table =
+            if (option.BIND_CFG == null or tnum_pdq > 0)
+                pdqinib_table[0 .. tnum_pdq].*
+            else [1]PDQINIB{ .{ .wobjatr = 0, .pdqcnt = 0,
+                                .maxdpri = 0, .p_pdqmb = null, }};
+
         pub export var _kernel_pdqcb_table: [
             if (option.BIND_CFG == null or tnum_pdq > 0) tnum_pdq else 1
         ]PDQCB = undefined;

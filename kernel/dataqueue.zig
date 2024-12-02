@@ -212,7 +212,7 @@ fn indexDtq(dtqid: ID) usize {
     return @intCast(dtqid - TMIN_DTQID);
 }
 fn checkAndGetDtqCB(dtqid: ID) ItronError!*DTQCB {
-    try checkId(TMIN_DTQID <= dtqid and dtqid <= maxDtqId());
+    try checkId(TMIN_DTQID <= dtqid and dtqid <= cfg._kernel_tmax_dtqid);
     return &cfg._kernel_dtqcb_table[indexDtq(dtqid)];
 }
 
@@ -247,7 +247,7 @@ pub fn getDtqIdFromWinfoRDtq(p_winfo: *WINFO) ID {
 ///  データキュー機能の初期化
 ///
 pub fn initialize_dataqueue() void {
-    for (cfg._kernel_dtqcb_table[0..cfg._kernel_dtqinib_table.len], 0..) |*p_dtqcb, i| {
+    for (cfg._kernel_dtqcb_table[0..numOfDtq()], 0..) |*p_dtqcb, i| {
         p_dtqcb.swait_queue.initialize();
         p_dtqcb.p_wobjinib = &cfg._kernel_dtqinib_table[i];
         p_dtqcb.rwait_queue.initialize();
@@ -608,11 +608,15 @@ pub fn ExportDtqCfg(comptime dtqinib_table: []DTQINIB) type {
     const tnum_dtq = dtqinib_table.len;
 
     return struct {
-        pub export const _kernel_dtqinib_table: ?*DTQINIB = if (tnum_dtq == 0) null else &dtqinib_table[0];
-        pub export const _kernel_tnum_dtq = tnum_dtq;
+        pub export const _kernel_tmax_dtqid: ID = tnum_dtq;
 
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする
+        pub export const _kernel_dtqinib_table =
+            if (option.BIND_CFG == null or tnum_dtq > 0)
+                dtqinib_table[0 .. tnum_dtq].*
+            else [1]DTQINIB{ .{ .wobjatr = 0, .dtqcnt = 0, .p_dtqmb = null, }};
+
         pub export var _kernel_dtqcb_table: [
             if (option.BIND_CFG == null or tnum_dtq > 0) tnum_dtq else 1
         ]DTQCB = undefined;

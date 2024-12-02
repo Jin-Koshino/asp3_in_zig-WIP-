@@ -230,7 +230,7 @@ fn indexMpf(mpfid: ID) usize {
     return @intCast(mpfid - TMIN_MPFID);
 }
 fn checkAndGetMpfCB(mpfid: ID) ItronError!*MPFCB {
-    try checkId(TMIN_MPFID <= mpfid and mpfid <= maxMpfId());
+    try checkId(TMIN_MPFID <= mpfid and mpfid <= cfg._kernel_tmax_mpfid);
     return &cfg._kernel_mpfcb_table[indexMpf(mpfid)];
 }
 
@@ -259,7 +259,7 @@ pub fn getMpfIdFromWinfo(p_winfo: *WINFO) ID {
 ///  固定長メモリプール機能の初期化
 ///
 pub fn initialize_mempfix() void {
-    for (cfg._kernel_mpfcb_table[0..cfg._kernel_mpfinib_table.len], 0..) |*p_mpfcb, i| {
+    for (cfg._kernel_mpfcb_table[0..numOfMpf()], 0..) |*p_mpfcb, i| {
         p_mpfcb.wait_queue.initialize();
         p_mpfcb.p_wobjinib = &cfg._kernel_mpfinib_table[i];
         p_mpfcb.fblkcnt = p_mpfcb.p_wobjinib.blkcnt;
@@ -487,11 +487,17 @@ pub fn ExportMpfCfg(comptime mpfinib_table: []MPFINIB) type {
 
     const tnum_mpf = mpfinib_table.len;
     return struct {
-        pub export const _kernel_mpfinib_table: ?*MPFINIB = if (tnum_mpf == 0) null else &mpfinib_table[0];
-        pub export const _kernel_tnum_mpf = tnum_mpf;
+        pub export const _kernel_tmax_mpfid: ID = tnum_mpf;
         
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする
+        pub export const _kernel_mpfinib_table =
+            if (option.BIND_CFG == null or tnum_mpf > 0)
+                mpfinib_table[0 .. tnum_mpf].*
+            else [1]MPFINIB{ .{ .wobjatr = 0, .blkcnt = 0, .blksz = 0,
+                                .mpf = @as([*]u8, @ptrFromInt(256),),
+                                .p_mpfmb = @as([*]MPFMB, @ptrFromInt(256)), }};
+
         pub export var _kernel_mpfcb_table: [
             if (option.BIND_CFG == null or tnum_mpf > 0) tnum_mpf else 1
         ]MPFCB = undefined;

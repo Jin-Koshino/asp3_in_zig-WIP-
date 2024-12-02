@@ -171,7 +171,7 @@ pub fn make_wait_tmout(tstat: u8, p_winfo: *WINFO, p_tmevtb: *TMEVTB, tmout: TMO
     if (tmout == TMO_FEVR) {
         p_winfo.p_tmevtb = null;
     } else {
-        assert(tmout <= TMAX_RELTIM);
+        assert(tmout <= TMAX_RELTIM, null);
         p_winfo.p_tmevtb = p_tmevtb;
         p_tmevtb.callback = wait_tmout;
         p_tmevtb.arg = @intFromPtr(task.p_runtsk);
@@ -187,7 +187,7 @@ pub fn make_wait_tmout(tstat: u8, p_winfo: *WINFO, p_tmevtb: *TMEVTB, tmout: TMO
 ///  なぐ．
 ///
 pub fn make_non_wait(p_tcb: *TCB) void {
-    assert(isWaiting(p_tcb.tstat));
+    assert(isWaiting(p_tcb.tstat), null);
 
     if (!isSuspended(p_tcb.tstat)) {
         // 待ち状態から実行できる状態への遷移

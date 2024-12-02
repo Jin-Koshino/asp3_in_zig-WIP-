@@ -531,8 +531,8 @@ pub fn probeInt(intno: INTNO) bool {
 ///  チェックしている．
 ///
 fn config_int(intno: INTNO, intatr: ATR, intpri: PRI) void {
-    assert(validIntno(intno));
-    assert(TMIN_INTPRI <= intpri and intpri <= TMAX_INTPRI);
+    assert(validIntno(intno), null);
+    assert(TMIN_INTPRI <= intpri and intpri <= TMAX_INTPRI, intpri);
 
     // 割込みを禁止
     //
@@ -646,7 +646,7 @@ pub fn irc_begin_int() callconv(.Naked) void {
           [offset_eoir] "i" (@intFromPtr(GICC_EOIR) - GICC_BASE),
           [offset_rpr] "i" (@intFromPtr(GICC_RPR) - GICC_BASE),
     );
-    unreachable;
+    //unreachable;
 }
 
 //
@@ -661,7 +661,7 @@ pub fn irc_end_int() callconv(.Naked) void {
         :
         : [gicc_pmr] "{r1}" (@intFromPtr(GICC_PMR)),
     );
-    unreachable;
+    //unreachable;
 }
 
 //
@@ -682,7 +682,7 @@ pub fn irc_get_intpri() callconv(.Naked) void {
           [gic_pri_mask] "n" (@as(u32, GIC_PRI_MASK)),
           [gicc_pmr] "{r1}" (@intFromPtr(GICC_PMR)),
     );
-    unreachable;
+    //unreachable;
 }
 
 //
@@ -701,7 +701,7 @@ pub fn irc_begin_exc() callconv(.Naked) void {
         :
         : [gicc_pmr] "{r1}" (@intFromPtr(GICC_PMR)),
     );
-    unreachable;
+    //unreachable;
 }
 
 //
@@ -716,14 +716,14 @@ pub fn irc_end_exc() callconv(.Naked) void {
         :
         : [gicc_pmr] "{r1}" (@intFromPtr(GICC_PMR)),
     );
-    unreachable;
+    //unreachable;
 }
 
 ///
 ///  割込み管理機能の初期化
 ///
 pub fn initialize_interrupt() void {
-    for (&cfg._kernel_intinib_table) |*p_intinib| {
+    for (cfg._kernel_intinib_table) |p_intinib| {
         config_int(p_intinib.intno, p_intinib.intatr, p_intinib.intpri);
     }
 }

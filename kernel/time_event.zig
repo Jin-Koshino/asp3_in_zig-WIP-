@@ -533,8 +533,8 @@ pub fn signal_time() void {
     var callflag: bool = true;
     var nocall: c_uint = 0;
 
-    assert(target_impl.mpcore_kernel_impl.core_kernel_impl.senseContext());
-    assert(!target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock());
+    assert(target_impl.mpcore_kernel_impl.core_kernel_impl.senseContext(), null);
+    assert(!target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock(), null);
 
     target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
     defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();

@@ -228,7 +228,7 @@ fn indexMtx(mtxid: ID) usize {
     return @intCast(mtxid - TMIN_MTXID);
 }
 fn checkAndGetMtxCB(mtxid: ID) ItronError!*MTXCB {
-    try checkId(TMIN_MTXID <= mtxid and mtxid <= maxMtxId());
+    try checkId(TMIN_MTXID <= mtxid and mtxid <= cfg._kernel_tmax_mtxid);
     return &cfg._kernel_mtxcb_table[indexMtx(mtxid)];
 }
 
@@ -261,7 +261,7 @@ pub fn initialize_mutex() void {
     task.mtxhook_scan_ceilmtx = @constCast(&mutexScanCeilMtx);
     task.mtxhook_release_all = @constCast(&mutexReleaseAll);
 
-    for (cfg._kernel_mtxcb_table[0..cfg._kernel_mtxinib_table.len], 0..) |*p_mtxcb, i| {
+    for (cfg._kernel_mtxcb_table[0..numOfMtx()], 0..) |*p_mtxcb, i| {
         p_mtxcb.wait_queue.initialize();
         p_mtxcb.p_wobjinib = &cfg._kernel_mtxinib_table[i];
         p_mtxcb.p_loctsk = null;
@@ -433,7 +433,7 @@ pub fn loc_mtx(mtxid: ID) ItronError!void {
             // 優先度上限ミューテックスをロックした場合，p_runtskの優
             // 先度が上がる可能性があるが，ディスパッチが必要になるこ
             // とはない．
-            assert(task.p_runtsk == task.p_schedtsk);
+            assert(task.p_runtsk == task.p_schedtsk, null);
         } else if (p_mtxcb.p_loctsk == task.p_runtsk) {
             return ItronError.ObjectStateError;
         } else {
@@ -466,7 +466,7 @@ pub fn ploc_mtx(mtxid: ID) ItronError!void {
             mutexAcquire(task.p_runtsk.?, p_mtxcb);
             // 優先度上限ミューテックスをロックした場合，p_runtskの優先度
             // が上がる可能性があるが，ディスパッチが必要になることはない．
-            assert(task.p_runtsk == task.p_schedtsk);
+            assert(task.p_runtsk == task.p_schedtsk, null);
         } else if (p_mtxcb.p_loctsk == task.p_runtsk) {
             return ItronError.ObjectStateError;
         } else {
@@ -498,7 +498,7 @@ pub fn tloc_mtx(mtxid: ID, tmout: TMO) ItronError!void {
             // 優先度上限ミューテックスをロックした場合，p_runtskの優
             // 先度が上がる可能性があるが，ディスパッチが必要になるこ
             // とはない．
-            assert(task.p_runtsk == task.p_schedtsk);
+            assert(task.p_runtsk == task.p_schedtsk, null);
         } else if (p_mtxcb.p_loctsk == task.p_runtsk) {
             return ItronError.ObjectStateError;
         } else if (tmout == TMO_POL) {
@@ -622,11 +622,15 @@ pub fn cre_mtx(cmtx: T_CMTX) ItronError!MTXINIB {
 pub fn ExportMtxCfg(comptime mtxinib_table: []MTXINIB) type {
     const tnum_mtx = mtxinib_table.len;
     return struct {
-        pub export const _kernel_mtxinib_table: ?*MTXINIB = if (tnum_mtx == 0) null else &mtxinib_table[0];
-        pub export const _kernel_tnum_mtx = tnum_mtx;
+        pub export const _kernel_tmax_mtxid: ID = tnum_mtx;
 
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする
+        pub export const _kernel_mtxinib_table =
+            if (option.BIND_CFG == null or tnum_mtx > 0)
+                mtxinib_table[0 .. tnum_mtx].*
+            else [1]MTXINIB{ .{ .wobjatr = 0, .ceilpri = 0, }};
+
         pub export var _kernel_mtxcb_table: [
             if (option.BIND_CFG == null or tnum_mtx > 0) tnum_mtx else 1
         ]MTXCB = undefined;
@@ -644,7 +648,7 @@ pub fn validMTXCB(p_mtxcb: *MTXCB) bool {
         return false;
     }
     const mtxid = getMtxIdFromMtxCB(p_mtxcb);
-    return (TMIN_MTXID <= mtxid and mtxid <= maxMtxId());
+    return (TMIN_MTXID <= mtxid and mtxid <= cfg._kernel_tmax_mtxid);
 }
 
 ///
@@ -701,8 +705,7 @@ fn bitMTXCB(p_mtxcb: *MTXCB) ItronError!void {
 ///
 pub fn bitMutex() ItronError!void {
     // ミューテックス毎の整合性検査
-    for (cfg._kernel_mtxcb_table[0..cfg._kernel_mtxinib_table.len], 0..) |*p_mtxcb, i| {
-        defer _ = i;
+    for (cfg._kernel_mtxcb_table[0..numOfMtx()]) |*p_mtxcb| {
         try bitMTXCB(p_mtxcb);
     }
 }

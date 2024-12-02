@@ -148,7 +148,7 @@ fn indexCyc(cycid: ID) usize {
     return @intCast(cycid - TMIN_CYCID);
 }
 fn checkAndGetCycCB(cycid: ID) ItronError!*CYCCB {
-    try checkId(TMIN_CYCID <= cycid and cycid <= maxCycId());
+    try checkId(TMIN_CYCID <= cycid and cycid <= cfg._kernel_tmax_cycid);
     return &cfg._kernel_cyccb_table[indexCyc(cycid)];
 }
 
@@ -156,7 +156,7 @@ fn checkAndGetCycCB(cycid: ID) ItronError!*CYCCB {
 ///  周期通知機能の初期化
 ///
 pub fn initialize_cyclic() void {
-    for (cfg._kernel_cyccb_table[0..cfg._kernel_cycinib_table.len], 0..) |*p_cyccb, i| {
+    for (cfg._kernel_cyccb_table[0..numOfCyc()], 0..) |*p_cyccb, i| {
         p_cyccb.p_cycinib = &cfg._kernel_cycinib_table[i];
         p_cyccb.tmevtb.callback = callCyclic;
         p_cyccb.tmevtb.arg = @intFromPtr(p_cyccb);
@@ -298,11 +298,16 @@ pub fn ExportCycCfg(comptime cycinib_table: []CYCINIB) type {
 
     const tnum_cyc = cycinib_table.len;
     return struct {
-        pub export const _kernel_cycinib_table: ?*CYCINIB = if (tnum_cyc == 0) null else &cycinib_table[0];
-        pub export const _kernel_tnum_cyc = tnum_cyc;
+        pub export const _kernel_tmax_cycid = tnum_cyc;
 
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする
+        pub export const _kernel_cycinib_table =
+            if (option.BIND_CFG == null or tnum_cyc > 0)
+                cycinib_table[0 .. tnum_cyc].*
+            else [1]CYCINIB{ .{ .cycatr = 0, .exinf = 0, .nfyhdr = 0,
+                                .cyctim = 0, .cycphs = 0, }};
+
         pub export var _kernel_cyccb_table: [
             if (option.BIND_CFG == null or tnum_cyc > 0) tnum_cyc else 1
         ]CYCCB = undefined;

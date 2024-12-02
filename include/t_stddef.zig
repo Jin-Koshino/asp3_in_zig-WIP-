@@ -76,6 +76,7 @@ const t_syslog = @import("t_syslog.zig");
 const arg = t_syslog.arg;
 const syslog = t_syslog.syslog;
 const LOG_EMERG = t_syslog.LOG_EMERG;
+const LOG_DEBUG = t_syslog.LOG_DEBUG;
 ////
 
 ///
@@ -228,15 +229,16 @@ pub const TMAX_RELTIM = 4000000000; // 66分40秒まで指定可
 ///
 ///  assert（デバッグ用）
 ///
-noinline fn assert_fail() noreturn {
-    syslog(LOG_EMERG, "assertion failed at %x.\x07", .{@returnAddress() - 4});
+noinline fn assert_fail(argument: ?c_int) noreturn {
+    const value = argument orelse 123;
+    syslog(LOG_EMERG, "assertion failed at %x.\x07, value= %d", .{@returnAddress() - 4, value});
     target.assert_abort();
 }
 
-pub fn assert(ok: bool) void {
+pub fn assert(ok: bool, value: ?c_int) void {
     // release-fast/smallでは，NDEBUGがtrueになり，assertは削除される．
     if (!option.NDEBUG and !ok) {
-        assert_fail();
+        assert_fail(value);
     }
 }
 

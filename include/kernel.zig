@@ -326,7 +326,7 @@ pub const T_CINT = struct {
     intpri: t_stddef.PRI, // 割込み優先度
 };
 
-pub const T_CISR = struct {
+pub const T_CISR = extern struct {
     isratr: t_stddef.ATR = t_stddef.TA_NULL, // 割込みサービスルーチン属性
     exinf: t_stddef.EXINF = t_stddef.castToExinf(0), // 割込みサービスルーチンの拡張情報
     intno: INTNO, // 割込みサービスルーチンを登録する

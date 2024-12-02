@@ -261,10 +261,10 @@ pub fn initialize_interrupt() void {
         target_impl.mpcore_kernel_impl.gic_kernel_impl.initialize_interrupt();
     } else {
         // 標準的な初期化処理
-        for (cfg._kernel_inhinib_table) |*p_inhinib| {
+        for (cfg._kernel_inhinib_table) |p_inhinib| {
             target_impl.define_inh(p_inhinib.inhno, p_inhinib.inhatr, p_inhinib.inthdr);
         }
-        for (cfg._kernel_intinib_table) |*p_intinib| {
+        for (cfg._kernel_intinib_table) |p_intinib| {
             target_impl.config_int(p_intinib.intno, p_intinib.intatr, p_intinib.intpri);
         }
     }

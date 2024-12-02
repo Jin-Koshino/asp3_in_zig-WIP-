@@ -277,14 +277,13 @@ pub const TCB = extern struct {
         bprio: TaskPrio, // ベース優先度（内部表現）
         prio: TaskPrio, // 現在の優先度（内部表現）
     },
-    flags: packed struct {
-        actque: u1, // 起動要求キューイング
-        wupque: u1, // 起床要求キューイング
+    flags: extern struct {
+        actque: u8, // 起動要求キューイング
+        wupque: u8, // 起床要求キューイング
         raster: bool, // タスク終了要求状態
         enater: bool, // タスク終了許可状態
         staovr: if (TOPPERS_SUPPORT_OVRHDR) bool else void,
         // オーバランハンドラ動作状態
-        padding: u4, //struct全体のサイズをC ABIに対応したサイズにするためのパディング
     },
     p_winfo: *WINFO, // 待ち情報ブロックへのポインタ
     p_lastmtx: ?*mutex.MTXCB, // 最後にロックしたミューテックス */
@@ -408,7 +407,7 @@ fn indexTsk(tskid: ID) usize {
     return @intCast(tskid - TMIN_TSKID);
 }
 pub fn checkAndGetTCB(tskid: ID) ItronError!*TCB {
-    try checkId(TMIN_TSKID <= tskid and tskid <= maxTskId());
+    try checkId(TMIN_TSKID <= tskid and tskid <= cfg._kernel_tmax_tskid);
     return &cfg._kernel_tcb_table[indexTsk(tskid)];
 }
 
@@ -454,7 +453,7 @@ pub fn initialize_task() void {
     }
     ready_primap.initialize();
 
-    for (cfg._kernel_torder_table[0..cfg._kernel_tinib_table.len]) |tskid| {
+    for (cfg._kernel_torder_table[0..numOfTsk()]) |tskid| {
         const p_tcb = &cfg._kernel_tcb_table[indexTsk(tskid)];
         p_tcb.p_tinib = &cfg._kernel_tinib_table[indexTsk(tskid)];
         p_tcb.flags.actque = 0;
@@ -510,12 +509,12 @@ pub fn make_non_runnable(p_tcb: *TCB) void {
     if (p_queue.isEmpty()) {
         ready_primap.clear(prio);
         if (p_schedtsk == p_tcb) {
-            assert(dspflg);
+            assert(dspflg, null);
             p_schedtsk = if (ready_primap.isEmpty()) null else searchSchedtsk();
         }
     } else {
         if (p_schedtsk == p_tcb) {
-            assert(dspflg);
+            assert(dspflg, null);
             p_schedtsk = getTCBFromQueue(p_queue.p_next);
         }
     }
@@ -739,7 +738,8 @@ pub fn ExportTskCfg(comptime tinib_table: []TINIB, comptime torder_table: []ID) 
 
     const tnum_tsk = tinib_table.len;
     return struct {
-        pub export const _kernel_tinib_table: ?*TINIB = if (tnum_tsk == 0) null else &tinib_table[0];
+        pub export const _kernel_tmax_tskid: ID = tnum_tsk;
+        pub export const _kernel_tinib_table = tinib_table[0 .. tnum_tsk].*;
         pub export const _kenrel_tnum_tsk = tnum_tsk;
         pub export const _kernel_torder_table = torder_table[0..tnum_tsk].*;
         pub export var _kernel_tcb_table: [tnum_tsk]TCB = undefined;
@@ -793,7 +793,7 @@ pub fn validTCB(p_tcb: *TCB) bool {
         return false;
     }
     const tskid = getTskIdFromTCB(p_tcb);
-    return TMIN_TSKID <= tskid and tskid <= maxTskId();
+    return TMIN_TSKID <= tskid and tskid <= cfg._kernel_tmax_tskid;
 }
 
 ///
@@ -968,7 +968,7 @@ pub fn bitTask() ItronError!void {
     try bitSched();
 
     // タスク毎の整合性検査
-    for (cfg._kernel_tcb_table[0..cfg._kernel_tinib_table.len]) |*p_tcb| {
+    for (cfg._kernel_tcb_table[0..numOfTsk()]) |*p_tcb| {
         try bitTCB(p_tcb);
     }
 }

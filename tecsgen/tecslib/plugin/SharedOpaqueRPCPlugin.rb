@@ -194,7 +194,7 @@ composite #{@shared_channel_server_ct_name} {
     cBody = RPCSharedTaskMain.eMain;
     taskAttribute = C_EXP("TA_ACT");
     stackSize = 4096;
-    priority = composite.priority;
+    priority = composite.prios.priority;
   };
   composite.eTDR           => TDR.eTDR;
 };

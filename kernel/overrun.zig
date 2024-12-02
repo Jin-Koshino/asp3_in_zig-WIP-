@@ -223,9 +223,9 @@ pub fn ref_ovr(tskid: ID, pk_rovr: *T_ROVR) ItronError!void {
 ///
 pub fn call_ovrhdr() void {
     if (comptime TOPPERS_SUPPORT_OVRHDR) {
-        assert(target_impl.mpcore_kernel_impl.core_kernel_impl.senseContext());
-        assert(!target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock());
-        assert(cfg._kernel_ovrinib.ovrhdr != null);
+        assert(target_impl.mpcore_kernel_impl.core_kernel_impl.senseContext(), null);
+        assert(!target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock(), null);
+        assert(cfg._kernel_ovrinib.ovrhdr != null, null);
 
         target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
         if (task.p_runtsk != null and task.p_runtsk.?.flags.staovr and task.p_runtsk.?.leftotm == 0) {

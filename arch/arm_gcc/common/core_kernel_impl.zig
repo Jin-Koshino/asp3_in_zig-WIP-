@@ -365,7 +365,7 @@ pub fn startDispatch() noreturn {
         \\  b dispatcher_0
         :
         : [stkpt] "{sp}" (stkpt(task.getTIniB(1))),
-          [dispatcher] "s" (dispatcher),
+          [dispatcher] "s" (&dispatcher),
     );
     unreachable;
 }
@@ -383,7 +383,7 @@ pub fn exitAndDispatch() noreturn {
         \\  b dispatcher                   // r0にはp_runtskが格納されている
         :
         : [p_selftsk] "{r0}" (task.p_runtsk.?),
-          [dispatcher] "s" (dispatcher),
+          [dispatcher] "s" (&dispatcher),
     );
     unreachable;
 }
@@ -449,10 +449,10 @@ fn dispatcher() callconv(.Naked) void {
           [cpsr_svc_unlock] "n" (@as(u32, arm.CPSR_SVC_MODE | CPSR_UNLOCK)),
           [p_runtsk] "s" (&task.p_runtsk),
           [p_schedtsk] "s" (&task.p_schedtsk),
-          [log_dsp_enter] "s" (logDispatchEnter),
-          [log_dsp_leave] "s" (logDispatchLeave),
+          [log_dsp_enter] "s" (&logDispatchEnter),
+          [log_dsp_leave] "s" (&logDispatchLeave),
     );
-    unreachable;
+    //unreachable;
 }
 
 //
@@ -486,8 +486,8 @@ fn start_r() callconv(.Naked) noreturn {
             \\  .long %[ext_tsk]
         :
         : [cpsr_svc_unlock] "n" (@as(u32, arm.CPSR_SVC_MODE | CPSR_UNLOCK)),
-          [ext_tsk] "s" (task_term.ext_tsk),
-          [overrun_start] "s" (overrun.overrun_start),
+          [ext_tsk] "s" (&task_term.ext_tsk),
+          [overrun_start] "s" (&overrun.overrun_start),
           [tcb_p_tinib] "J" (@as(i16, @offsetOf(task.TCB, "p_tinib"))),
           [tinib_tskatr] "J" (@as(i16, @offsetOf(task.TINIB, "tskatr"))),
           [tinib_exinf] "J" (@as(i16, @offsetOf(task.TINIB, "exinf"))),
@@ -495,7 +495,7 @@ fn start_r() callconv(.Naked) noreturn {
           [ta_fpu] "n" (@as(u32, TA_FPU)),
           [fpexc_enable] "n" (@as(u32, arm.FPEXC_ENABLE)),
     );
-    unreachable;
+    //unreachable;
 }
 
 ///
@@ -518,7 +518,7 @@ pub fn callExitKernel() noreturn {
         \\ 5:
         \\  .long %[istkpt]
         :
-        : [exit_kernel] "s" (startup.exitKernel),
+        : [exit_kernel] "s" (&startup.exitKernel),
           [istkpt] "s" (&cfg._kernel_istkpt),
     );
     unreachable;
@@ -592,7 +592,9 @@ pub fn ExportInhIniB(comptime inhinib_list: []interrupt.INHINIB) type {
 // 割込み要求ライン初期化ブロック
 fn ExportIniB(comptime intinib_list: []interrupt.INTINIB) type {
     return struct {
-        pub export const _kernel_intinib_table: ?*interrupt.INTINIB = if (intinib_list.len == 0) null else &intinib_list[0];
+        pub export const _kernel_tnum_cfg_intno: c_uint = intinib_list.len;
+        pub export const _kernel_intinib_table = intinib_list
+                                                [0 .. intinib_list.len].*;
     };
 }
 
@@ -893,21 +895,20 @@ fn irq_handler() callconv(.Naked) void {
           [tcb_sp] "J" (@as(i16, @offsetOf(task.TCB, "tskctxb") + @offsetOf(TSKCTXB, "sp"))),
           [tcb_pc] "J" (@as(i16, @offsetOf(task.TCB, "tskctxb") + @offsetOf(TSKCTXB, "pc"))),
           [ta_fpu] "n" (@as(u32, TA_FPU)),
-          [fpexc_enable] "n" (@as(u32, arm.FPEXC_ENABLE)),
           [excpt_nest_count] "s" (&excpt_nest_count),
           [p_runtsk] "s" (&task.p_runtsk),
           [p_schedtsk] "s" (&task.p_schedtsk),
           [istkpt] "s" (&cfg._kernel_istkpt),
           [inh_table] "s" (&cfg._kernel_inh_table),
-          [log_inh_enter] "s" (logInthdrEnter),
-          [log_inh_leave] "s" (logInthdrLeave),
-          [overrun_start] "s" (overrun.overrun_start),
-          [overrun_stop] "s" (overrun.overrun_stop),
-          [irc_begin_int] "s" (target_impl.mpcore_kernel_impl.gic_kernel_impl.irc_begin_int),
-          [irc_end_int] "s" (target_impl.mpcore_kernel_impl.gic_kernel_impl.irc_end_int),
-          [dispatcher] "s" (dispatcher),
+          [log_inh_enter] "s" (&logInthdrEnter),
+          [log_inh_leave] "s" (&logInthdrLeave),
+          [overrun_start] "s" (&overrun.overrun_start),
+          [overrun_stop] "s" (&overrun.overrun_stop),
+          [irc_begin_int] "s" (&target_impl.mpcore_kernel_impl.gic_kernel_impl.irc_begin_int),
+          [irc_end_int] "s" (&target_impl.mpcore_kernel_impl.gic_kernel_impl.irc_end_int),
+          [dispatcher] "s" (&dispatcher),
     );
-    unreachable;
+    //unreachable;
 }
 
 ///
@@ -1553,13 +1554,13 @@ fn exc_entry() callconv(.Naked) void {
           [p_schedtsk] "s" (&task.p_schedtsk),
           [istkpt] "s" (&cfg._kernel_istkpt),
           [exc_table] "s" (&cfg._kernel_exc_table),
-          [log_exc_enter] "s" (logExchdrEnter),
-          [log_exc_leave] "s" (logExchdrLeave),
-          [overrun_start] "s" (overrun.overrun_start),
-          [overrun_stop] "s" (overrun.overrun_stop),
-          [irc_get_intpri] "s" (target_impl.mpcore_kernel_impl.gic_kernel_impl.irc_get_intpri),
-          [irc_begin_exc] "s" (target_impl.mpcore_kernel_impl.gic_kernel_impl.irc_begin_exc),
-          [irc_end_exc] "s" (target_impl.mpcore_kernel_impl.gic_kernel_impl.irc_end_exc),
+          [log_exc_enter] "s" (&logExchdrEnter),
+          [log_exc_leave] "s" (&logExchdrLeave),
+          [overrun_start] "s" (&overrun.overrun_start),
+          [overrun_stop] "s" (&overrun.overrun_stop),
+          [irc_get_intpri] "s" (&target_impl.mpcore_kernel_impl.gic_kernel_impl.irc_get_intpri),
+          [irc_begin_exc] "s" (&target_impl.mpcore_kernel_impl.gic_kernel_impl.irc_begin_exc),
+          [irc_end_exc] "s" (&target_impl.mpcore_kernel_impl.gic_kernel_impl.irc_end_exc),
     );
 
     //
@@ -1642,7 +1643,7 @@ fn exc_entry() callconv(.Naked) void {
           [istkpt] "s" (&cfg._kernel_istkpt),
           [exc_table] "s" (&cfg._kernel_exc_table),
     );
-    unreachable;
+    //unreachable;
 }
 
 ///
@@ -1685,9 +1686,9 @@ fn config_section_entry(ammuc: ARM_MMU_CONFIG) void {
     var paddr = ammuc.paddr;
     var size = ammuc.size;
 
-    assert(vaddr % arm.SECTION_SIZE == 0);
-    assert(paddr % arm.SECTION_SIZE == 0);
-    assert(size % arm.SECTION_SIZE == 0);
+    assert(vaddr % arm.SECTION_SIZE == 0, null);
+    assert(paddr % arm.SECTION_SIZE == 0, null);
+    assert(size % arm.SECTION_SIZE == 0, null);
     while (size > 0) {
         if (USE_ARM_SSECTION and size >= arm.SSECTION_SIZE and (vaddr % arm.SSECTION_SIZE) == 0) {
             var i: usize = 0;
@@ -1713,7 +1714,7 @@ fn arm_mmu_initialize() void {
     var reg: u32 = undefined;
 
     // MMUのセクションテーブルの設定
-    for (section_table) |*entry| {
+    for (&section_table) |*entry| {
         entry.* = arm.MMU_DSCR1_FAULT;
     }
     for (target_impl.arm_memory_area) |area| {
@@ -2027,9 +2028,9 @@ fn start() callconv(.Naked) noreturn {
           [istk] "s" (&cfg._kernel_istk),
           [istksz] "s" (&cfg._kernel_istksz),
           [istkpt] "s" (&cfg._kernel_istkpt),
-          [sta_ker] "s" (startup.sta_ker),
+          [sta_ker] "s" (&startup.sta_ker),
     );
-    unreachable;
+    //unreachable;
 }
 
 ///
@@ -2062,9 +2063,9 @@ pub fn vector_table() linksection(".vector") callconv(.Naked) void {
         \\ fiq_vector:
         \\  .long fiq_handler
         :
-        : [start] "s" (start),
-          [irq_handler] "s" (irq_handler),
-          [exc_entry] "s" (exc_entry),
+        : [start] "s" (&start),
+          [irq_handler] "s" (&irq_handler),
+          [exc_entry] "s" (&exc_entry),
     );
 }
 
@@ -2094,7 +2095,7 @@ pub const CoreExportDefs = struct {
     ///  スクリプトのKEEP指定により，必ずリンクされる．それに対して，
     ///  この関数自身はリンクされず，最終的な実行ファイルには残らない．
     ///
-    export fn _kernel_vector_table() callconv(.Naked) usize {
-        return @intFromPtr(vector_table);
+    export fn _kernel_vector_table() usize {
+        return @intFromPtr(&vector_table);
     }
 };
