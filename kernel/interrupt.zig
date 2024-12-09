@@ -498,8 +498,10 @@ pub fn cfg_int(intno: INTNO, cint: T_CINT) ItronError!INTINIB {
 ///  割込み要求ライン初期化ブロックの生成（静的APIの処理）
 ///
 pub fn ExportIntIniB(comptime intinib_table: []INTINIB) type {
+    const tnum_int = intinib_table.len;
     return struct {
-        export const _kernel_intinib_table = intinib_table;
+        export const _kernel_tnum_cfg_intno: c_uint = tnum_int;
+        export const _kernel_intinib_table = intinib_table[0 .. tnum_int].*;
     };
 }
 
@@ -551,8 +553,10 @@ pub fn ExportInhIniB(comptime inhinib_table: []INHINIB) type {
     exportCheck(@offsetOf(INHINIB, "inhno"), "offsetof_INHINIB_inhno");
     exportCheck(@offsetOf(INHINIB, "inthdr"), "offsetof_INHINIB_inthdr");
 
+    const tnum_inh = inhinib_table.len;
     return struct {
-        export const _kernel_inhinib_table = inhinib_table;
+        export const _kernel_tnum_def_inhno: c_uint = tnum_inh;
+        export const _kernel_inhinib_table = inhinib_table[0 .. tnum_inh].*;
     };
 }
 
