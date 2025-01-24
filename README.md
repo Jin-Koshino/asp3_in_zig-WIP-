@@ -3,7 +3,6 @@ TOPPERS/ASP3 Kernel written in Zig Programming Language
 
 このレポジトリは、TOPPERS Projectのレポジトリ[asp3_in_zig](https://github.com/toppers/asp3_in_zig)からJin-Koshinoがforkしたものです。
 
-
 ビルド&実行方法（例）
 
     % mkdir OBJ-ARM
@@ -33,3 +32,7 @@ Zigのコンパイラは，Release 0.9.1を利用してください。古い版�
 - 小南さんが，以下のページに，関連するソフトウェアに関する情報を詳細に記述くださっています。
 
   https://github.com/ykominami/asp3_in_zig/blob/master/README.md
+
+## devcontainer
+
+このレポジトリは，asp3_in_zigビルド環境を提供する[devcontainerレポジトリ](https://github.com/Jin-Koshino/devcontainer_asp3_in_zig/tree/zig-v0.9.1)のsubmoduleとして配置されています。
