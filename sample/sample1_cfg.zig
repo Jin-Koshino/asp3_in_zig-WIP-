@@ -1,7 +1,7 @@
 ///
 ///  サンプルプログラム(1)のシステムコンフィギュレーション記述
 ///
-const kernel_cfg = @import("../kernel/kernel_cfg.zig");
+const kernel_cfg = @import("kernel_cfg");
 
 ////
 const zig = kernel_cfg.zig;
