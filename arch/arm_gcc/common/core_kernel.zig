@@ -25,7 +25,7 @@ pub const core_publish = struct {
 
     ///
     ///  CPU例外ハンドラ番号の数
-    ///  
+    ///
     pub const TNUM_EXCNO = 7;
 
     ///

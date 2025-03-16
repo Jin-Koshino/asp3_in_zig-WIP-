@@ -243,7 +243,7 @@ pub fn sns_ter() bool {
     traceLog("snsTerEnter", .{});
     // enaterを変更できるのは自タスクのみであるため，排他制御せずに読
     // んでも問題ない．
-    var state = if (task.p_runtsk) |p_tcb| !p_tcb.flags.enater else true;
+    const state = if (task.p_runtsk) |p_tcb| !p_tcb.flags.enater else true;
     traceLog("snsTerLeave", .{state});
     return state;
 }

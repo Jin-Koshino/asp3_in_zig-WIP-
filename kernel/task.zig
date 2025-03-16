@@ -429,7 +429,7 @@ pub fn getTskIdFromTCB(p_tcb: *TCB) ID {
 ///  タスクキューからTCBを取り出すための関数
 ///
 pub fn getTCBFromQueue(p_entry: *queue.Queue) *TCB {
-    return @fieldParentPtr(TCB, "task_queue", p_entry);
+    return @fieldParentPtr("task_queue", p_entry);
 }
 
 ///
@@ -605,7 +605,7 @@ pub fn change_priority(p_tcb: *TCB, newprio: TaskPrio, mtxmode: bool) void {
         if (isWaitingWobjCB(p_tcb.tstat)) {
             // タスクが，同期・通信オブジェクトの管理ブロックの共通部
             // 分（WOBJCB）の待ちキューにつながれている場合
-            wobj_change_priority(@fieldParentPtr(WINFO_WOBJ, "winfo", p_tcb.p_winfo).p_wobjcb, p_tcb);
+            wobj_change_priority(@as(WINFO_WOBJ, @fieldParentPtr("winfo", p_tcb.p_winfo)).p_wobjcb, p_tcb);
         }
     }
 }
@@ -739,7 +739,7 @@ pub fn ExportTskCfg(comptime tinib_table: []TINIB, comptime torder_table: []ID) 
     const tnum_tsk = tinib_table.len;
     return struct {
         pub export const _kernel_tmax_tskid: ID = tnum_tsk;
-        pub export const _kernel_tinib_table = tinib_table[0 .. tnum_tsk].*;
+        pub export const _kernel_tinib_table = tinib_table[0..tnum_tsk].*;
         pub export const _kenrel_tnum_tsk = tnum_tsk;
         pub export const _kernel_torder_table = torder_table[0..tnum_tsk].*;
         pub export var _kernel_tcb_table: [tnum_tsk]TCB = undefined;

@@ -1,7 +1,7 @@
 ///
 ///  TOPPERS Software
 ///      Toyohashi Open Platform for Embedded Real-Time Systems
-/// 
+///
 ///  Copyright (C) 2000 by Embedded and Real-Time Systems Laboratory
 ///                                 Toyohashi Univ. of Technology, JAPAN
 ///  Copyright (C) 2006-2020 by Embedded and Real-Time Systems Laboratory
@@ -38,7 +38,6 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  キュー操作ライブラリ
 ///
@@ -56,8 +55,8 @@ const assert = std.debug.assert;
 ///  ダブルリンクキューの構造体
 ///
 pub const Queue = extern struct {
-    p_next: *Queue,             // 次エントリへのポインタ
-    p_prev: *Queue,             // 前エントリへのポインタ
+    p_next: *Queue, // 次エントリへのポインタ
+    p_prev: *Queue, // 前エントリへのポインタ
 
     ///
     ///  キューの初期化
@@ -144,20 +143,20 @@ pub const Queue = extern struct {
     pub fn bitIncluded(p_self: *const Queue, p_entry: *const Queue) bool {
         var p_current = p_self.p_next;
         if (p_current.p_prev != p_self) {
-            return false;               // ダブルリンクの不整合
+            return false; // ダブルリンクの不整合
         }
         while (p_current != p_self) {
             if (p_current == p_entry) {
-                return true;            // p_entryが含まれていた
+                return true; // p_entryが含まれていた
             }
 
             // キューの次の要素に進む
             const p_next = p_current.p_next;
             if (p_next.p_prev != p_current) {
-                return false;           // ダブルリンクの不整合 */
+                return false; // ダブルリンクの不整合 */
             }
             p_current = p_next;
         }
-        return(false);
+        return (false);
     }
 };

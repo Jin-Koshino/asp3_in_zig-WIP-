@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
 ///                                 Toyohashi Univ. of Technology, JAPAN
 ///  Copyright (C) 2005-2020 by Embedded and Real-Time Systems Laboratory
@@ -39,7 +39,7 @@
 ///
 ///  $Id$
 ///
-/// 
+///
 ///  タイマドライバ（MPCore内蔵タイマ用）
 ///
 ///  MPCoreは，プロセッサ毎にプライベートタイマとウォッチドッグを持つ．

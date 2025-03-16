@@ -1,7 +1,6 @@
 ///
 ///  Zynq7000のハードウェア資源の定義
 ///
-
 ///
 ///  MPCore Private Memory Regionの先頭番地
 ///

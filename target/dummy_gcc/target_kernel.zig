@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2013-2020 by Embedded and Real-Time Systems Laboratory
 ///                 Graduate School of Informatics, Nagoya Univ., JAPAN
 ///
@@ -37,19 +37,17 @@
 ///
 ///  $Id$
 ///
-
 ///
 ///  kernel.zigのターゲット依存部（ダミーターゲット用）
 ///
-
 ///
 ///  サポートできる機能の定義
 ///
-pub const TOPPERS_SUPPORT_ENA_INT = true;       // ena_int
-pub const TOPPERS_SUPPORT_DIS_INT = true;       // dis_int
-pub const TOPPERS_SUPPORT_CLR_INT = true;       // clr_int
-pub const TOPPERS_SUPPORT_RAS_INT = true;       // ras_int
-pub const TOPPERS_SUPPORT_PRB_INT = true;       // prb_int
+pub const TOPPERS_SUPPORT_ENA_INT = true; // ena_int
+pub const TOPPERS_SUPPORT_DIS_INT = true; // dis_int
+pub const TOPPERS_SUPPORT_CLR_INT = true; // clr_int
+pub const TOPPERS_SUPPORT_RAS_INT = true; // ras_int
+pub const TOPPERS_SUPPORT_PRB_INT = true; // prb_int
 pub const TOPPERS_SUPPORT_OVRHDR = true;
 
 ///
@@ -63,7 +61,6 @@ pub const TARGET_INHATR = TA_NONKERNEL;
 ///  高分解能タイマのタイマ周期
 ///
 ///  TCYC_HRTCNTは定義しない．
-
 ///
 ///  高分解能タイマのカウント値の進み幅
 ///
@@ -72,8 +69,8 @@ pub const TSTEP_HRTCNT = 1;
 ///
 ///  割込み優先度の範囲
 ///
-pub const TMIN_INTPRI = -7;     // 割込み優先度の最小値（最高値）
-pub const TMAX_INTPRI = -1;     // 割込み優先度の最大値（最低値）
+pub const TMIN_INTPRI = -7; // 割込み優先度の最小値（最高値）
+pub const TMAX_INTPRI = -1; // 割込み優先度の最大値（最低値）
 
 ///
 ///  アプリケーションに直接見せる定義

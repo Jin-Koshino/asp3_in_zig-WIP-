@@ -216,7 +216,7 @@ fn getFlgIdFromFlgCB(p_flgcb: *FLGCB) ID {
 ///  イベントフラグ待ち情報ブロックを取り出すための関数
 ///
 pub fn getWinfoFlg(p_winfo: *WINFO) *WINFO_FLG {
-    return @fieldParentPtr(WINFO_FLG, "winfo", p_winfo);
+    return @fieldParentPtr("winfo", p_winfo);
 }
 
 ///
@@ -458,8 +458,12 @@ pub fn ExportFlgCfg(comptime flginib_table: []FLGINIB) type {
         // 出ないようにする
         pub export const _kernel_flginib_table =
             if (option.BIND_CFG == null or tnum_flg > 0)
-                flginib_table[0 .. tnum_flg].*
-            else [1]FLGINIB{ .{ .wobjatr = 0, .iflgptn = 0, }};
+            flginib_table[0..tnum_flg].*
+        else
+            [1]FLGINIB{.{
+                .wobjatr = 0,
+                .iflgptn = 0,
+            }};
 
         pub export var _kernel_flgcb_table: [
             if (option.BIND_CFG == null or tnum_flg > 0) tnum_flg else 1

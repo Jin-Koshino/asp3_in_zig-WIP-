@@ -280,8 +280,13 @@ pub fn ExportAlmCfg(comptime alminib_table: []ALMINIB) type {
         // 出ないようにする
         pub export const _kernel_alminib_table =
             if (option.BIND_CFG == null or tnum_alm > 0)
-                alminib_table[0 .. tnum_alm].*
-            else [1]ALMINIB{ .{ .almatr = 0, .exinf = 0, .nfyhdr = 0, }};
+            alminib_table[0..tnum_alm].*
+        else
+            [1]ALMINIB{.{
+                .almatr = 0,
+                .exinf = 0,
+                .nfyhdr = 0,
+            }};
 
         pub export var _kernel_almcb_table: [
             if (option.BIND_CFG == null or tnum_alm > 0) tnum_alm else 1

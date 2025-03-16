@@ -245,7 +245,7 @@ fn getMpfIdFromMpfCB(p_mpfcb: *MPFCB) ID {
 ///  固定長メモリプール待ち情報ブロックを取り出すための関数
 ///
 pub fn getWinfoMpf(p_winfo: *WINFO) *WINFO_MPF {
-    return @fieldParentPtr(WINFO_MPF, "winfo", p_winfo);
+    return @fieldParentPtr("winfo", p_winfo);
 }
 
 ///
@@ -376,10 +376,10 @@ pub fn rel_mpf(mpfid: ID, blk: *u8) ItronError!void {
     try checkContextTaskUnlock();
     const p_mpfcb = try checkAndGetMpfCB(mpfid);
     try checkParameter(@intFromPtr(p_mpfcb.p_wobjinib.mpf) <= @intFromPtr(blk));
-    var blkoffset = @intFromPtr(blk) - @intFromPtr(p_mpfcb.p_wobjinib.mpf);
+    const blkoffset = @intFromPtr(blk) - @intFromPtr(p_mpfcb.p_wobjinib.mpf);
     try checkParameter(blkoffset % p_mpfcb.p_wobjinib.blksz == 0);
     try checkParameter(blkoffset / p_mpfcb.p_wobjinib.blksz < p_mpfcb.unused);
-    var blkidx = @as(c_uint, @intCast(blkoffset / p_mpfcb.p_wobjinib.blksz));
+    const blkidx = @as(c_uint, @intCast(blkoffset / p_mpfcb.p_wobjinib.blksz));
     try checkParameter(p_mpfcb.p_wobjinib.p_mpfmb[blkidx].next == INDEX_ALLOC);
     {
         target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
@@ -488,15 +488,23 @@ pub fn ExportMpfCfg(comptime mpfinib_table: []MPFINIB) type {
     const tnum_mpf = mpfinib_table.len;
     return struct {
         pub export const _kernel_tmax_mpfid: ID = tnum_mpf;
-        
+
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする
         pub export const _kernel_mpfinib_table =
             if (option.BIND_CFG == null or tnum_mpf > 0)
-                mpfinib_table[0 .. tnum_mpf].*
-            else [1]MPFINIB{ .{ .wobjatr = 0, .blkcnt = 0, .blksz = 0,
-                                .mpf = @as([*]u8, @ptrFromInt(256),),
-                                .p_mpfmb = @as([*]MPFMB, @ptrFromInt(256)), }};
+            mpfinib_table[0..tnum_mpf].*
+        else
+            [1]MPFINIB{.{
+                .wobjatr = 0,
+                .blkcnt = 0,
+                .blksz = 0,
+                .mpf = @as(
+                    [*]u8,
+                    @ptrFromInt(256),
+                ),
+                .p_mpfmb = @as([*]MPFMB, @ptrFromInt(256)),
+            }};
 
         pub export var _kernel_mpfcb_table: [
             if (option.BIND_CFG == null or tnum_mpf > 0) tnum_mpf else 1

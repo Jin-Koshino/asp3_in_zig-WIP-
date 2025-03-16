@@ -279,7 +279,7 @@ pub fn dis_int(intno: INTNO) ItronError!void {
     try comptime checkNotSupported(TOPPERS_SUPPORT_DIS_INT); //［NGKI3093］
     try checkParameter(validIntnoDisInt(intno)); //［NGKI3083］［NGKI3087］
     {
-        var locked = target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock();
+        const locked = target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock();
         if (!locked) {
             target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
         }
@@ -308,7 +308,7 @@ pub fn ena_int(intno: INTNO) ItronError!void {
     try checkParameter(validIntnoDisInt(intno)); //［NGKI3096］［NGKI3100］
 
     {
-        var locked = target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock();
+        const locked = target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock();
         if (!locked) {
             target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
         }
@@ -337,7 +337,7 @@ pub fn clr_int(intno: INTNO) ItronError!void {
     try checkParameter(validIntnoClrInt(intno)); //［NGKI3921］［NGKI3930］
 
     {
-        var locked = target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock();
+        const locked = target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock();
         if (!locked) {
             target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
         }
@@ -366,7 +366,7 @@ pub fn ras_int(intno: INTNO) ItronError!void {
     try checkParameter(validIntnoRasInt(intno)); //［NGKI3933］［NGKI3942］
 
     {
-        var locked = target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock();
+        const locked = target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock();
         if (!locked) {
             target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
         }
@@ -394,7 +394,7 @@ pub fn prb_int(intno: INTNO) ItronError!bool {
     try comptime checkNotSupported(TOPPERS_SUPPORT_PRB_INT); //［NGKI3951］
     try checkParameter(validIntnoPrbInt(intno)); //［NGKI3945］［NGKI3952］
     {
-        var locked = target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock();
+        const locked = target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock();
         if (!locked) {
             target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
         }
@@ -501,7 +501,7 @@ pub fn ExportIntIniB(comptime intinib_table: []INTINIB) type {
     const tnum_int = intinib_table.len;
     return struct {
         export const _kernel_tnum_cfg_intno: c_uint = tnum_int;
-        export const _kernel_intinib_table = intinib_table[0 .. tnum_int].*;
+        export const _kernel_intinib_table = intinib_table[0..tnum_int].*;
     };
 }
 
@@ -556,7 +556,7 @@ pub fn ExportInhIniB(comptime inhinib_table: []INHINIB) type {
     const tnum_inh = inhinib_table.len;
     return struct {
         export const _kernel_tnum_def_inhno: c_uint = tnum_inh;
-        export const _kernel_inhinib_table = inhinib_table[0 .. tnum_inh].*;
+        export const _kernel_inhinib_table = inhinib_table[0..tnum_inh].*;
     };
 }
 

@@ -1,7 +1,7 @@
 ///
 ///  TOPPERS Software
 ///      Toyohashi Open Platform for Embedded Real-Time Systems
-/// 
+///
 ///  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
 ///                                 Toyohashi Univ. of Technology, JAPAN
 ///  Copyright (C) 2006-2020 by Embedded and Real-Time Systems Laboratory
@@ -839,7 +839,7 @@ pub fn disable_bp() void {
 ///
 pub fn get_my_prcidx() c_uint {
     if (comptime isEnabled(Feature.has_v6)) {
-        var reg = CP15_READ_MPIDR();
+        const reg = CP15_READ_MPIDR();
         return reg & 0xff;
     } else @compileError("not supported.");
 }

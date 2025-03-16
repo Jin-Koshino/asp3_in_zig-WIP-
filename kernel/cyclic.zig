@@ -304,9 +304,15 @@ pub fn ExportCycCfg(comptime cycinib_table: []CYCINIB) type {
         // 出ないようにする
         pub export const _kernel_cycinib_table =
             if (option.BIND_CFG == null or tnum_cyc > 0)
-                cycinib_table[0 .. tnum_cyc].*
-            else [1]CYCINIB{ .{ .cycatr = 0, .exinf = 0, .nfyhdr = 0,
-                                .cyctim = 0, .cycphs = 0, }};
+            cycinib_table[0..tnum_cyc].*
+        else
+            [1]CYCINIB{.{
+                .cycatr = 0,
+                .exinf = 0,
+                .nfyhdr = 0,
+                .cyctim = 0,
+                .cycphs = 0,
+            }};
 
         pub export var _kernel_cyccb_table: [
             if (option.BIND_CFG == null or tnum_cyc > 0) tnum_cyc else 1

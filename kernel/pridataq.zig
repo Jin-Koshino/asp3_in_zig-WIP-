@@ -211,7 +211,7 @@ comptime {
 pub const ExternPdqCfg = struct {
     ///
     ///　優先度データキューIDの最大値
-    /// 
+    ///
     pub extern const _kernel_tmax_pdqid: ID;
 
     ///
@@ -262,10 +262,10 @@ fn getPdqIdFromPdqCB(p_pdqcb: *PDQCB) ID {
 ///  優先度データキュー待ち情報ブロックを取り出すための関数
 ///
 pub fn getWinfoSPdq(p_winfo: *WINFO) *WINFO_SPDQ {
-    return @fieldParentPtr(WINFO_SPDQ, "winfo", p_winfo);
+    return @fieldParentPtr("winfo", p_winfo);
 }
 pub fn getWinfoRPdq(p_winfo: *WINFO) *WINFO_RPDQ {
-    return @fieldParentPtr(WINFO_RPDQ, "winfo", p_winfo);
+    return @fieldParentPtr("winfo", p_winfo);
 }
 
 ///
@@ -640,15 +640,20 @@ pub fn cre_pdq(comptime cpdq: T_CPDQ) ItronError!PDQINIB {
 pub fn ExportPdqCfg(comptime pdqinib_table: []PDQINIB) type {
     const tnum_pdq = pdqinib_table.len;
     return struct {
-    pub export const _kernel_tmax_pdqid: ID = tnum_pdq;
+        pub export const _kernel_tmax_pdqid: ID = tnum_pdq;
 
         // Zigの制限の回避：BIND_CFG != nullの場合に，サイズ0の配列が
         // 出ないようにする
         pub export const _kernel_pdqinib_table =
             if (option.BIND_CFG == null or tnum_pdq > 0)
-                pdqinib_table[0 .. tnum_pdq].*
-            else [1]PDQINIB{ .{ .wobjatr = 0, .pdqcnt = 0,
-                                .maxdpri = 0, .p_pdqmb = null, }};
+            pdqinib_table[0..tnum_pdq].*
+        else
+            [1]PDQINIB{.{
+                .wobjatr = 0,
+                .pdqcnt = 0,
+                .maxdpri = 0,
+                .p_pdqmb = null,
+            }};
 
         pub export var _kernel_pdqcb_table: [
             if (option.BIND_CFG == null or tnum_pdq > 0) tnum_pdq else 1

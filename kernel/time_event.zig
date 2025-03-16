@@ -348,7 +348,7 @@ fn tmevtb_delete(p_tmevtb: *TMEVTB) void {
 /// タイムイベントヒープの先頭のノードの削除
 fn tmevtb_delete_top() *TMEVTB {
     var index: usize = undefined;
-    var p_top_tmevtb = cfg._kernel_tmevt_heap[0];
+    const p_top_tmevtb = cfg._kernel_tmevt_heap[0];
     var event_evttim: EVTTIM = undefined;
 
     // 削除によりタイムイベントヒープが空になる場合は何もしない．

@@ -229,7 +229,7 @@ fn getSemIdFromSemCB(p_semcb: *SEMCB) ID {
 ///  セマフォ待ち情報ブロックを取り出すための関数
 ///
 pub fn getWinfoSem(p_winfo: *WINFO) *WINFO_SEM {
-    return @fieldParentPtr(WINFO_SEM, "winfo", p_winfo);
+    return @fieldParentPtr("winfo", p_winfo);
 }
 
 ///
@@ -429,8 +429,13 @@ pub fn ExportSemCfg(comptime seminib_table: []SEMINIB) type {
         // 出ないようにする
         pub export const _kernel_seminib_table =
             if (option.BIND_CFG == null or tnum_sem > 0)
-                seminib_table[0 .. tnum_sem].*
-            else [1]SEMINIB{ .{ .wobjatr = 0, .isemcnt = 0, .maxsem = 0, }};
+            seminib_table[0..tnum_sem].*
+        else
+            [1]SEMINIB{.{
+                .wobjatr = 0,
+                .isemcnt = 0,
+                .maxsem = 0,
+            }};
 
         pub export var _kernel_semcb_table: [
             if (option.BIND_CFG == null or tnum_sem > 0) tnum_sem else 1

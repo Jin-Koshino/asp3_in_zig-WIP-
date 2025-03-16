@@ -227,10 +227,10 @@ pub fn getDtqIdFromDtqCB(p_dtqcb: *DTQCB) ID {
 ///  データキュー待ち情報ブロックを取り出すための関数
 ///
 pub fn getWinfoSDtq(p_winfo: *WINFO) *WINFO_SDTQ {
-    return @fieldParentPtr(WINFO_SDTQ, "winfo", p_winfo);
+    return @fieldParentPtr("winfo", p_winfo);
 }
 pub fn getWinfoRDtq(p_winfo: *WINFO) *WINFO_RDTQ {
-    return @fieldParentPtr(WINFO_RDTQ, "winfo", p_winfo);
+    return @fieldParentPtr("winfo", p_winfo);
 }
 
 ///
@@ -614,8 +614,13 @@ pub fn ExportDtqCfg(comptime dtqinib_table: []DTQINIB) type {
         // 出ないようにする
         pub export const _kernel_dtqinib_table =
             if (option.BIND_CFG == null or tnum_dtq > 0)
-                dtqinib_table[0 .. tnum_dtq].*
-            else [1]DTQINIB{ .{ .wobjatr = 0, .dtqcnt = 0, .p_dtqmb = null, }};
+            dtqinib_table[0..tnum_dtq].*
+        else
+            [1]DTQINIB{.{
+                .wobjatr = 0,
+                .dtqcnt = 0,
+                .p_dtqmb = null,
+            }};
 
         pub export var _kernel_dtqcb_table: [
             if (option.BIND_CFG == null or tnum_dtq > 0) tnum_dtq else 1

@@ -245,11 +245,11 @@ pub fn NFYINFO(comptime args: anytype, comptime cfg_data: *CfgData) T_NFYINFO {
     }
 
     // 通知処理のパラメータ数を求める
-    comptime var numpar =
+    const numpar =
         if (nfymode1 != TNFY_HANDLER and nfymode1 != TNFY_SETVAR and nfymode1 != TNFY_SETFLG and nfymode1 != TNFY_SNDDTQ) 1 else 2;
 
     // エラー通知処理のパラメータ数を求める
-    comptime var numepar =
+    const numepar =
         if (nfymode2 == 0) 0 else if (nfymode2 != TENFY_SETFLG) 1 else 2;
 
     // パラメータが足りない場合

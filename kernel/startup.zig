@@ -204,7 +204,7 @@ pub fn sta_ker() noreturn {
     cfg._kernel_initialize_object();
 
     // 初期化ルーチンの実行
-    for (cfg._kernel_inirtnb_table[0 .. cfg._kernel_tnum_inirtn]) |inirtnb| {
+    for (cfg._kernel_inirtnb_table[0..cfg._kernel_tnum_inirtn]) |inirtnb| {
         inirtnb.inirtn(inirtnb.exinf);
     }
 
@@ -240,7 +240,7 @@ pub fn ext_ker() noreturn {
 /// カーネルの終了処理
 pub fn exitKernel() noreturn {
     // 終了処理ルーチンの実行
-    for (cfg._kernel_terrtnb_table[0 .. cfg._kernel_tnum_terrtn]) |terrtnb| {
+    for (cfg._kernel_terrtnb_table[0..cfg._kernel_tnum_terrtn]) |terrtnb| {
         terrtnb.terrtn(terrtnb.exinf);
     }
 
@@ -300,7 +300,7 @@ pub fn ExportIniRtnB(comptime inirtnb_table: []INIRTNB) type {
     return struct {
         pub export const _kernel_tnum_inirtn: c_uint = tnum_inirtn;
         pub export const _kernel_inirtnb_table =
-                                        inirtnb_table[0 .. tnum_inirtn].*;
+            inirtnb_table[0..tnum_inirtn].*;
     };
 }
 
@@ -317,8 +317,7 @@ pub fn ExportTerRtnB(comptime terrtnb_table: []TERRTNB) type {
     return struct {
         pub export const _kernel_tnum_terrtn: c_uint = tnum_terrtn;
         pub export const _kernel_terrtnb_table =
-                                        terrtnb_table[0 .. tnum_terrtn].*;
-
+            terrtnb_table[0..tnum_terrtn].*;
     };
 }
 

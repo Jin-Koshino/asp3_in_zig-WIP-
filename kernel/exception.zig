@@ -129,7 +129,7 @@ pub fn initialize_exception() void {
 ///
 pub fn xsns_dpn(p_excinf: *anyopaque) bool {
     traceLog("xSnsDpnEnter", .{p_excinf});
-    var state = !(startup.kerflg and target_impl.mpcore_kernel_impl.core_kernel_impl.exc_sense_intmask(p_excinf) and task.enadsp and task.p_runtsk != null);
+    const state = !(startup.kerflg and target_impl.mpcore_kernel_impl.core_kernel_impl.exc_sense_intmask(p_excinf) and task.enadsp and task.p_runtsk != null);
     traceLog("xSnsDpnLeave", .{state});
     return state;
 }

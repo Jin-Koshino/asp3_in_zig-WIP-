@@ -2,7 +2,7 @@
 ///  TOPPERS/ASP Kernel
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2007-2020 by Embedded and Real-Time Systems Laboratory
 ///                 Graduate School of Informatics, Nagoya Univ., JAPAN
 ///
@@ -66,7 +66,7 @@ pub const INTPRI_OVRTIMER = INTPRI_HRT; // 割込み優先度
 pub const INTATR_OVRTIMER = TA_EDGE; // 割込み属性
 
 ///
-///  シミュレートされた高分解能タイマ割込みの要求 
+///  シミュレートされた高分解能タイマ割込みの要求
 ///
 pub fn raise_hrt_int() void {
     target_impl.mpcore_kernel_impl.gic_kernel_impl.raiseInt(INTNO_HRT);

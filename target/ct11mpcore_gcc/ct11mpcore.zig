@@ -76,7 +76,7 @@ pub const EB_PLD_CTRL1_INTMODE_MASK = 0x01c00000;
 ///
 ///  UART関連の定義
 ///
-/// 
+///
 ///  UARTレジスタのベースアドレス
 ///
 pub const EB_UART0_BASE = EB_BASE + 0x9000;
@@ -86,14 +86,14 @@ pub const EB_UART3_BASE = EB_BASE + 0xc000;
 
 ///
 ///  ボーレート設定（38400bps）
-/// 
+///
 pub const EB_UART_IBRD_38400 = 0x27;
 pub const EB_UART_FBRD_38400 = 0x04;
 
 ///
 ///  タイマ関連の定義
 ///
-/// 
+///
 ///  タイマレジスタのベースアドレス
 ///
 pub const EB_TIMER0_BASE = EB_BASE + 0x11000;

@@ -1,7 +1,7 @@
 ///
 ///  TOPPERS Software
 ///      Toyohashi Open Platform for Embedded Real-Time Systems
-/// 
+///
 ///  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
 ///                                 Toyohashi Univ. of Technology, JAPAN
 ///  Copyright (C) 2004-2020 by Embedded and Real-Time Systems Laboratory

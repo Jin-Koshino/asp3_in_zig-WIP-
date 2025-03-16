@@ -1,7 +1,6 @@
 ///
 ///  カーネルのターゲット依存部（ZYBO用）
 ///
-
 ///
 ///  コンフィギュレーションオプションの取り込み
 ///
@@ -33,28 +32,24 @@ const pl310 = @import("../../arch/arm_gcc/common/pl310.zig");
 ///  0xfffc0000 - 0xffffffff：オンチップメモリ（OCM）領域
 ///                           （上位番地にマッピングした場合）
 ///
-
 ///
 ///  MMUへの設定属性（第1レベルディスクリプタ）
 ///
-pub const MMU_ATTR_RAM   = arm.MMU_DSCR1_SHARED | arm.MMU_DSCR1_TEX001
-                         | arm.V6_MMU_DSCR1_AP011 | arm.MMU_DSCR1_CB11;
-pub const MMU_ATTR_IODEV = arm.MMU_DSCR1_SHARED | arm.MMU_DSCR1_TEX000
-                         | arm.V6_MMU_DSCR1_AP011 | arm.MMU_DSCR1_CB01
-                         | arm.V6_MMU_DSCR1_NOEXEC;
+pub const MMU_ATTR_RAM = arm.MMU_DSCR1_SHARED | arm.MMU_DSCR1_TEX001 | arm.V6_MMU_DSCR1_AP011 | arm.MMU_DSCR1_CB11;
+pub const MMU_ATTR_IODEV = arm.MMU_DSCR1_SHARED | arm.MMU_DSCR1_TEX000 | arm.V6_MMU_DSCR1_AP011 | arm.MMU_DSCR1_CB01 | arm.V6_MMU_DSCR1_NOEXEC;
 
 ///
 ///  外付けDDR領域の先頭番地，サイズ，属性
 ///
 pub const DDR_ADDR = 0x00000000;
-pub const DDR_SIZE = 0x20000000;        // 512MB
+pub const DDR_SIZE = 0x20000000; // 512MB
 pub const DDR_ATTR = MMU_ATTR_RAM;
 
 ///
 ///  プログラマブルロジック領域の先頭番地，サイズ，属性
 ///
 pub const PL_ADDR = 0x40000000;
-pub const PL_SIZE = 0x80000000;         // 2GB
+pub const PL_SIZE = 0x80000000; // 2GB
 pub const PL_ATTR = MMU_ATTR_IODEV;
 
 ///
@@ -71,21 +66,17 @@ pub const PERI_ATTR = MMU_ATTR_IODEV;
 ///  では1MB単位でしか設定できないため，1MB単位に丸めて登録する．
 ///
 pub const OCM_ADDR = 0xfff00000;
-pub const OCM_SIZE = 0x00100000;        // 1MB
+pub const OCM_SIZE = 0x00100000; // 1MB
 pub const OCM_ATTR = MMU_ATTR_RAM;
 
 ///
 ///  MMUの設定情報（メモリエリアの情報）
 ///
-pub const arm_memory_area = [_]ARM_MMU_CONFIG {
-    .{ .vaddr = DDR_ADDR, .paddr = DDR_ADDR,
-       .size = DDR_SIZE, .attr = DDR_ATTR },
-    .{ .vaddr = PL_ADDR, .paddr = PL_ADDR,
-       .size = PL_SIZE, .attr = PL_ATTR },
-    .{ .vaddr = PERI_ADDR, .paddr = PERI_ADDR,
-       .size = PERI_SIZE, .attr = PERI_ATTR },
-    .{ .vaddr = OCM_ADDR, .paddr = OCM_ADDR,
-       .size = OCM_SIZE, .attr = OCM_ATTR },
+pub const arm_memory_area = [_]ARM_MMU_CONFIG{
+    .{ .vaddr = DDR_ADDR, .paddr = DDR_ADDR, .size = DDR_SIZE, .attr = DDR_ATTR },
+    .{ .vaddr = PL_ADDR, .paddr = PL_ADDR, .size = PL_SIZE, .attr = PL_ATTR },
+    .{ .vaddr = PERI_ADDR, .paddr = PERI_ADDR, .size = PERI_SIZE, .attr = PERI_ATTR },
+    .{ .vaddr = OCM_ADDR, .paddr = OCM_ADDR, .size = OCM_SIZE, .attr = OCM_ATTR },
 };
 
 ///
@@ -119,7 +110,10 @@ extern fn software_term_hook() void;
 pub fn exit() noreturn {
     // software_term_hookの呼び出し
     // 最適化の抑止のために，インラインアセンブラを使っている．
-    if (asm("" : [_]"=r"(-> u32) : [_]"0"(software_term_hook)) != 0) {
+    if (asm (""
+        : [_] "=r" (-> u32),
+        : [_] "0" (software_term_hook),
+    ) != 0) {
         software_term_hook();
     }
 

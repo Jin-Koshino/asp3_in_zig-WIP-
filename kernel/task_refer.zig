@@ -201,7 +201,7 @@ pub fn ref_tsk(tskid: ID, pk_rtsk: *T_RTSK) ItronError!void {
         target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
-        var tstat = p_tcb.tstat;
+        const tstat = p_tcb.tstat;
         if (isDormant(tstat)) {
             // 対象タスクが休止状態の場合［NGKI1225］
             pk_rtsk.tskstat = TTS_DMT;

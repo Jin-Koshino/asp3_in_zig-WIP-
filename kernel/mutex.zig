@@ -243,7 +243,7 @@ pub fn getMtxIdFromMtxCB(p_mtxcb: *MTXCB) ID {
 ///  ミューテックス待ち情報ブロックを取り出すための関数
 ///
 pub fn getWinfoMtx(p_winfo: *WINFO) *WINFO_MTX {
-    return @fieldParentPtr(WINFO_MTX, "winfo", p_winfo);
+    return @fieldParentPtr("winfo", p_winfo);
 }
 
 ///
@@ -628,8 +628,12 @@ pub fn ExportMtxCfg(comptime mtxinib_table: []MTXINIB) type {
         // 出ないようにする
         pub export const _kernel_mtxinib_table =
             if (option.BIND_CFG == null or tnum_mtx > 0)
-                mtxinib_table[0 .. tnum_mtx].*
-            else [1]MTXINIB{ .{ .wobjatr = 0, .ceilpri = 0, }};
+            mtxinib_table[0..tnum_mtx].*
+        else
+            [1]MTXINIB{.{
+                .wobjatr = 0,
+                .ceilpri = 0,
+            }};
 
         pub export var _kernel_mtxcb_table: [
             if (option.BIND_CFG == null or tnum_mtx > 0) tnum_mtx else 1

@@ -155,7 +155,7 @@ pub fn get_lod(tskpri: PRI, p_load: *c_uint) ItronError!void {
         try checkParameter(validTaskPri(tskpri)); //［NGKI3626］
         prio = internalTaskPrio(tskpri);
     }
-    var p_queue = &task.ready_queue[prio];
+    const p_queue = &task.ready_queue[prio];
     {
         target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
@@ -184,7 +184,7 @@ pub fn get_nth(tskpri: PRI, nth: c_uint, p_tskid: *ID) ItronError!void {
         try checkParameter(validTaskPri(tskpri)); //［NGKI3644］
         prio = internalTaskPrio(tskpri);
     }
-    var p_queue = &task.ready_queue[prio];
+    const p_queue = &task.ready_queue[prio];
     {
         target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
@@ -282,7 +282,7 @@ pub fn ena_dsp() ItronError!void {
 ///
 pub fn sns_ctx() bool {
     traceLog("snsCtxEnter", .{});
-    var state = target_impl.mpcore_kernel_impl.core_kernel_impl.senseContext();
+    const state = target_impl.mpcore_kernel_impl.core_kernel_impl.senseContext();
     traceLog("snsCtxLeave", .{state});
     return state;
 }
@@ -292,7 +292,7 @@ pub fn sns_ctx() bool {
 ///
 pub fn sns_loc() bool {
     traceLog("snsLocEnter", .{});
-    var state = target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock();
+    const state = target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock();
     traceLog("snsLocLeave", .{state});
     return state;
 }
@@ -302,7 +302,7 @@ pub fn sns_loc() bool {
 ///
 pub fn sns_dsp() bool {
     traceLog("snsDspEnter", .{});
-    var state = !task.enadsp;
+    const state = !task.enadsp;
     traceLog("snsDspLeave", .{state});
     return state;
 }
@@ -312,7 +312,7 @@ pub fn sns_dsp() bool {
 ///
 pub fn sns_dpn() bool {
     traceLog("snsDpnEnter", .{});
-    var state = target_impl.mpcore_kernel_impl.core_kernel_impl.senseContext() or target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock() or !task.dspflg;
+    const state = target_impl.mpcore_kernel_impl.core_kernel_impl.senseContext() or target_impl.mpcore_kernel_impl.core_kernel_impl.senseLock() or !task.dspflg;
     traceLog("snsDpnLeave", .{state});
     return state;
 }
@@ -322,7 +322,7 @@ pub fn sns_dpn() bool {
 ///
 pub fn sns_ker() bool {
     traceLog("snsKerEnter", .{});
-    var state = !startup.kerflg;
+    const state = !startup.kerflg;
     traceLog("snsKerLeave", .{state});
     return state;
 }

@@ -593,8 +593,7 @@ pub fn ExportInhIniB(comptime inhinib_list: []interrupt.INHINIB) type {
 fn ExportIniB(comptime intinib_list: []interrupt.INTINIB) type {
     return struct {
         pub export const _kernel_tnum_cfg_intno: c_uint = intinib_list.len;
-        pub export const _kernel_intinib_table = intinib_list
-                                                [0 .. intinib_list.len].*;
+        pub export const _kernel_intinib_table = intinib_list[0..intinib_list.len].*;
     };
 }
 
@@ -610,7 +609,6 @@ fn ExportCfg(comptime intinib_list: []interrupt.INTINIB) type {
 }
 
 pub fn ExportIntIniB(comptime intinib_list: []interrupt.INTINIB) type {
-
     return struct {
         pub usingnamespace if (isTrue(target_impl.mpcore_kernel_impl.gic_kernel_impl, "USE_INTINIB_TABLE"))
             ExportIniB(intinib_list)

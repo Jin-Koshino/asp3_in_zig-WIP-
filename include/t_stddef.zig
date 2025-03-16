@@ -2,7 +2,7 @@
 ///  TOPPERS Software
 ///      Toyohashi Open Platform for Embedded Real-Time Systems/
 ///      Advanced Standard Profile Kernel
-/// 
+///
 ///  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
 ///                                 Toyohashi Univ. of Technology, JAPAN
 ///  Copyright (C) 2004-2021 by Embedded and Real-Time Systems Laboratory
@@ -231,7 +231,7 @@ pub const TMAX_RELTIM = 4000000000; // 66分40秒まで指定可
 ///
 noinline fn assert_fail(argument: ?c_int) noreturn {
     const value = argument orelse 123;
-    syslog(LOG_EMERG, "assertion failed at %x.\x07, value= %d", .{@returnAddress() - 4, value});
+    syslog(LOG_EMERG, "assertion failed at %x.\x07, value= %d", .{ @returnAddress() - 4, value });
     target.assert_abort();
 }
 

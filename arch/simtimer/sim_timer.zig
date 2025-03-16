@@ -1,7 +1,7 @@
 ///
 ///  TOPPERS Software
 ///      Toyohashi Open Platform for Embedded Real-Time Systems
-/// 
+///
 ///  Copyright (C) 2018-2020 by Embedded and Real-Time Systems Laboratory
 ///                 Graduate School of Informatics, Nagoya Univ., JAPAN
 ///
@@ -387,7 +387,7 @@ fn simtim_advance(time: c_uint) void {
 ///  シミュレーション時刻を強制的に進める（テストプログラム用）
 ///
 fn simtim_add(time: c_uint) void {
-    var locked = (sns_loc() != 0);
+    const locked = (sns_loc() != 0);
     if (!locked) {
         _ = loc_cpu();
     }
