@@ -54,7 +54,7 @@ pub const decl = option.decl;
 ///
 ///  アプリケーションと共通の定義ファイル
 ///
-pub const zig = @import("../include/kernel.zig");
+pub const zig = @import("kernel");
 
 ////
 const TMAX_TPRI = zig.TMAX_TPRI;

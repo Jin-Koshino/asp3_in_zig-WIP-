@@ -9,7 +9,7 @@ pub const option = @import("../include/option.zig");
 ///
 ///  アプリケーションと共通の定義ファイル
 ///
-pub const zig = @import("../include/kernel.zig");
+pub const zig = @import("kernel");
 //usingnamespace zig;
 
 ////
