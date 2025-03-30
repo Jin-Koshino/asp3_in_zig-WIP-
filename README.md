@@ -3,18 +3,6 @@ TOPPERS/ASP3 Kernel written in Zig Programming Language
 
 このレポジトリは、TOPPERS Projectのレポジトリ[asp3_in_zig](https://github.com/toppers/asp3_in_zig)からJin-Koshinoがforkしたものです。
 masterブランチのコミットは変更作業が完了していないため、ビルド時にエラーが発生します。
-現在サンプルプログラムを実行可能なコミットは、タグ"v0.9.1-ct11mpcore"が付けられたコミットです。ct11mpcoreをターゲットとした場合にのみサンプルプログラムを実行可能です。
-
-ビルド&実行方法（例）
-
-    % mkdir OBJ-ARM
-    % cd OBJ-ARM
-    % ../configure.rb -T ct11mpcore_gcc -O "-DTOPPERS_USE_QEMU"
-    % make
-    % qemu-system-arm -M realview-eb-mpcore -semihosting -m 128M -nographic -kernel asp
-
-Zigのコンパイラは，Release 0.9.1を利用してください。古い版では動作しません。最新版で動作するとは限りません。
-また、現時点で対応しているターゲットはct11mpcoreのみで、開発段階のためサンプルプログラム以外の動作は未確認です。
 
 その他の依存しているソフトウェアの動作確認バージョンは，次の通りです。
 
