@@ -8,7 +8,9 @@ def path_to_mod_name(path):
     no_extension = os.path.splitext(normalized)[0]
     # '/'を'_'に置き換える
     slash_replace = no_extension.replace('/', '_')
-    return slash_replace
+    # '-'を'_'に置き換える
+    dash_replace = slash_replace.replace('-', '_')
+    return dash_replace
 
 # 依存関係を抽出する関数
 def extract_imports_from_file(filepath):
@@ -26,7 +28,7 @@ def collect_dependencies(root_dir):
     dependencies = {}
     for dirpath, _, filenames in os.walk(root_dir):
         for filename in filenames:
-            if filename.endswith(".zig"):
+            if filename.endswith(".zig") and "zig-cache" not in dirpath:
                 filepath = os.path.join(dirpath, filename)
                 imports = extract_imports_from_file(filepath)
                 rel_filepath = os.path.relpath(filepath, root_dir)
@@ -43,24 +45,42 @@ def print_dependencies(dependencies):
             print()
 
 # build.zig用のモジュール登録のための依存関係に変換
-def dataset_for_buildzig(dependencies):
-    build_dir = os.path.join(root_directory, "OBJ_ARM")
-    mod_paths = {}
-    dep_mods = {}
+def extract_deps_for_buildzig(dependencies):
+    deps_for_buildzig = {}
+    # 各.zigファイルで，上位階層を経由して@importされているモジュールを抽出
     for file, imports in dependencies.items():
-        mod_path = os.path.relpath(file, build_dir)
-        mod_name = path_to_mod_name(mod_path)
-        if mod_name is not mod_paths.keys():
-            mod_paths[mod_name] = mod_path
-        dep_mods[mod_name] = [path_to_mod_name(imp) for imp in imports]
-    return (mod_paths, dep_mods)
+        deps_for_buildzig[file] = []
+        for imp in imports:
+            # 上位階層を経由して@importされているモジュールを抽出，パスを正規化
+            if imp.startswith("../"):
+                # 相対パスを絶対パスに変換してから正規化
+                imp_from_root = os.path.normpath(os.path.join(os.path.dirname(file), imp))
+                deps_for_buildzig[file].append(imp_from_root)
+    return deps_for_buildzig
 
 # build.zigへの記述を自動生成
-def generate_description_for_buildzig(build_datasets):
-    pass
+def generate_description_for_buildzig(deps_for_buildzig):
+    # @importされるモジュールの登録
+    already_declared = []
+    for _, imports in deps_for_buildzig.items():
+        for imp in imports:
+            if imp not in already_declared:
+                already_declared.append(imp)
+    for imp in already_declared:
+        imp_name = path_to_mod_name(imp)
+        print(f"const {imp_name}_mod = b.addModule(\"{imp_name}\", .{{.root_source_file = .{{ .path = \"{imp}\" }},}});")
+    # モジュール間依存関係の登録
+    for importer, imports in deps_for_buildzig.items():
+        importer_name = path_to_mod_name(importer)
+        if importer not in already_declared:
+            already_declared.append(importer)
+            print(f"const {importer_name}_mod = b.addModule(\"{importer_name}\", .{{.root_source_file = .{{ .path = \"{importer}\" }},}});")
+        for imp in imports:
+            imp_name = path_to_mod_name(imp)
+            print(f"{importer_name}_mod.addImport(\"{imp_name}\", {imp_name}_mod);")
 
 if __name__ == "__main__":
     root_directory = "."  # ここで検索対象のフォルダを指定する（"."は現在のフォルダ）
     deps = collect_dependencies(root_directory)
-    mods = dataset_for_buildzig(deps)
-    print(mods)
+    deps_for_buildzig = extract_deps_for_buildzig(deps)
+    generate_description_for_buildzig(deps_for_buildzig)
