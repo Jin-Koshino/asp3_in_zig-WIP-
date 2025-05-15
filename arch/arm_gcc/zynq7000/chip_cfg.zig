@@ -1,7 +1,8 @@
 ///
 ///  システムコンフィギュレーション記述のターゲット依存部（Zynq7000用）
 ///
-const kernel_cfg = @import("../../../kernel/kernel_cfg.zig");
+// const kernel_cfg = @import("../../../kernel/kernel_cfg.zig");
+const kernel_cfg = @import("kernel").kernel_cfg;
 ///usingnamespace kernel_cfg.zig;
 const zig = kernel_cfg.zig;
 

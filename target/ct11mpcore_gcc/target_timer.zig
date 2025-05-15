@@ -1,7 +1,8 @@
 ///
 ///  タイマドライバ（CT11MPCore用）
 ///
-const kernel_impl = @import("../../kernel/kernel_impl.zig");
+// const kernel_impl = @import("kernel").kernel_impl;
+const kernel_impl = @import("kernel").kernel_impl;
 const option = kernel_impl.option;
 const sil = kernel_impl.sil;
 const overrun = kernel_impl.overrun;
@@ -30,7 +31,8 @@ const EB_IRQNO_TIMER01 = option.target.EB_IRQNO_TIMER01;
 ///  MPCoreのプライベートタイマとウォッチドッグを用いて高分解能タイマ
 ///  を実現する．
 ///
-const mpcore_timer = @import("../../arch/arm_gcc/common/mpcore_timer.zig");
+// const mpcore_timer = @import("../../arch/arm_gcc/common/mpcore_timer.zig");
+const mpcore_timer = @import("arch").mpcore_timer;
 
 ////
 const PRCTIM = mpcore_timer.PRCTIM;

@@ -42,7 +42,7 @@
 ///
 ///  システム時刻管理機能
 ///
-const kernel_impl = @import("kernel_impl.zig");
+const kernel_impl = @import("kernel").kernel_impl;
 ///usingnamespace time_event;
 const time_event = kernel_impl.time_event;
 ///usingnamespace check;

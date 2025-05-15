@@ -53,14 +53,15 @@ const builtin = @import("builtin");
 ///
 ///  コンフィギュレーションオプションの取り込み
 ///
-const option = @import("../include/option.zig");
+const option = @import("include").option;
 const isTrue = option.isTrue;
 
 ///
 ///  ターゲット依存部
 ///
 ///const target = @import("../target/" ++ option.TARGET ++ "/target_stddef.zig");
-const target = @import("../target/ct11mpcore_gcc/target_stddef.zig");
+// const target = @import("../target/ct11mpcore_gcc/target_stddef.zig");
+const target = @import("target").ct11mpcore_target_stddef;
 ///
 ///  ターゲット依存の定義の取り込み
 ///

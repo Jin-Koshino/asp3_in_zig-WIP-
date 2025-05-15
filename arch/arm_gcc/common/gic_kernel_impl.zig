@@ -40,7 +40,7 @@
 ///
 ///  カーネルの割込みコントローラ依存部（GIC用）
 ///
-const kernel_impl = @import("../../../kernel/kernel_impl.zig");
+const kernel_impl = @import("kernel").kernel_impl;
 
 ////
 const zig = kernel_impl.zig;
@@ -315,7 +315,7 @@ fn gicd_raise_sgi(intno: INTNO) void {
 pub fn gicd_config(intno: INTNO, conf: u32) void {
     if (intno >= GIC_INTNO_PPI0) {
         var reg = sil.rew_mem(GICD_ICFGR(intno / 16));
-        var shift: c_uint = (intno % 16) * 2;
+        const shift: c_uint = (intno % 16) * 2;
         reg &= ~(@as(u32, 0x03) << @as(u5, @intCast(shift)));
         reg |= (conf << @as(u5, @intCast(shift)));
         sil.wrw_mem(GICD_ICFGR(intno / 16), reg);
@@ -327,7 +327,7 @@ pub fn gicd_config(intno: INTNO, conf: u32) void {
 ///
 pub fn gicd_set_priority(intno: INTNO, pri: u32) void {
     var reg = sil.rew_mem(GICD_IPRIORITYR(intno / 4));
-    var shift: c_uint = (intno % 4) * 8;
+    const shift: c_uint = (intno % 4) * 8;
     reg &= ~(@as(u32, 0xff) << @as(u5, @intCast(shift)));
     reg |= (pri << @as(u5, @intCast(@as(u5, @intCast(shift)))));
     sil.wrw_mem(GICD_IPRIORITYR(intno / 4), reg);
@@ -345,7 +345,7 @@ pub fn gicd_set_priority(intno: INTNO, pri: u32) void {
 ///
 pub fn gicd_set_target(intno: INTNO, affinity: u32) void {
     var reg = sil.rew_mem(GICD_ITARGETSR(intno / 4));
-    var shift: c_uint = (intno % 4) * 8;
+    const shift: c_uint = (intno % 4) * 8;
     reg &= ~(@as(u32, 0xff) << @as(u5, @intCast(shift)));
     reg |= (affinity << @as(u5, @intCast(shift)));
     sil.wrw_mem(GICD_ITARGETSR(intno / 4), reg);

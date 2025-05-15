@@ -1,8 +1,10 @@
 ///
 ///  タイマドライバシミュレータのシステムコンフィギュレーション記述
 ///
-const kernel_cfg = @import("../../kernel/kernel_cfg.zig");
-usingnamespace kernel_cfg.zig;
+// const kernel_cfg = @import("../../kernel/kernel_cfg.zig");
+const kernel_cfg = @import("kernel").kernel_cfg;
+const zig = @import("include").kernel;
+const t_stddef = @import("include").t_stddef;
 
 ////
 const CfgData = kernel_cfg.CfgData;

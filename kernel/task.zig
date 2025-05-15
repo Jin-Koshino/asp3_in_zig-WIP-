@@ -42,7 +42,7 @@
 ///
 ///  タスク管理モジュール
 ///
-const kernel_impl = @import("kernel_impl.zig");
+const kernel_impl = @import("kernel").kernel_impl;
 ///usingnamespace wait;
 const wait = kernel_impl.wait;
 ///usingnamespace time_event;

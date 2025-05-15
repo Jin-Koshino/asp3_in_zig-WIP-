@@ -39,7 +39,8 @@
 ///
 ///  ItronError型のエラーをC言語APIのエラーコードに変換する関数
 ///
-const t_stddef = @import("../include/t_stddef.zig");
+// const t_stddef = @import("../include/t_stddef.zig");
+const t_stddef = @import("include").t_stddef;
 
 ////
 const ItronError = t_stddef.ItronError;

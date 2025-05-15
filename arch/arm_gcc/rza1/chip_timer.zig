@@ -4,7 +4,7 @@
 ///  RZ/A1は2チャンネルのOSタイマを持つが，その内の1つを用いて高分解能
 ///  タイマを，もう1つを用いてオーバランタイマを実現する．
 ///
-const kernel_impl = @import("../../../kernel/kernel_impl.zig");
+const kernel_impl = @import("kernel").kernel_impl;
 
 ////
 const zig = kernel_impl.zig;

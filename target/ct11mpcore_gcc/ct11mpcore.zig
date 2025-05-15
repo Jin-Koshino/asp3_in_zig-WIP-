@@ -4,7 +4,7 @@
 ///
 ///  コンフィギュレーションオプションの取り込み
 ///
-const option = @import("../../include/option.zig");
+const option = @import("include").option;
 const TOPPERS_USE_QEMU = @hasDecl(option.target, "TOPPERS_USE_QEMU");
 
 ///

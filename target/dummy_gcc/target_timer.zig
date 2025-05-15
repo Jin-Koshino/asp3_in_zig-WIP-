@@ -1,7 +1,7 @@
 ///
 ///  タイマドライバ（ダミーターゲット用）
 ///
-const kernel_impl = @import("../../kernel/kernel_impl.zig");
+const kernel_impl = @import("kernel").kernel_impl;
 
 ///
 ///  ハードウェア資源の定義

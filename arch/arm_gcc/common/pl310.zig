@@ -42,13 +42,15 @@
 ///
 ///  コンフィギュレーションオプションの取り込み
 ///
-const option = @import("../../../include/option.zig");
+// const option = @import("../../../include/option.zig");
+const option = @import("include").option;
 const PL310_BASE = option.target.PL310_BASE;
 
 ///
 ///  用いるライブラリ
 ///
-const sil = @import("../../../include/sil.zig");
+// const sil = @import("../../../include/sil.zig");
+const sil = @import("include").sil;
 
 ///
 ///  PL310のレジスタの番地の定義
@@ -159,11 +161,11 @@ pub fn initialize(aux_val: u32, aux_mask: u32) void {
         prefetch_set |= PREFETCH_CTRL_INCR_DLINEFILL;
 
         // 補助制御レジスタを設定
-        var aux = sil.rew_mem(AUX_CTRL);
+        const aux = sil.rew_mem(AUX_CTRL);
         sil.wrw_mem(AUX_CTRL, (aux & aux_mask) | aux_set);
 
         // プリフェッチ制御レジスタを設定
-        var prefetch = sil.rew_mem(PREFETCH_CTRL);
+        const prefetch = sil.rew_mem(PREFETCH_CTRL);
         sil.wrw_mem(PREFETCH_CTRL, (prefetch | prefetch_set));
 
         // L2キャッシュの全体の無効化

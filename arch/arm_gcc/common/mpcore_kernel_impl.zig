@@ -1,12 +1,13 @@
 ///
 ///  kernel_impl.zigのMPCore依存部
 ///
-const kernel_impl = @import("../../../kernel/kernel_impl.zig");
+const kernel_impl = @import("kernel").kernel_impl;
 
 ///
 ///  MPCoreのハードウェア資源の定義
 ///
-const mpcore = @import("mpcore.zig");
+// const mpcore = @import("mpcore.zig");
+const mpcore = @import("arch").mpcore;
 
 ///
 ///  コア依存部

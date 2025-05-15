@@ -74,7 +74,7 @@ pub fn abort() noreturn {
 ///  サンプルプログラム／テストプログラムのための定義
 ///
 pub const _test = struct {
-    const zig = @import("../../include/kernel.zig");
+    const zig = @import("include").kernel;
 
     // コアで共通な定義の取り込み
     usingnamespace core_test;

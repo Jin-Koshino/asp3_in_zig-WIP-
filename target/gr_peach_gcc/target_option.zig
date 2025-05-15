@@ -55,7 +55,7 @@ pub const RZA1_CLK_P1 = gr_peach.RZA1_CLK_P1;
 ///  サンプルプログラム／テストプログラムのための定義
 ///
 pub const _test = struct {
-    const zig = @import("../../include/kernel.zig");
+    const zig = @import("include").kernel;
 
     // コアで共通な定義の取り込み
     usingnamespace core_test;

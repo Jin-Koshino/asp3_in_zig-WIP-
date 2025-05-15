@@ -42,7 +42,7 @@
 ///
 ///  周期通知機能
 ///
-const kernel_impl = @import("kernel_impl.zig");
+const kernel_impl = @import("kernel").kernel_impl;
 ///usingnamespace kernel_impl.time_event;
 const time_event = kernel_impl.time_event;
 ///usingnamespace kernel_impl.check;

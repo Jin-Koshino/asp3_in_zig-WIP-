@@ -40,7 +40,7 @@
 ///
 ///  タスクの状態参照機能
 ///
-const kernel_impl = @import("kernel_impl.zig");
+const kernel_impl = @import("kernel").kernel_impl;
 ///usingnamespace task;
 const task = kernel_impl.task;
 ///usingnamespace wait;

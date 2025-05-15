@@ -44,7 +44,7 @@
 ///
 ///  コンフィギュレーションオプションの取り込み
 ///
-const option = @import("../include/option.zig");
+const option = @import("include").option;
 
 ///
 ///  Zigの標準ライブラリ
@@ -57,7 +57,8 @@ const Endian = builtin.Endian;
 ///  ターゲット依存部
 ///
 ///const target = @import("../target/" ++ option.TARGET ++ "/target_sil.zig");
-const target = @import("../target/ct11mpcore_gcc/target_sil.zig");
+// const target = @import("../target/ct11mpcore_gcc/target_sil.zig");
+const target = @import("target").ct11mpcore_target_sil;
 ///
 ///  全割込みロック状態の制御
 ///

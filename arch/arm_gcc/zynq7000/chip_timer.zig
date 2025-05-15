@@ -1,7 +1,8 @@
 ///
 ///  タイマドライバ（Zynq7000用）
 ///
-const kernel_impl = @import("../../../kernel/kernel_impl.zig");
+// const kernel_impl = @import("kernel").kernel_impl;
+const kernel_impl = @import("kernel").kernel_impl;
 
 ////
 const zig = kernel_impl.zig;
@@ -24,7 +25,8 @@ const MPCORE_WDG_FREQ = option.target.MPCORE_WDG_FREQ;
 ///
 ///  MPCoreのグローバルタイマを用いて高分解能タイマを実現する．
 ///
-const mpcore_timer = @import("../common/mpcore_timer.zig");
+// const mpcore_timer = @import("../common/mpcore_timer.zig");
+const mpcore_timer = @import("arm_gcc.common").mpcore_timer;
 
 ///
 ///  高分解能タイマドライバのインスタンシエート

@@ -4,12 +4,12 @@
 ///
 ///  コンフィギュレーションオプションの取り込み
 ///
-pub const option = @import("../include/option.zig");
+pub const option = @import("include").option;
 
 ///
 ///  アプリケーションと共通の定義ファイル
 ///
-pub const zig = @import("../include/kernel.zig");
+pub const zig = @import("include").kernel;
 //usingnamespace zig;
 
 ////
@@ -349,7 +349,8 @@ pub const GenCfgData = static_api.GenCfgData;
 ///
 ///  システムコンフィギュレーション記述のターゲット依存部
 ///
-pub const target = @import("../target/ct11mpcore_gcc/target_cfg.zig");
+// pub const target = @import("../target/ct11mpcore_gcc/target_cfg.zig");
+pub const target = @import("target").ct11mpcore_target_cfg;
 
 ///
 ///  C言語の変数へのポインタの取り込み

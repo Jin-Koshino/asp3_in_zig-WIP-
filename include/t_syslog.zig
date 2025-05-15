@@ -61,7 +61,8 @@ const TOPPERS_OMIT_SYSLOG = @hasDecl(opt, "TOPPERS_OMIT_SYSLOG");
 ///
 ///  TOPPERS共通定義ファイル
 ///
-const t_stddef = @import("t_stddef.zig");
+// const t_stddef = @import("t_stddef.zig");
+const t_stddef = @import("include").t_stddef;
 
 ////
 const HRTCNT = t_stddef.HRTCNT;

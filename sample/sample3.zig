@@ -113,13 +113,13 @@
 ///
 ///  使用するカーネルおよびライブラリ
 ///
-const zig = @import("../include/kernel.zig");
-const t_syslog = @import("../include/t_syslog.zig");
+const zig = @import("include").kernel;
+const t_syslog = @import("include").t_syslog;
 
 ///
 ///  コンフィギュレーションオプションの取り込み
 ///
-pub const option = @import("../include/option.zig");
+pub const option = @import("include").option;
 
 ///
 ///  C言語ヘッダファイルの取り込み

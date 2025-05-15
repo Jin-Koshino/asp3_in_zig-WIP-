@@ -43,7 +43,8 @@
 ///
 ///  コア依存部
 ///
-const core_kernel = @import("../../arch/arm_gcc/common/core_kernel.zig");
+// const core_kernel = @import("../../arch/arm_gcc/common/core_kernel.zig");
+const core_kernel = @import("arch").core_kernel;
 
 ////
 const core_publish = core_kernel.core_publish;

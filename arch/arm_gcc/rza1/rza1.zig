@@ -1,7 +1,7 @@
 ///
 ///  RZ/A1のハードウェア資源の定義
 ///
-const kernel_impl = @import("../../../kernel/kernel_impl.zig");
+const kernel_impl = @import("kernel").kernel_impl;
 
 ////
 const isTrue = kernel_impl.isTrue;

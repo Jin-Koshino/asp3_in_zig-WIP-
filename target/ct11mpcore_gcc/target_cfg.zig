@@ -1,7 +1,8 @@
 ///
 ///  システムコンフィギュレーション記述のターゲット依存部（CT11MPCore用）
 ///
-const kernel_cfg = @import("../../kernel/kernel_cfg.zig");
+// const kernel_cfg = @import("../../kernel/kernel_cfg.zig");
+const kernel_cfg = @import("kernel").kernel_cfg;
 const zig = kernel_cfg.zig;
 ////
 const t_stddef = zig.t_stddef;

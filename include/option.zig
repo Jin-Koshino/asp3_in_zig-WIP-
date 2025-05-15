@@ -54,7 +54,8 @@ const TOPPERS_ENABLE_TRACE = @hasDecl(opt, "TOPPERS_ENABLE_TRACE");
 ///  トレースログ機能
 ///
 pub const log = if (TOPPERS_ENABLE_TRACE)
-    @import("../arch/tracelog/trace_option.zig")
+    // @import("../arch/tracelog/trace_option.zig")
+    @import("arch").trace_option
 else
     struct {
         pub const TraceExportDefs = struct {};
@@ -63,7 +64,8 @@ else
 ///
 ///  ターゲット依存部
 ///
-pub const target = @import("../target/ct11mpcore_gcc/target_option.zig");
+// pub const target = @import("../target/ct11mpcore_gcc/target_option.zig");
+pub const target = @import("target").ct11mpcore_target_option;
 
 ///
 ///  ネームスペースnsにnameが定義されていればその値を返し，そうでない

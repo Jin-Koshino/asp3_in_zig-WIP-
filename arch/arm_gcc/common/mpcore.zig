@@ -4,13 +4,15 @@
 ///
 ///  コンフィギュレーションオプションの取り込み
 ///
-const option = @import("../../../include/option.zig");
+// const option = @import("../../../include/option.zig");
+const option = @import("include").option;
 const MPCORE_PMR_BASE = option.target.MPCORE_PMR_BASE;
 
 ///
 ///  用いるライブラリ
 ///
-const sil = @import("../../../include/sil.zig");
+// const sil = @import("../../../include/sil.zig");
+const sil = @import("include").sil;
 const arm = @import("arm.zig");
 
 ///

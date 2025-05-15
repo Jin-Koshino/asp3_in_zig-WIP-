@@ -1,7 +1,8 @@
 ///
 ///  サンプルプログラム(1)のシステムコンフィギュレーション記述
 ///
-const kernel_cfg = @import("../kernel/kernel_cfg.zig");
+// const kernel_cfg = @import("../kernel/kernel_cfg.zig");
+const kernel_cfg = @import("kernel").kernel_cfg;
 
 ////
 const zig = kernel_cfg.zig;
@@ -26,7 +27,8 @@ const target = kernel_cfg.target;
 ///
 ///  TECSが生成するコンフィギュレーション記述
 ///
-const tecs = @import("../OBJ-ARM/gen/tecsgen_cfg.zig");
+// const tecs = @import("../OBJ-ARM/gen/tecsgen_cfg.zig");
+const tecs = @import("objarm").tecsgen_cfg;
 
 ///
 ///  C言語ヘッダファイルの取り込み

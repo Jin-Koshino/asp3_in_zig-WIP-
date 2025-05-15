@@ -47,14 +47,14 @@
 ///
 ///  コンフィギュレーションオプションの取り込み
 ///
-pub const option = @import("../include/option.zig");
+pub const option = @import("include").option;
 pub const isTrue = option.isTrue;
 pub const decl = option.decl;
 
 ///
 ///  アプリケーションと共通の定義ファイル
 ///
-pub const zig = @import("../include/kernel.zig");
+pub const zig = @import("include").kernel;
 
 ////
 const TMAX_TPRI = zig.TMAX_TPRI;
@@ -69,24 +69,24 @@ const TMEHDR = zig.TMEHDR;
 ///
 ///  システムログ機能
 ///
-pub const t_syslog = @import("../include/t_syslog.zig");
+pub const t_syslog = @import("include").t_syslog;
 
 ///
 ///  ターゲット依存情報の定義
 ///
 ///pub const target_impl = @import("../target/" ++ option.TARGET ++ "/target_kernel_impl.zig");
-pub const target_impl = @import("../target/ct11mpcore_gcc/target_kernel_impl.zig");
+pub const target_impl = @import("target").ct11mpcore_target_kernel_impl;
 ///
 ///  タイマドライバ
 ///
 ///pub const target_timer = @import("../target/" ++ option.TARGET ++ "/target_timer.zig");
-pub const target_timer = @import("../target/ct11mpcore_gcc/target_timer.zig");
+pub const target_timer = @import("target").ct11mpcore_target_timer;
 ///
 ///  カーネル内部で用いるライブラリ
 ///
-pub const sil = @import("../include/sil.zig");
-pub const queue = @import("../library/queue.zig");
-pub const prio_bitmap = @import("../library/prio_bitmap.zig");
+pub const sil = @import("include").sil;
+pub const queue = @import("library").queue;
+pub const prio_bitmap = @import("library").prio_bitmap;
 
 ///
 ///  カーネルを構成するモジュール

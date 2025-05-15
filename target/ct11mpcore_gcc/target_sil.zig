@@ -10,7 +10,8 @@ const DLY_TIM2 = 2;
 ///
 ///  コア依存部
 ///
-pub const core_sil = @import("../../arch/arm_gcc/common/core_sil.zig");
+// pub const core_sil = @import("../../arch/arm_gcc/common/core_sil.zig");
+pub const core_sil = @import("arch").core_sil;
 
 ////
 const core_dly_nse = core_sil.core_dly_nse;

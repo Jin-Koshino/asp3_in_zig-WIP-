@@ -4,7 +4,7 @@
 ///
 ///  コンフィギュレーションオプションの取り込み
 ///
-const option = @import("../../include/option.zig");
+const option = @import("include").option;
 const abort = option.target.abort;
 
 ///

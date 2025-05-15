@@ -1,7 +1,8 @@
 ///
 ///  カーネルのターゲット依存部（CT11MPCore用）
 ///
-const kernel_impl = @import("../../kernel/kernel_impl.zig");
+// const kernel_impl = @import("kernel").kernel_impl;
+const kernel_impl = @import("kernel").kernel_impl;
 
 ////
 const option = kernel_impl.option;
@@ -24,7 +25,8 @@ pub const DEFAULT_ISTKSZ = 0x2000;
 ///
 ///  MPCore依存部
 ///
-pub const mpcore_kernel_impl = @import("../../arch/arm_gcc/common/mpcore_kernel_impl.zig");
+// pub const mpcore_kernel_impl = @import("../../arch/arm_gcc/common/mpcore_kernel_impl.zig");
+pub const mpcore_kernel_impl = @import("arch").mpcore_kernel_impl;
 
 ////
 const ARM_MMU_CONFIG = mpcore_kernel_impl.core_kernel_impl.ARM_MMU_CONFIG;
@@ -42,7 +44,8 @@ const ct11mpcore = @import("ct11mpcore.zig");
 ///
 ///  用いるライブラリ
 ///
-const arm = @import("../../arch/arm_gcc/common/arm.zig");
+// const arm = @import("../../arch/arm_gcc/common/arm.zig");
+const arm = @import("arch").arm;
 
 ///
 ///  カーネル動作時のメモリマップと関連する定義

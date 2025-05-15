@@ -44,7 +44,7 @@ const std = @import("std");
 ///
 ///  タイムイベント管理モジュール
 ///
-const kernel_impl = @import("kernel_impl.zig");
+const kernel_impl = @import("kernel").kernel_impl;
 
 ////
 const zig = kernel_impl.zig;
@@ -129,7 +129,7 @@ fn EVTTIM_LE(t1: EVTTIM, t2: EVTTIM) bool {
 ///
 ///  コールバック関数のデータ型の定義
 ///
-pub const CBACK = *const fn (usize) void;
+pub const CBACK = *const fn (usize) callconv(.Naked) void;
 
 ///
 ///  タイムイベントブロックのデータ型の定義

@@ -39,7 +39,7 @@
 ///
 ///  タイマドライバシミュレータ
 ///
-const kernel_impl = @import("../../kernel/kernel_impl.zig");
+const kernel_impl = @import("kernel").kernel_impl;
 
 ////
 const zig = kernel_impl.zig;

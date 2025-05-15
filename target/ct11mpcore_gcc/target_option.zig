@@ -15,13 +15,15 @@ pub const TOPPERS_OMIT_DATA_INIT = @hasDecl(opt, "TOPPERS_OMIT_DATA_INIT");
 ///
 ///  コア依存部（チップ依存部は飛ばす）
 ///
-const core_option = @import("../../arch/arm_gcc/common/core_option.zig");
+// const core_option = @import("../../arch/arm_gcc/common/core_option.zig");
+const core_option = @import("arch").core_option;
 
 ///
 ///  ターゲットのハードウェア資源の定義
 ///
 const ct11mpcore = @import("ct11mpcore.zig");
-const mpcore = @import("../../arch/arm_gcc/common/mpcore.zig");
+// const mpcore = @import("../../arch/arm_gcc/common/mpcore.zig");
+const mpcore = @import("arch").mpcore;
 
 ///
 ///  ターゲットのコンフィギュレーション
@@ -72,7 +74,8 @@ pub fn abort() noreturn {
 ///  サンプルプログラム／テストプログラムのための定義
 ///
 pub const _test = struct {
-    const zig = @import("../../include/kernel.zig");
+    // const zig = @import("include").kernel;
+    const zig = @import("include").kernel;
 
     ////
     const TA_ENAINT = zig.TA_ENAINT;

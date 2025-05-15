@@ -37,7 +37,7 @@
 ///
 ///  $Id$
 ///
-const kernel_impl = @import("kernel_impl.zig");
+const kernel_impl = @import("kernel").kernel_impl;
 
 ////
 const zig = kernel_impl.zig;
@@ -104,7 +104,7 @@ pub const c = @cImport({
 ///
 ///  用いるライブラリ
 ///
-const errorcode = @import("../library/errorcode.zig");
+const errorcode = @import("library").errorcode;
 
 ///
 ///  サービスコールのC言語API

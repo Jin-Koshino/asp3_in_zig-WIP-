@@ -41,7 +41,8 @@
 ///
 ///  エラーメッセージ文字列を返す関数
 ///
-const t_stddef = @import("../include/t_stddef.zig");
+// const t_stddef = @import("../include/t_stddef.zig");
+const t_stddef = @import("include").t_stddef;
 
 ////
 const ItronError = t_stddef.ItronError;

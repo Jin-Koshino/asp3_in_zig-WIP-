@@ -61,7 +61,7 @@
 ///  WDG_OVRTIMER：
 ///		ウォッチドッグを用いて，オーバランタイマを実現する．
 ///
-const kernel_impl = @import("../../../kernel/kernel_impl.zig");
+const kernel_impl = @import("kernel").kernel_impl;
 
 ////
 const zig = kernel_impl.zig;
@@ -93,7 +93,8 @@ const ARM_CA9_GTC_ERRATA = isTrue(target_impl, "ARM_CA9_GTC_ERRATA");
 ///
 ///  MPCoreのハードウェア資源の定義
 ///
-const mpcore = @import("mpcore.zig");
+// const mpcore = @import("mpcore.zig");
+const mpcore = @import("arch").mpcore;
 
 ///
 ///  プライベートタイマとウォッチドッグを用いて高分解能タイマを実現

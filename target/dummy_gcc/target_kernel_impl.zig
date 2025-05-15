@@ -40,7 +40,7 @@
 ///
 ///  カーネルのターゲット依存部（ダミーターゲット用）
 ///
-const kernel_impl = @import("../../kernel/kernel_impl.zig");
+const kernel_impl = @import("kernel").kernel_impl;
 
 ///
 ///  コンフィギュレーションオプションの取り込み

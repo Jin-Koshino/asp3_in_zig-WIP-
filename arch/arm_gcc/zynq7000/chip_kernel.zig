@@ -4,7 +4,8 @@
 ///
 ///  コア依存部
 ///
-const core_kernel = @import("../common/core_kernel.zig");
+// const core_kernel = @import("../common/core_kernel.zig");
+const core_kernel = @import("arm_gcc.common").core_kernel;
 
 ////
 const core_publish = core_kernel.core_publish;

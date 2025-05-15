@@ -4,7 +4,7 @@
 ///
 ///  コンフィギュレーションオプションの取り込み
 ///
-const option = @import("../../include/option.zig");
+const option = @import("include").option;
 const isTrue = option.isTrue;
 const TOPPERS_OMIT_TECS = option.TOPPERS_OMIT_TECS;
 const TOPPERS_RZA1H = isTrue(option.target, "TOPPERS_RZA1H");

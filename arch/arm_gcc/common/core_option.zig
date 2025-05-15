@@ -4,13 +4,14 @@
 ///
 ///  コアのハードウェア資源の定義
 ///
-const arm = @import("arm.zig");
+// const arm = @import("arm.zig");
+const arm = @import("arch").arm;
 
 ///
 ///  サンプルプログラム／テストプログラムのための定義
 ///
 pub const core_test = struct {
-    const zig = @import("../../../include/kernel.zig");
+    const zig = @import("include").kernel;
 
     ////
     const EXCNO_UNDEF = zig.publish.EXCNO_UNDEF;

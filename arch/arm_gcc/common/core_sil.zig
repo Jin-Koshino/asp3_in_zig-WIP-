@@ -4,7 +4,8 @@
 ///
 ///  用いるライブラリ
 ///
-const arm = @import("arm.zig");
+// const arm = @import("arm.zig");
+const arm = @import("arch").arm;
 
 ///
 ///  すべての割込み（FIQとIRQ）の禁止

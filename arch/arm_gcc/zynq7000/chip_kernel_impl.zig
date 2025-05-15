@@ -1,7 +1,8 @@
 ///
 ///  カーネルのチップ依存部（Zynq7000用）
 ///
-const kernel_impl = @import("../../../kernel/kernel_impl.zig");
+// const kernel_impl = @import("kernel").kernel_impl;
+const kernel_impl = @import("kernel").kernel_impl;
 
 ///
 ///  デフォルトの非タスクコンテキスト用のスタック領域の定義
@@ -16,7 +17,8 @@ pub const ARM_CA9_GTC_ERRATA = true;
 ///
 ///  MPCore依存部
 ///
-pub const mpcore_kernel_impl = @import("../common/mpcore_kernel_impl.zig");
+// pub const mpcore_kernel_impl = @import("../common/mpcore_kernel_impl.zig");
+pub const mpcore_kernel_impl = @import("arm_gcc.common").mpcore_kernel_impl;
 
 ////
 const mpcore_initialize = mpcore_kernel_impl.mpcore_initialize;
@@ -26,7 +28,8 @@ const mpcore_terminate = mpcore_kernel_impl.mpcore_terminate;
 ///
 ///  L2キャッシュコントローラ（PL310）の操作ライブラリ
 ///
-const pl310 = @import("../common/pl310.zig");
+// const pl310 = @import("../common/pl310.zig");
+const pl310 = @import("arm_gcc.common").pl310;
 
 ///
 ///  チップ依存の初期化
