@@ -1,6 +1,7 @@
 ///
 ///  サンプルプログラム(1)のシステムコンフィギュレーション記述
 ///
+const std = @import("std");
 // const kernel_cfg = @import("../kernel/kernel_cfg.zig");
 const kernel_cfg = @import("kernel").kernel_cfg;
 
@@ -28,7 +29,7 @@ const target = kernel_cfg.target;
 ///  TECSが生成するコンフィギュレーション記述
 ///
 // const tecs = @import("../OBJ-ARM/gen/tecsgen_cfg.zig");
-const tecs = @import("objarm").tecsgen_cfg;
+const tecs = @import("objarm");
 
 ///
 ///  C言語ヘッダファイルの取り込み
@@ -56,33 +57,37 @@ const overrun_handler = cimport.overrun_handler;
 ///
 ///  システムコンフィギュレーション記述本体
 ///
-fn configuration(comptime cfg: *CfgData) void {
-    tecs.configuration(cfg);
-    cfg.CRE_TSK("TASK1", CTSK(TA_NULL, 1, task, MID_PRIORITY, STACK_SIZE, null));
+fn configuration(comptime arg_cfg: CfgData) CfgData {
+    //  関数内部でカーネルオブジェクト登録後のCfgDataを受け取るための変数cfg
+    comptime var cfg = tecs.configuration(arg_cfg);
+
+    cfg = cfg.CRE_TSK("TASK1", CTSK(TA_NULL, 1, task, MID_PRIORITY, STACK_SIZE, null));
     //  代案
     //  cfg.CRE_TSK("TASK1", .{ .exinf = @castToExinf(1),
     //                          .task = task,
     //                          .itskpri = MID_PRIORITY,
     //                          .stksz = STACK_SIZE, });
-    cfg.CRE_TSK("TASK2", CTSK(TA_NULL, 2, task, MID_PRIORITY, STACK_SIZE, null));
-    cfg.CRE_TSK("TASK3", CTSK(TA_NULL, 3, task, MID_PRIORITY, STACK_SIZE, null));
-    cfg.CRE_TSK("MAIN_TASK", CTSK(TA_ACT, 0, main_task, MAIN_PRIORITY, STACK_SIZE, null));
-    cfg.CRE_TSK("EXC_TASK", CTSK(TA_NULL, 0, exc_task, EXC_PRIORITY, STACK_SIZE, null));
-    cfg.CRE_CYC("CYCHDR1", CCYC(TA_NULL, NFY_TMEHDR(0, cyclic_handler), 2_000_000, 0));
+    comptime std.debug.print("{d}", .{cfg.getTskId("TASK1")});
+    cfg = cfg.CRE_TSK("TASK2", CTSK(TA_NULL, 2, task, MID_PRIORITY, STACK_SIZE, null));
+    cfg = cfg.CRE_TSK("TASK3", CTSK(TA_NULL, 3, task, MID_PRIORITY, STACK_SIZE, null));
+    cfg = cfg.CRE_TSK("MAIN_TASK", CTSK(TA_ACT, 0, main_task, MAIN_PRIORITY, STACK_SIZE, null));
+    cfg = cfg.CRE_TSK("EXC_TASK", CTSK(TA_NULL, 0, exc_task, EXC_PRIORITY, STACK_SIZE, null));
+    cfg = cfg.CRE_CYC("CYCHDR1", CCYC(TA_NULL, NFY_TMEHDR(0, cyclic_handler), 2_000_000, 0));
     //    cfg.CRE_CYC("CYCHDR1", CCYC(TA_NULL,
     //                                NFYINFO(.{ TNFY_ACTTSK, "TASK1" }, cfg),
     //                                2_000_000, 0));
-    cfg.CRE_ALM("ALMHDR1", CALM(TA_NULL, NFY_TMEHDR(0, alarm_handler)));
+    cfg = cfg.CRE_ALM("ALMHDR1", CALM(TA_NULL, NFY_TMEHDR(0, alarm_handler)));
     if (zig.TOPPERS_SUPPORT_OVRHDR) {
-        cfg.DEF_OVR(DOVR(TA_NULL, overrun_handler));
+        cfg = cfg.DEF_OVR(DOVR(TA_NULL, overrun_handler));
     }
     if (@hasDecl(option.target._test, "INTNO1")) {
-        cfg.CFG_INT(option.target._test.INTNO1, CINT(option.target._test.INTNO1_INTATR, option.target._test.INTNO1_INTPRI));
-        cfg.CRE_ISR("INTNO1_ISR", CISR(TA_NULL, 0, option.target._test.INTNO1, intno1_isr, 1));
+        cfg = cfg.CFG_INT(option.target._test.INTNO1, CINT(option.target._test.INTNO1_INTATR, option.target._test.INTNO1_INTPRI));
+        cfg = cfg.CRE_ISR("INTNO1_ISR", CISR(TA_NULL, 0, option.target._test.INTNO1, intno1_isr, 1));
     }
     if (@hasDecl(option.target._test, "CPUEXC1")) {
-        cfg.DEF_EXC(option.target._test.CPUEXC1, DEXC(TA_NULL, cpuexc_handler));
+        cfg = cfg.DEF_EXC(option.target._test.CPUEXC1, DEXC(TA_NULL, cpuexc_handler));
     }
+    return cfg;
 }
 
 //
@@ -97,10 +102,11 @@ fn configuration(comptime cfg: *CfgData) void {
 //
 pub fn genConfig(comptime dummy: void) type {
     comptime var cfg = CfgData{};
-    target.configuration(&cfg);
-    configuration(&cfg);
+    cfg = target.configuration(cfg);
+    cfg = configuration(cfg);
     _ = dummy;
-    return GenCfgData(&cfg);
+    const generated_cfg = GenCfgData(cfg);
+    return generated_cfg;
 }
 export const _ = if (@hasDecl(@This(), "BIND_CFG"))
 {} else genConfig({}){};

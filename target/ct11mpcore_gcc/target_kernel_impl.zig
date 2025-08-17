@@ -39,7 +39,8 @@ const CoreExportDefs = mpcore_kernel_impl.core_kernel_impl.CoreExportDefs;
 ///
 ///  ターゲットのハードウェア資源の定義
 ///
-const ct11mpcore = @import("ct11mpcore.zig");
+// const ct11mpcore = @import("ct11mpcore.zig");
+const ct11mpcore = @import("target").ct11mpcore;
 
 ///
 ///  用いるライブラリ

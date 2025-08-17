@@ -36,20 +36,22 @@ const _kernel_target_ovrtimer_handler = target_timer.ExternDefs._kernel_target_o
 ///
 ///  システムコンフィギュレーション記述
 ///
-pub fn configuration(comptime cfg: *CfgData) void {
+pub fn configuration(comptime arg_cfg: CfgData) CfgData {
+    comptime var cfg = arg_cfg;
     // 高分解能タイマドライバ
-    cfg.ATT_INI(AINI(TA_NULL, 0, _kernel_target_hrt_initialize));
-    cfg.ATT_TER(ATER(TA_NULL, 0, _kernel_target_hrt_terminate));
+    cfg = cfg.ATT_INI(AINI(TA_NULL, 0, _kernel_target_hrt_initialize));
+    cfg = cfg.ATT_TER(ATER(TA_NULL, 0, _kernel_target_hrt_terminate));
 
-    cfg.CFG_INT(target_timer.hrt.INTNO_HRT, CINT(TA_ENAINT | target_timer.hrt.INTATR_HRT, target_timer.hrt.INTPRI_HRT));
-    cfg.DEF_INH(target_timer.hrt.INHNO_HRT, DINH(TA_NULL, _kernel_target_hrt_handler));
+    cfg = cfg.CFG_INT(target_timer.hrt.INTNO_HRT, CINT(TA_ENAINT | target_timer.hrt.INTATR_HRT, target_timer.hrt.INTPRI_HRT));
+    cfg = cfg.DEF_INH(target_timer.hrt.INHNO_HRT, DINH(TA_NULL, _kernel_target_hrt_handler));
 
     // オーバランタイマドライバ
     if (TOPPERS_SUPPORT_OVRHDR) {
-        cfg.ATT_INI(AINI(TA_NULL, 0, _kernel_target_ovrtimer_initialize));
-        cfg.ATT_TER(ATER(TA_NULL, 0, _kernel_target_ovrtimer_terminate));
+        cfg = cfg.ATT_INI(AINI(TA_NULL, 0, _kernel_target_ovrtimer_initialize));
+        cfg = cfg.ATT_TER(ATER(TA_NULL, 0, _kernel_target_ovrtimer_terminate));
 
-        cfg.CFG_INT(target_timer.ovrtimer.INTNO_OVRTIMER, CINT(TA_ENAINT | target_timer.ovrtimer.INTATR_OVRTIMER, target_timer.ovrtimer.INTPRI_OVRTIMER));
-        cfg.DEF_INH(target_timer.ovrtimer.INHNO_OVRTIMER, DINH(TA_NULL, _kernel_target_ovrtimer_handler));
+        cfg = cfg.CFG_INT(target_timer.ovrtimer.INTNO_OVRTIMER, CINT(TA_ENAINT | target_timer.ovrtimer.INTATR_OVRTIMER, target_timer.ovrtimer.INTPRI_OVRTIMER));
+        cfg = cfg.DEF_INH(target_timer.ovrtimer.INHNO_OVRTIMER, DINH(TA_NULL, _kernel_target_ovrtimer_handler));
     }
+    return cfg;
 }

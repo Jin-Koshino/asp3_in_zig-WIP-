@@ -21,7 +21,8 @@ const core_option = @import("arch").core_option;
 ///
 ///  ターゲットのハードウェア資源の定義
 ///
-const ct11mpcore = @import("ct11mpcore.zig");
+// const ct11mpcore = @import("ct11mpcore.zig");
+const ct11mpcore = @import("target").ct11mpcore;
 // const mpcore = @import("../../arch/arm_gcc/common/mpcore.zig");
 const mpcore = @import("arch").mpcore;
 

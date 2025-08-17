@@ -835,7 +835,7 @@ $zigcfg = GenFile.new($outputFileName)
 $zigcfg.append(<<EOS)
 // #{$outputFileName}
 
-const kernel_cfg = @import("../../kernel/kernel_cfg.zig");
+const kernel_cfg = @import("kernel").kernel_cfg;
 
 const c = @cImport({
     @cDefine("UINT_C(val)", "val");
@@ -928,7 +928,7 @@ $cfgFileInfo.each do |cfgInfo|
 
     when "CRE_ISR"
       $requireTA_NULL = true
-      $zigcfg.add("const ct11mpcore = @import(\"../../target/ct11mpcore_gcc/ct11mpcore.zig\");")
+      $zigcfg.add("const ct11mpcore = @import(\"target\").ct11mpcore;")
       $zigcfg.add("const #{cfgInfo["intno"]} = ct11mpcore.#{cfgInfo["intno"]};")
       $zigcfg.add("const #{cfgInfo["isr"]} = c.#{cfgInfo["isr"]};")
 

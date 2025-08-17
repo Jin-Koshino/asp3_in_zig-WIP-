@@ -363,7 +363,7 @@ pub fn importSymbol(comptime T: type, comptime name: []const u8) *T {
         comptime {
             @export(placeholder, .{
                 .name = name,
-                .linkage = .Weak,
+                .linkage = .weak,
                 .section = ".discard",
             });
         }

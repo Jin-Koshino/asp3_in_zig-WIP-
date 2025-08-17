@@ -48,6 +48,6 @@ fn genConfig(comptime dummy: void) type {
     comptime var cfg = CfgData{};
     target.configuration(&cfg);
     configuration(&cfg);
-    return GenCfgData(&cfg);
+    return GenCfgData(cfg);
 }
 export const _ = genConfig({}){};

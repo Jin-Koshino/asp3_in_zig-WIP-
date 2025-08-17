@@ -346,18 +346,21 @@ pub const CfgData = struct {
     inirtn_list: LIST(T_INIRTN) = LIST(T_INIRTN){},
     terrtn_list: LIST(T_TERRTN) = LIST(T_TERRTN){},
 
+    // const Self = @This();
+
     // コンフィギュレーションデータの追加
-    fn addItem(comptime T: type, comptime p_list: *LIST(T)) *T {
-        comptime var item: T = undefined;
+    fn addItem(comptime T: type, comptime item: *T, comptime list: LIST(T)) LIST(T) {
+        var new_list: LIST(T) = list;
         item.p_next = null;
-        if (p_list.tail) |tail| {
-            tail.p_next = &item;
+        if (new_list.tail) |tail| {
+            tail.p_next = item;
         } else {
-            p_list.head = &item;
+            new_list.head = item;
         }
-        p_list.tail = &item;
-        p_list.length += 1;
-        return &item;
+        new_list.tail = item;
+        new_list.length += 1;
+
+        return new_list;
     }
 
     // オブジェクトIDの取得
@@ -386,10 +389,19 @@ pub const CfgData = struct {
     }
 
     // タスクの生成
-    pub fn CRE_TSK(comptime p_self: *CfgData, comptime tsk_name: []const u8, comptime ctsk: T_CTSK) void {
-        comptime var p_tsk = addItem(T_TSK, &p_self.tsk_list);
-        p_tsk.name = tsk_name;
-        p_tsk.inib = comptime task.cre_tsk(ctsk) catch |err| reportError("CRE_TSK", err);
+    // pub fn CRE_TSK(comptime p_self: *CfgData, comptime tsk_name: []const u8, comptime ctsk: T_CTSK) void {
+    //     comptime var p_tsk = addItem(T_TSK, &p_self.tsk_list);
+    //     p_tsk.name = tsk_name;
+    //     p_tsk.inib = comptime task.cre_tsk(ctsk) catch |err| reportError("CRE_TSK", err);
+    // }
+
+    // タスクの生成（0.12対応版）
+    pub fn CRE_TSK(comptime self: CfgData, comptime tsk_name: []const u8, comptime ctsk: T_CTSK) CfgData {
+        const tsk = T_TSK{ .name = tsk_name, .inib = task.cre_tsk(ctsk) catch |err| reportError("CRE_TSK", err) };
+        const new_list = self.addItem(T_TSK, tsk, self.tsk_list);
+        const new_cfg = self;
+        new_cfg.tsk_list = new_list;
+        return new_cfg;
     }
 
     // タスクIDの取得
@@ -415,10 +427,20 @@ pub const CfgData = struct {
     }
 
     // セマフォの生成
-    pub fn CRE_SEM(comptime p_self: *CfgData, comptime sem_name: []const u8, comptime csem: T_CSEM) void {
-        comptime var p_sem = addItem(T_SEM, &p_self.sem_list);
-        p_sem.name = sem_name;
-        p_sem.inib = comptime semaphore.cre_sem(csem) catch |err| reportError("CRE_SEM", err);
+    // pub fn CRE_SEM(comptime p_self: *CfgData, comptime sem_name: []const u8, comptime csem: T_CSEM) void {
+    //     comptime var p_sem = addItem(T_SEM, &p_self.sem_list);
+    //     p_sem.name = sem_name;
+    //     p_sem.inib = comptime semaphore.cre_sem(csem) catch |err| reportError("CRE_SEM", err);
+    // }
+
+    pub fn CRE_SEM(comptime self: CfgData, comptime sem_name: []const u8, comptime csem: T_CSEM) CfgData {
+        comptime {
+            var sem = T_SEM{ .name = sem_name, .inib = semaphore.cre_sem(csem) catch |err| reportError("CRE_SEM", err), .p_next = undefined };
+            const new_list = addItem(T_SEM, &sem, self.sem_list);
+            var new_cfg = self;
+            new_cfg.sem_list = new_list;
+            return new_cfg;
+        }
     }
 
     // セマフォIDの取得
@@ -432,10 +454,20 @@ pub const CfgData = struct {
     }
 
     // イベントフラグの生成
-    pub fn CRE_FLG(comptime p_self: *CfgData, comptime flg_name: []const u8, comptime cflg: T_CFLG) void {
-        comptime var p_flg = addItem(T_FLG, &p_self.flg_list);
-        p_flg.name = flg_name;
-        p_flg.inib = comptime eventflag.cre_flg(cflg) catch |err| reportError("CRE_FLG", err);
+    // pub fn CRE_FLG(comptime p_self: *CfgData, comptime flg_name: []const u8, comptime cflg: T_CFLG) void {
+    //     comptime var p_flg = addItem(T_FLG, &p_self.flg_list);
+    //     p_flg.name = flg_name;
+    //     p_flg.inib = comptime eventflag.cre_flg(cflg) catch |err| reportError("CRE_FLG", err);
+    // }
+
+    pub fn CRE_FLG(comptime self: CfgData, comptime flg_name: []const u8, comptime cflg: T_CFLG) CfgData {
+        comptime {
+            var flg = T_FLG{ .name = flg_name, .inib = eventflag.cre_flg(cflg) catch |err| reportError("CRE_FLG", err), .p_next = undefined };
+            const new_list = addItem(T_FLG, &flg, self.flg_list);
+            var new_cfg = self;
+            new_cfg.flg_list = new_list;
+            return new_cfg;
+        }
     }
 
     // イベントフラグIDの取得
@@ -449,10 +481,20 @@ pub const CfgData = struct {
     }
 
     // データキューの生成
-    pub fn CRE_DTQ(comptime p_self: *CfgData, comptime dtq_name: []const u8, comptime cdtq: T_CDTQ) void {
-        comptime var p_dtq = addItem(T_DTQ, &p_self.dtq_list);
-        p_dtq.name = dtq_name;
-        p_dtq.inib = comptime dataqueue.cre_dtq(cdtq) catch |err| reportError("CRE_DTQ", err);
+    // pub fn CRE_DTQ(comptime p_self: *CfgData, comptime dtq_name: []const u8, comptime cdtq: T_CDTQ) void {
+    //     comptime var p_dtq = addItem(T_DTQ, &p_self.dtq_list);
+    //     p_dtq.name = dtq_name;
+    //     p_dtq.inib = comptime dataqueue.cre_dtq(cdtq) catch |err| reportError("CRE_DTQ", err);
+    // }
+
+    pub fn CRE_DTQ(comptime self: CfgData, comptime dtq_name: []const u8, comptime cdtq: T_CDTQ) CfgData {
+        comptime {
+            var dtq = T_DTQ{ .name = dtq_name, .inib = dataqueue.cre_dtq(cdtq) catch |err| reportError("CRE_DTQ", err), .p_next = undefined };
+            const new_list = addItem(T_DTQ, &dtq, self.dtq_list);
+            var new_cfg = self;
+            new_cfg.dtq_list = new_list;
+            return new_cfg;
+        }
     }
 
     // データキューIDの取得
@@ -466,10 +508,20 @@ pub const CfgData = struct {
     }
 
     // 優先度データキューの生成
-    pub fn CRE_PDQ(comptime p_self: *CfgData, comptime pdq_name: []const u8, comptime cpdq: T_CPDQ) void {
-        comptime var p_pdq = addItem(T_PDQ, &p_self.pdq_list);
-        p_pdq.name = pdq_name;
-        p_pdq.inib = comptime pridataq.cre_pdq(cpdq) catch |err| reportError("CRE_PDQ", err);
+    // pub fn CRE_PDQ(comptime p_self: *CfgData, comptime pdq_name: []const u8, comptime cpdq: T_CPDQ) void {
+    //     comptime var p_pdq = addItem(T_PDQ, &p_self.pdq_list);
+    //     p_pdq.name = pdq_name;
+    //     p_pdq.inib = comptime pridataq.cre_pdq(cpdq) catch |err| reportError("CRE_PDQ", err);
+    // }
+
+    pub fn CRE_PDQ(comptime self: CfgData, comptime pdq_name: []const u8, comptime cpdq: T_CPDQ) CfgData {
+        comptime {
+            var pdq = T_PDQ{ .name = pdq_name, .inib = pridataq.cre_pdq(cpdq) catch |err| reportError("CRE_PDQ", err), .p_next = undefined };
+            const new_list = addItem(T_PDQ, &pdq, self.pdq_list);
+            var new_cfg = self;
+            new_cfg.pdq_list = new_list;
+            return new_cfg;
+        }
     }
 
     // 優先度データキューIDの取得
@@ -483,10 +535,20 @@ pub const CfgData = struct {
     }
 
     // ミューテックスの生成
-    pub fn CRE_MTX(comptime p_self: *CfgData, comptime mtx_name: []const u8, comptime cmtx: T_CMTX) void {
-        comptime var p_mtx = addItem(T_MTX, &p_self.mtx_list);
-        p_mtx.name = mtx_name;
-        p_mtx.inib = comptime mutex.cre_mtx(cmtx) catch |err| reportError("CRE_MTX", err);
+    // pub fn CRE_MTX(comptime p_self: *CfgData, comptime mtx_name: []const u8, comptime cmtx: T_CMTX) void {
+    //     comptime var p_mtx = addItem(T_MTX, &p_self.mtx_list);
+    //     p_mtx.name = mtx_name;
+    //     p_mtx.inib = comptime mutex.cre_mtx(cmtx) catch |err| reportError("CRE_MTX", err);
+    // }
+
+    pub fn CRE_MTX(comptime self: CfgData, comptime mtx_name: []const u8, comptime cmtx: T_CMTX) CfgData {
+        comptime {
+            var mtx = T_MTX{ .name = mtx_name, .inib = mutex.cre_mtx(cmtx) catch |err| reportError("CRE_MTX", err), .p_next = undefined };
+            const new_list = addItem(T_MTX, &mtx, self.mtx_list);
+            var new_cfg = self;
+            new_cfg.mtx_list = new_list;
+            return new_cfg;
+        }
     }
 
     // ミューテックスIDの取得
@@ -500,10 +562,20 @@ pub const CfgData = struct {
     }
 
     // 固定長メモリプールの生成
-    pub fn CRE_MPF(comptime p_self: *CfgData, comptime mpf_name: []const u8, comptime cmpf: T_CMPF) void {
-        comptime var p_mpf = addItem(T_MPF, &p_self.mpf_list);
-        p_mpf.name = mpf_name;
-        p_mpf.inib = comptime mempfix.cre_mpf(cmpf) catch |err| reportError("CRE_MPF", err);
+    // pub fn CRE_MPF(comptime p_self: *CfgData, comptime mpf_name: []const u8, comptime cmpf: T_CMPF) void {
+    //     comptime var p_mpf = addItem(T_MPF, &p_self.mpf_list);
+    //     p_mpf.name = mpf_name;
+    //     p_mpf.inib = comptime mempfix.cre_mpf(cmpf) catch |err| reportError("CRE_MPF", err);
+    // }
+
+    pub fn CRE_MPF(comptime self: CfgData, comptime mpf_name: []const u8, comptime cmpf: T_CMPF) CfgData {
+        comptime {
+            var mpf = T_MPF{ .name = mpf_name, .inib = mempfix.cre_mpf(cmpf) catch |err| reportError("CRE_MPF", err), .p_next = undefined };
+            const new_list = addItem(T_MPF, &mpf, self.mpf_list);
+            var new_cfg = self;
+            new_cfg.mpf_list = new_list;
+            return new_cfg;
+        }
     }
 
     // 固定長メモリプールIDの取得
@@ -517,10 +589,20 @@ pub const CfgData = struct {
     }
 
     // 周期通知の生成
-    pub fn CRE_CYC(comptime p_self: *CfgData, comptime cyc_name: []const u8, comptime ccyc: T_CCYC) void {
-        comptime var p_cyc = addItem(T_CYC, &p_self.cyc_list);
-        p_cyc.name = cyc_name;
-        p_cyc.inib = comptime cyclic.cre_cyc(ccyc) catch |err| reportError("CRE_CYC", err);
+    // pub fn CRE_CYC(comptime p_self: *CfgData, comptime cyc_name: []const u8, comptime ccyc: T_CCYC) void {
+    //     comptime var p_cyc = addItem(T_CYC, &p_self.cyc_list);
+    //     p_cyc.name = cyc_name;
+    //     p_cyc.inib = comptime cyclic.cre_cyc(ccyc) catch |err| reportError("CRE_CYC", err);
+    // }
+
+    pub fn CRE_CYC(comptime self: CfgData, comptime cyc_name: []const u8, comptime ccyc: T_CCYC) CfgData {
+        comptime {
+            var cyc = T_CYC{ .name = cyc_name, .inib = cyclic.cre_cyc(ccyc) catch |err| reportError("CRE_CYC", err), .p_next = undefined };
+            const new_list = addItem(T_CYC, &cyc, self.cyc_list);
+            var new_cfg = self;
+            new_cfg.cyc_list = new_list;
+            return new_cfg;
+        }
     }
 
     // 周期通知初期化ブロックの生成
@@ -529,10 +611,20 @@ pub const CfgData = struct {
     }
 
     // アラーム通知の生成
-    pub fn CRE_ALM(comptime p_self: *CfgData, comptime alm_name: []const u8, comptime calm: T_CALM) void {
-        comptime var p_alm = addItem(T_ALM, &p_self.alm_list);
-        p_alm.name = alm_name;
-        p_alm.inib = comptime alarm.cre_alm(calm) catch |err| reportError("CRE_ALM", err);
+    // pub fn CRE_ALM(comptime p_self: *CfgData, comptime alm_name: []const u8, comptime calm: T_CALM) void {
+    //     comptime var p_alm = addItem(T_ALM, &p_self.alm_list);
+    //     p_alm.name = alm_name;
+    //     p_alm.inib = comptime alarm.cre_alm(calm) catch |err| reportError("CRE_ALM", err);
+    // }
+
+    pub fn CRE_ALM(comptime self: CfgData, comptime alm_name: []const u8, comptime calm: T_CALM) CfgData {
+        comptime {
+            var alm = T_ALM{ .name = alm_name, .inib = alarm.cre_alm(calm) catch |err| reportError("CRE_ALM", err), .p_next = undefined };
+            const new_list = addItem(T_ALM, &alm, self.alm_list);
+            var new_cfg = self;
+            new_cfg.alm_list = new_list;
+            return new_cfg;
+        }
     }
 
     // アラーム通知初期化ブロックの生成
@@ -541,23 +633,47 @@ pub const CfgData = struct {
     }
 
     // オーバランハンドラの定義
-    pub fn DEF_OVR(comptime p_self: *CfgData, comptime dovr: T_DOVR) void {
+    // pub fn DEF_OVR(comptime p_self: *CfgData, comptime dovr: T_DOVR) void {
+    //     if (!TOPPERS_SUPPORT_OVRHDR) {
+    //         reportError("DEF_OVR", ItronError!NotSupported);
+    //     } else if (p_self.p_ovr != null) {
+    //         // 静的API「DEF_OVR」が複数ある場合（E_OBJ）［NGKI2619］
+    //         reportError("DEF_OVR", ItronError!ObjectStateError);
+    //     } else {
+    //         comptime var ovr: T_OVR = undefined;
+    //         p_self.p_ovr = &ovr;
+    //         ovr.inib = comptime overrun.defineOverrun(dovr) catch |err| reportError("DEF_OVR", err);
+    //     }
+    // }
+
+    pub fn DEF_OVR(comptime self: CfgData, comptime dovr: T_DOVR) CfgData {
         if (!TOPPERS_SUPPORT_OVRHDR) {
             reportError("DEF_OVR", ItronError!NotSupported);
-        } else if (p_self.p_ovr != null) {
+        } else if (self.p_ovr != null) {
             // 静的API「DEF_OVR」が複数ある場合（E_OBJ）［NGKI2619］
             reportError("DEF_OVR", ItronError!ObjectStateError);
         } else {
-            comptime var ovr: T_OVR = undefined;
-            p_self.p_ovr = &ovr;
-            ovr.inib = comptime overrun.defineOverrun(dovr) catch |err| reportError("DEF_OVR", err);
+            comptime var ovr: T_OVR = T_OVR{ .inib = overrun.defineOverrun(dovr) catch |err| reportError("DEF_OVR", err) };
+            var new_cfg = self;
+            new_cfg.p_ovr = &ovr;
+            return new_cfg;
         }
     }
 
     // 割込み要求ラインの設定
-    pub fn CFG_INT(comptime p_self: *CfgData, comptime intno: INTNO, comptime cint: T_CINT) void {
-        comptime var p_int = addItem(T_INT, &p_self.int_list);
-        p_int.inib = comptime interrupt.cfg_int(intno, cint) catch |err| reportError("CFG_INT", err);
+    // pub fn CFG_INT(comptime p_self: *CfgData, comptime intno: INTNO, comptime cint: T_CINT) void {
+    //     comptime var p_int = addItem(T_INT, &p_self.int_list);
+    //     p_int.inib = comptime interrupt.cfg_int(intno, cint) catch |err| reportError("CFG_INT", err);
+    // }
+
+    pub fn CFG_INT(comptime self: CfgData, comptime intno: INTNO, comptime cint: T_CINT) CfgData {
+        comptime {
+            var int = T_INT{ .inib = interrupt.cfg_int(intno, cint) catch |err| reportError("CFG_INT", err), .p_next = undefined };
+            const new_list = addItem(T_INT, &int, self.int_list);
+            var new_cfg = self;
+            new_cfg.int_list = new_list;
+            return new_cfg;
+        }
     }
 
     // 割込み要求ライン初期化ブロックの生成
@@ -577,10 +693,20 @@ pub const CfgData = struct {
     }
 
     // 割込みハンドラの定義
-    pub fn DEF_INH(comptime p_self: *CfgData, comptime inhno: INHNO, comptime dinh: T_DINH) void {
-        comptime var p_inh = addItem(T_INH, &p_self.inh_list);
-        p_inh.inib =
-            comptime interrupt.def_inh(inhno, dinh, p_self) catch |err| reportError("DEF_INH", err);
+    // pub fn DEF_INH(comptime p_self: *CfgData, comptime inhno: INHNO, comptime dinh: T_DINH) void {
+    //     comptime var p_inh = addItem(T_INH, &p_self.inh_list);
+    //     p_inh.inib =
+    //         comptime interrupt.def_inh(inhno, dinh, p_self) catch |err| reportError("DEF_INH", err);
+    // }
+
+    pub fn DEF_INH(comptime self: CfgData, comptime inhno: INHNO, comptime dinh: T_DINH) CfgData {
+        comptime {
+            var inh = T_INH{ .inib = interrupt.def_inh(inhno, dinh, self) catch |err| reportError("DEF_INH", err), .p_next = undefined };
+            const new_list = addItem(T_INH, &inh, self.inh_list);
+            var new_cfg = self;
+            new_cfg.inh_list = new_list;
+            return new_cfg;
+        }
     }
 
     // 割込みハンドラ初期化ブロックの生成
@@ -600,12 +726,22 @@ pub const CfgData = struct {
     }
 
     // 割込みサービスルーチンの生成
-    pub fn CRE_ISR(comptime p_self: *CfgData, comptime isr_name: []const u8, comptime cisr: T_CISR) void {
-        comptime var p_isr = addItem(T_ISR, &p_self.isr_list);
-        p_isr.name = isr_name;
-        p_isr.cfg.cisr = comptime interrupt.cre_isr(cisr, p_self) catch |err| reportError("CRE_ISR", err);
-        p_isr.cfg.isrid = comptime @as(ID, @intCast(p_self.isr_list.length));
-        p_isr.cfg.genflag = false;
+    // pub fn CRE_ISR(comptime p_self: *CfgData, comptime isr_name: []const u8, comptime cisr: T_CISR) void {
+    //     comptime var p_isr = addItem(T_ISR, &p_self.isr_list);
+    //     p_isr.name = isr_name;
+    //     p_isr.cfg.cisr = comptime interrupt.cre_isr(cisr, p_self) catch |err| reportError("CRE_ISR", err);
+    //     p_isr.cfg.isrid = comptime @as(ID, @intCast(p_self.isr_list.length));
+    //     p_isr.cfg.genflag = false;
+    // }
+
+    pub fn CRE_ISR(comptime self: CfgData, comptime isr_name: []const u8, comptime cisr: T_CISR) CfgData {
+        comptime {
+            var isr = T_ISR{ .name = isr_name, .cfg = interrupt.ISRCFG{ .cisr = interrupt.cre_isr(cisr, self) catch |err| reportError("CRE_ISR", err), .isrid = @as(ID, @intCast(self.isr_list.length)), .genflag = false }, .p_next = undefined };
+            const new_list = addItem(T_ISR, &isr, self.isr_list);
+            var new_cfg = self;
+            new_cfg.isr_list = new_list;
+            return new_cfg;
+        }
     }
 
     // 割込みサービスルーチンの生成情報の取得
@@ -620,15 +756,35 @@ pub const CfgData = struct {
     }
 
     // 割込みサービスルーチンを呼び出す割込みハンドラの登録
-    pub fn addInh(comptime p_self: *CfgData, comptime inhinib: interrupt.INHINIB) void {
-        comptime var p_inh = addItem(T_INH, &p_self.inh_list);
-        p_inh.inib = inhinib;
+    // pub fn addInh(comptime p_self: *CfgData, comptime inhinib: interrupt.INHINIB) void {
+    //     comptime var p_inh = addItem(T_INH, &p_self.inh_list);
+    //     p_inh.inib = inhinib;
+    // }
+
+    pub fn addInh(comptime self: CfgData, comptime inhinib: interrupt.INHINIB) CfgData {
+        comptime {
+            var inh = T_INH{ .inib = inhinib, .p_next = undefined };
+            const new_list = addItem(T_INH, &inh, self.inh_list);
+            var new_cfg = self;
+            new_cfg.inh_list = new_list;
+            return new_cfg;
+        }
     }
 
     // CPU例外ハンドラの定義
-    pub fn DEF_EXC(comptime p_self: *CfgData, comptime excno: EXCNO, comptime dexc: T_DEXC) void {
-        comptime var p_exc = addItem(T_EXC, &p_self.exc_list);
-        p_exc.inib = comptime exception.def_exc(excno, dexc) catch |err| reportError("DEF_EXC", err);
+    // pub fn DEF_EXC(comptime p_self: *CfgData, comptime excno: EXCNO, comptime dexc: T_DEXC) void {
+    //     comptime var p_exc = addItem(T_EXC, &p_self.exc_list);
+    //     p_exc.inib = comptime exception.def_exc(excno, dexc) catch |err| reportError("DEF_EXC", err);
+    // }
+
+    pub fn DEF_EXC(comptime self: CfgData, comptime excno: EXCNO, comptime dexc: T_DEXC) CfgData {
+        comptime {
+            var exc = T_EXC{ .inib = exception.def_exc(excno, dexc) catch |err| reportError("DEF_EXC", err), .p_next = undefined };
+            const new_list = addItem(T_EXC, &exc, self.exc_list);
+            var new_cfg = self;
+            new_cfg.exc_list = new_list;
+            return new_cfg;
+        }
     }
 
     // CPU例外ハンドラ初期化ブロックの生成
@@ -637,22 +793,47 @@ pub const CfgData = struct {
     }
 
     // 非タスクコンテキスト用スタック領域の定義
-    pub fn DEF_ICS(comptime p_self: *CfgData, comptime dics: T_DICS) void {
-        if (p_self.p_ics != null) {
+    // pub fn DEF_ICS(comptime p_self: *CfgData, comptime dics: T_DICS) void {
+    //     if (p_self.p_ics != null) {
+    //         // 非タスクコンテキスト用スタック領域が設定済みの場合（E_OBJ）
+    //         // ［NGKI3216］
+    //         reportError("DEF_ICS", ItronError!ObjectStateError);
+    //     } else {
+    //         comptime var ics: T_ICS = undefined;
+    //         p_self.p_ics = &ics;
+    //         ics.dics = comptime startup.defineInterruptStack(dics) catch |err| reportError("DEF_ICS", err);
+    //     }
+    // }
+
+    pub fn DEF_ICS(comptime self: CfgData, comptime dics: T_DICS) CfgData {
+        if (self.p_ics != null) {
             // 非タスクコンテキスト用スタック領域が設定済みの場合（E_OBJ）
             // ［NGKI3216］
             reportError("DEF_ICS", ItronError!ObjectStateError);
         } else {
-            comptime var ics: T_ICS = undefined;
-            p_self.p_ics = &ics;
-            ics.dics = comptime startup.defineInterruptStack(dics) catch |err| reportError("DEF_ICS", err);
+            comptime {
+                var ics: T_ICS = T_ICS{ .dics = startup.defineInterruptStack(dics) catch |err| reportError("DEF_ICS", err) };
+                var new_cfg = self;
+                new_cfg.p_ics = &ics;
+                return new_cfg;
+            }
         }
     }
 
     // 初期化ルーチンの追加
-    pub fn ATT_INI(comptime p_self: *CfgData, comptime aini: T_AINI) void {
-        comptime var p_inirtn = addItem(T_INIRTN, &p_self.inirtn_list);
-        p_inirtn.inib = comptime startup.attachInitializeRoutine(aini) catch |err| reportError("ATT_INI", err);
+    // pub fn ATT_INI(comptime p_self: *CfgData, comptime aini: T_AINI) void {
+    //     comptime var p_inirtn = addItem(T_INIRTN, &p_self.inirtn_list);
+    //     p_inirtn.inib = comptime startup.attachInitializeRoutine(aini) catch |err| reportError("ATT_INI", err);
+    // }
+
+    pub fn ATT_INI(comptime self: CfgData, comptime aini: T_AINI) CfgData {
+        comptime {
+            var inirtn = T_INIRTN{ .inib = startup.attachInitializeRoutine(aini) catch |err| reportError("ATT_INI", err), .p_next = undefined };
+            const new_list = addItem(T_INIRTN, &inirtn, self.inirtn_list);
+            var new_cfg = self;
+            new_cfg.inirtn_list = new_list;
+            return new_cfg;
+        }
     }
 
     // 初期化ルーチンブロックの生成
@@ -661,9 +842,19 @@ pub const CfgData = struct {
     }
 
     // 終了処理ルーチンの追加
-    pub fn ATT_TER(comptime p_self: *CfgData, comptime ater: T_ATER) void {
-        comptime var p_terrtn = addItem(T_TERRTN, &p_self.terrtn_list);
-        p_terrtn.inib = comptime startup.attachTerminateRoutine(ater) catch |err| reportError("ATT_TER", err);
+    // pub fn ATT_TER(comptime p_self: *CfgData, comptime ater: T_ATER) void {
+    //     comptime var p_terrtn = addItem(T_TERRTN, &p_self.terrtn_list);
+    //     p_terrtn.inib = comptime startup.attachTerminateRoutine(ater) catch |err| reportError("ATT_TER", err);
+    // }
+
+    pub fn ATT_TER(comptime self: CfgData, comptime ater: T_ATER) CfgData {
+        comptime {
+            var terrtn = T_TERRTN{ .inib = startup.attachTerminateRoutine(ater) catch |err| reportError("ATT_TER", err), .p_next = undefined };
+            const new_list = addItem(T_TERRTN, &terrtn, self.terrtn_list);
+            var new_cfg = self;
+            new_cfg.terrtn_list = new_list;
+            return new_cfg;
+        }
     }
 
     // 終了処理ルーチンブロックの生成

@@ -611,7 +611,7 @@ const c_api = struct {
 ///
 ///  割込みサービスルーチンを呼び出す割込みハンドラの生成
 ///
-fn GenInterruptHandler(comptime isrcfg_table: []ISRCFG) type {
+fn GenInterruptHandler(comptime isrcfg_table: []const ISRCFG) type {
     return struct {
         pub fn handler() callconv(.C) void {
             inline for (isrcfg_table, 0..) |isrcfg, i| {
@@ -667,11 +667,15 @@ pub fn generateInhForIsr(isrcfg_table: []ISRCFG, comptime cfg_data: *static_api.
         // ISR優先度順にソート
         std.sort.insertion(ISRCFG, &isrcfg_table_intno, {}, isrcfgLessThan);
 
+        // comptime varからconst配列を作成
+        const isrcfg_table_intno_const = isrcfg_table_intno;
+
         // ISRを呼び出す割込みハンドラの生成
         cfg_data.addInh(INHINIB{
             .inhno = intnoToInhno(isrcfg.cisr.intno),
             .inhatr = TA_NULL,
-            .inthdr = GenInterruptHandler(&isrcfg_table_intno).handler,
+            // GenInterruptHandler関数にはconst変数のポインタを渡す
+            .inthdr = GenInterruptHandler(&isrcfg_table_intno_const).handler,
         });
     }
 }
