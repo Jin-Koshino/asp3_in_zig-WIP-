@@ -619,7 +619,7 @@ pub fn cre_mtx(cmtx: T_CMTX) ItronError!MTXINIB {
 ///  ミューテックスに関するコンフィギュレーションデータの取り込み（静
 ///  的APIの処理）
 ///
-pub fn ExportMtxCfg(comptime mtxinib_table: []MTXINIB) type {
+pub fn ExportMtxCfg(comptime mtxinib_table: []const MTXINIB) type {
     const tnum_mtx = mtxinib_table.len;
     return struct {
         pub export const _kernel_tmax_mtxid: ID = tnum_mtx;

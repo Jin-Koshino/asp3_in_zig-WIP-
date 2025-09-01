@@ -571,7 +571,7 @@ pub const ExternIntIniB = struct {
 ///
 extern fn _kernel_default_int_handler() void;
 
-pub fn ExportInhIniB(comptime inhinib_list: []interrupt.INHINIB) type {
+pub fn ExportInhIniB(comptime inhinib_list: []const interrupt.INHINIB) type {
     // チェック処理用の定義の生成
     exportCheck(TNUM_INHNO, "TNUM_INHNO");
     exportCheck(@sizeOf(INTHDR), "sizeof_INTHDR");
@@ -590,7 +590,7 @@ pub fn ExportInhIniB(comptime inhinib_list: []interrupt.INHINIB) type {
 ///
 
 // 割込み要求ライン初期化ブロック
-fn ExportIniB(comptime intinib_list: []interrupt.INTINIB) type {
+fn ExportIniB(comptime intinib_list: []const interrupt.INTINIB) type {
     return struct {
         pub export const _kernel_tnum_cfg_intno: c_uint = intinib_list.len;
         pub export const _kernel_intinib_table = intinib_list[0..intinib_list.len].*;
@@ -598,7 +598,7 @@ fn ExportIniB(comptime intinib_list: []interrupt.INTINIB) type {
 }
 
 // 割込み要求ライン設定テーブル
-fn ExportCfg(comptime intinib_list: []interrupt.INTINIB) type {
+fn ExportCfg(comptime intinib_list: []const interrupt.INTINIB) type {
     comptime var intcfg_table = [1]bool{false} ** TNUM_INTNO;
     for (intinib_list) |intinib| {
         intcfg_table[intinib.intno] = true;
@@ -608,7 +608,7 @@ fn ExportCfg(comptime intinib_list: []interrupt.INTINIB) type {
     };
 }
 
-pub fn ExportIntIniB(comptime intinib_list: []interrupt.INTINIB) type {
+pub fn ExportIntIniB(comptime intinib_list: []const interrupt.INTINIB) type {
     return struct {
         pub usingnamespace if (isTrue(target_impl.mpcore_kernel_impl.gic_kernel_impl, "USE_INTINIB_TABLE"))
             ExportIniB(intinib_list)
@@ -921,7 +921,7 @@ pub const ExternExcIniB = struct {
 ///
 extern fn _kernel_default_exc_handler(p_excinf: *T_EXCINF, excno: EXCNO) void;
 
-pub fn ExportExcIniB(comptime excinib_list: []exception.EXCINIB) type {
+pub fn ExportExcIniB(comptime excinib_list: []const exception.EXCINIB) type {
     // チェック処理用の定義の生成
     exportCheck(TNUM_EXCNO, "TNUM_EXCNO");
     exportCheck(@sizeOf(EXCHDR), "sizeof_EXCHDR");

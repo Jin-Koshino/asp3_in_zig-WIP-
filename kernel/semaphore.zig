@@ -420,7 +420,7 @@ pub fn cre_sem(csem: T_CSEM) ItronError!SEMINIB {
 ///
 ///  セマフォに関するコンフィギュレーションデータの生成（静的APIの処理）
 ///
-pub fn ExportSemCfg(comptime seminib_table: []SEMINIB) type {
+pub fn ExportSemCfg(comptime seminib_table: []const SEMINIB) type {
     const tnum_sem = seminib_table.len;
     return struct {
         pub export const _kernel_tmax_semid: ID = tnum_sem;

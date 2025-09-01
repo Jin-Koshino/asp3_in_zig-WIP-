@@ -346,8 +346,6 @@ pub const CfgData = struct {
     inirtn_list: LIST(T_INIRTN) = LIST(T_INIRTN){},
     terrtn_list: LIST(T_TERRTN) = LIST(T_TERRTN){},
 
-    // const Self = @This();
-
     // コンフィギュレーションデータの追加
     fn addItem(comptime T: type, comptime item: *T, comptime list: LIST(T)) LIST(T) {
         var new_list: LIST(T) = list;
@@ -377,7 +375,7 @@ pub const CfgData = struct {
     }
 
     // オブジェクトの初期化ブロックの生成
-    fn genIniB(comptime INIB: type, comptime list: anytype) []INIB {
+    fn genIniB(comptime INIB: type, comptime list: anytype) []const INIB {
         comptime var inib_table: [list.length]INIB = undefined;
         comptime var i: usize = 0;
         comptime var p_item = list.head;
@@ -385,7 +383,9 @@ pub const CfgData = struct {
             inib_table[i] = item.inib;
             i += 1;
         }
-        return &inib_table;
+        // constな変数に初期化ブロックの配列をコピー後，要素不変のスライスとして返す
+        const inib_table_final: [list.length]INIB = inib_table;
+        return inib_table_final[0..];
     }
 
     // タスクの生成
@@ -397,9 +397,9 @@ pub const CfgData = struct {
 
     // タスクの生成（0.12対応版）
     pub fn CRE_TSK(comptime self: CfgData, comptime tsk_name: []const u8, comptime ctsk: T_CTSK) CfgData {
-        const tsk = T_TSK{ .name = tsk_name, .inib = task.cre_tsk(ctsk) catch |err| reportError("CRE_TSK", err) };
-        const new_list = self.addItem(T_TSK, tsk, self.tsk_list);
-        const new_cfg = self;
+        var tsk = T_TSK{ .name = tsk_name, .inib = task.cre_tsk(ctsk) catch |err| reportError("CRE_TSK", err), .p_next = undefined };
+        const new_list = addItem(T_TSK, &tsk, self.tsk_list);
+        var new_cfg = self;
         new_cfg.tsk_list = new_list;
         return new_cfg;
     }
@@ -410,12 +410,12 @@ pub const CfgData = struct {
     }
 
     // タスク初期化ブロックの生成
-    fn genTIniB(comptime self: CfgData) []task.TINIB {
+    fn genTIniB(comptime self: CfgData) []const task.TINIB {
         return genIniB(task.TINIB, self.tsk_list);
     }
 
     // タスク順序テーブルの生成
-    fn genTorderTable(comptime self: CfgData) []ID {
+    fn genTorderTable(comptime self: CfgData) []const ID {
         comptime var torder_table: [self.tsk_list.length]ID = undefined;
         comptime var i: usize = 0;
         comptime var p_item = self.tsk_list.head;
@@ -423,7 +423,11 @@ pub const CfgData = struct {
             torder_table[i] = @as(ID, @intCast(i + 1));
             i += 1;
         }
-        return &torder_table;
+        // constな変数にIDの配列をコピー後，要素不変のスライスとして返す
+        const torder_table_const: [self.tsk_list.length]ID = torder_table;
+        const torder_table_slice: []const ID = torder_table_const[0..];
+
+        return torder_table_slice;
     }
 
     // セマフォの生成
@@ -449,7 +453,7 @@ pub const CfgData = struct {
     }
 
     // セマフォ初期化ブロックの生成
-    fn genSemIniB(comptime self: CfgData) []semaphore.SEMINIB {
+    fn genSemIniB(comptime self: CfgData) []const semaphore.SEMINIB {
         return genIniB(semaphore.SEMINIB, self.sem_list);
     }
 
@@ -476,7 +480,7 @@ pub const CfgData = struct {
     }
 
     // イベントフラグ初期化ブロックの生成
-    fn genFlgIniB(comptime self: CfgData) []eventflag.FLGINIB {
+    fn genFlgIniB(comptime self: CfgData) []const eventflag.FLGINIB {
         return genIniB(eventflag.FLGINIB, self.flg_list);
     }
 
@@ -503,7 +507,7 @@ pub const CfgData = struct {
     }
 
     // データキュー初期化ブロックの生成
-    fn genDtqIniB(comptime self: CfgData) []dataqueue.DTQINIB {
+    fn genDtqIniB(comptime self: CfgData) []const dataqueue.DTQINIB {
         return genIniB(dataqueue.DTQINIB, self.dtq_list);
     }
 
@@ -530,7 +534,7 @@ pub const CfgData = struct {
     }
 
     // 優先度データキュー初期化ブロックの生成
-    fn genPdqIniB(comptime self: CfgData) []pridataq.PDQINIB {
+    fn genPdqIniB(comptime self: CfgData) []const pridataq.PDQINIB {
         return genIniB(pridataq.PDQINIB, self.pdq_list);
     }
 
@@ -557,7 +561,7 @@ pub const CfgData = struct {
     }
 
     // ミューテックス初期化ブロックの生成
-    fn genMtxIniB(comptime self: CfgData) []mutex.MTXINIB {
+    fn genMtxIniB(comptime self: CfgData) []const mutex.MTXINIB {
         return genIniB(mutex.MTXINIB, self.mtx_list);
     }
 
@@ -584,7 +588,7 @@ pub const CfgData = struct {
     }
 
     // 固定長メモリプール初期化ブロックの生成
-    fn genMpfIniB(comptime self: CfgData) []mempfix.MPFINIB {
+    fn genMpfIniB(comptime self: CfgData) []const mempfix.MPFINIB {
         return genIniB(mempfix.MPFINIB, self.mpf_list);
     }
 
@@ -606,7 +610,7 @@ pub const CfgData = struct {
     }
 
     // 周期通知初期化ブロックの生成
-    fn genCycIniB(comptime self: CfgData) []cyclic.CYCINIB {
+    fn genCycIniB(comptime self: CfgData) []const cyclic.CYCINIB {
         return genIniB(cyclic.CYCINIB, self.cyc_list);
     }
 
@@ -628,7 +632,7 @@ pub const CfgData = struct {
     }
 
     // アラーム通知初期化ブロックの生成
-    fn genAlmIniB(comptime self: CfgData) []alarm.ALMINIB {
+    fn genAlmIniB(comptime self: CfgData) []const alarm.ALMINIB {
         return genIniB(alarm.ALMINIB, self.alm_list);
     }
 
@@ -677,7 +681,7 @@ pub const CfgData = struct {
     }
 
     // 割込み要求ライン初期化ブロックの生成
-    fn genIntIniB(comptime self: CfgData) []interrupt.INTINIB {
+    fn genIntIniB(comptime self: CfgData) []const interrupt.INTINIB {
         return genIniB(interrupt.INTINIB, self.int_list);
     }
 
@@ -710,7 +714,7 @@ pub const CfgData = struct {
     }
 
     // 割込みハンドラ初期化ブロックの生成
-    fn genInhIniB(comptime self: CfgData) []interrupt.INHINIB {
+    fn genInhIniB(comptime self: CfgData) []const interrupt.INHINIB {
         return genIniB(interrupt.INHINIB, self.inh_list);
     }
 
@@ -788,7 +792,7 @@ pub const CfgData = struct {
     }
 
     // CPU例外ハンドラ初期化ブロックの生成
-    fn genExcIniB(comptime self: CfgData) []exception.EXCINIB {
+    fn genExcIniB(comptime self: CfgData) []const exception.EXCINIB {
         return genIniB(exception.EXCINIB, self.exc_list);
     }
 
@@ -837,7 +841,7 @@ pub const CfgData = struct {
     }
 
     // 初期化ルーチンブロックの生成
-    fn genIniRtnB(comptime self: CfgData) []startup.INIRTNB {
+    fn genIniRtnB(comptime self: CfgData) []const startup.INIRTNB {
         return genIniB(startup.INIRTNB, self.inirtn_list);
     }
 
@@ -858,7 +862,7 @@ pub const CfgData = struct {
     }
 
     // 終了処理ルーチンブロックの生成
-    fn genTerRtnB(comptime self: CfgData) []startup.TERRTNB {
+    fn genTerRtnB(comptime self: CfgData) []const startup.TERRTNB {
         const length = self.terrtn_list.length;
         comptime var table: [length]startup.TERRTNB = undefined;
         comptime var i: usize = length;
@@ -867,25 +871,27 @@ pub const CfgData = struct {
             i -= 1;
             table[i] = terrtn.inib;
         }
-        return &table;
+        const table_final = table;
+        return table_final[0..];
     }
 
     // コンフィギュレーションデータの加工処理
-    pub fn process(comptime p_self: *CfgData) void {
+    pub fn process(comptime self: CfgData) CfgData {
         // タスクが1つも登録されていない場合［NGKI0033］
-        if (p_self.tsk_list.head == null) {
+        if (self.tsk_list.head == null) {
             @compileError("no task is registered.");
         }
 
         // 割込みサービスルーチンを呼び出す割込みハンドラの生成
-        comptime var isrcfg_table: [p_self.isr_list.length]interrupt.ISRCFG = undefined;
+        comptime var isrcfg_table: [self.isr_list.length]interrupt.ISRCFG = undefined;
         comptime var i: usize = 0;
-        comptime var p_isr = p_self.isr_list.head;
+        comptime var p_isr = self.isr_list.head;
         inline while (p_isr) |isr| : (p_isr = isr.p_next) {
             isrcfg_table[i] = isr.cfg;
             i += 1;
         }
-        interrupt.generateInhForIsr(&isrcfg_table, p_self);
+        const new_cfg = interrupt.generateInhForIsr(isrcfg_table[0..], self);
+        return new_cfg;
     }
 };
 
@@ -943,161 +949,192 @@ fn exportId(comptime list: anytype) void {
 ///
 ///  コンフィギュレーションデータの生成
 ///
-pub fn GenCfgData(comptime cfg_data: *CfgData) type {
-    // コンフィギュレーションデータの加工処理
-    cfg_data.process();
+pub fn GenCfgData(comptime cfg_data: CfgData) type {
+    comptime {
+        // コンフィギュレーションデータの加工処理
+        const cfg_data_processed = cfg_data.process();
 
-    //
-    //  オブジェクトIDの定義の生成
-    //
-    exportIdSymbol(@as(u32, 0x12345678), "TOPPERS_magic_number");
-    exportIdSymbol(cfg_data.tsk_list.length, "TNUM_TSKID");
-    exportId(cfg_data.tsk_list);
-    exportIdSymbol(cfg_data.sem_list.length, "TNUM_SEMID");
-    exportId(cfg_data.sem_list);
-    exportIdSymbol(cfg_data.flg_list.length, "TNUM_FLGID");
-    exportId(cfg_data.flg_list);
-    exportIdSymbol(cfg_data.dtq_list.length, "TNUM_DTQID");
-    exportId(cfg_data.dtq_list);
-    exportIdSymbol(cfg_data.pdq_list.length, "TNUM_PDQID");
-    exportId(cfg_data.pdq_list);
-    exportIdSymbol(cfg_data.mtx_list.length, "TNUM_MTXID");
-    exportId(cfg_data.mtx_list);
-    exportIdSymbol(cfg_data.mpf_list.length, "TNUM_MPFID");
-    exportId(cfg_data.mpf_list);
-    exportIdSymbol(cfg_data.cyc_list.length, "TNUM_CYCID");
-    exportId(cfg_data.cyc_list);
-    exportIdSymbol(cfg_data.alm_list.length, "TNUM_ALMID");
-    exportId(cfg_data.alm_list);
-    exportIdSymbol(cfg_data.isr_list.length, "TNUM_ISRID");
-    exportId(cfg_data.isr_list);
-    exportIdSymbol(cfg_data.inirtn_list.length, "TNUM_INIRTN");
-    exportIdSymbol(cfg_data.terrtn_list.length, "TNUM_TERRTN");
+        //
+        //  オブジェクトIDの定義の生成
+        //
+        exportIdSymbol(@as(u32, 0x12345678), "TOPPERS_magic_number");
+        exportIdSymbol(cfg_data_processed.tsk_list.length, "TNUM_TSKID");
+        exportId(cfg_data_processed.tsk_list);
+        exportIdSymbol(cfg_data_processed.sem_list.length, "TNUM_SEMID");
+        exportId(cfg_data_processed.sem_list);
+        exportIdSymbol(cfg_data_processed.flg_list.length, "TNUM_FLGID");
+        exportId(cfg_data_processed.flg_list);
+        exportIdSymbol(cfg_data_processed.dtq_list.length, "TNUM_DTQID");
+        exportId(cfg_data_processed.dtq_list);
+        exportIdSymbol(cfg_data_processed.pdq_list.length, "TNUM_PDQID");
+        exportId(cfg_data_processed.pdq_list);
+        exportIdSymbol(cfg_data_processed.mtx_list.length, "TNUM_MTXID");
+        exportId(cfg_data_processed.mtx_list);
+        exportIdSymbol(cfg_data_processed.mpf_list.length, "TNUM_MPFID");
+        exportId(cfg_data_processed.mpf_list);
+        exportIdSymbol(cfg_data_processed.cyc_list.length, "TNUM_CYCID");
+        exportId(cfg_data_processed.cyc_list);
+        exportIdSymbol(cfg_data_processed.alm_list.length, "TNUM_ALMID");
+        exportId(cfg_data_processed.alm_list);
+        exportIdSymbol(cfg_data_processed.isr_list.length, "TNUM_ISRID");
+        exportId(cfg_data_processed.isr_list);
+        exportIdSymbol(cfg_data_processed.inirtn_list.length, "TNUM_INIRTN");
+        exportIdSymbol(cfg_data_processed.terrtn_list.length, "TNUM_TERRTN");
 
-    //
-    //  チェック処理用の定義の生成
-    //
-    exportCheck(0x12345678, "TOPPERS_magic_number");
-    exportCheck(decl(u32, target_impl, "CHECK_USIZE_ALIGN", 1), "CHECK_USIZE_ALIGN");
-    exportCheck(decl(u32, target_impl, "CHECK_USIZE_ALIGN", 1), "CHECK_USIZE_ALIGN");
-    exportCheck(@intFromBool(isTrue(target_impl, "CHECK_USIZE_NONNULL")), "CHECK_USIZE_NONNULL");
-    exportCheck(decl(u32, target_impl, "CHECK_FUNC_ALIGN", 1), "CHECK_FUNC_ALIGN");
-    exportCheck(@intFromBool(isTrue(target_impl, "CHECK_FUNC_NONNULL")), "CHECK_FUNC_NONNULL");
-    exportCheck(decl(u32, target_impl, "CHECK_STACK_ALIGN", 1), "CHECK_STACK_ALIGN");
-    exportCheck(@intFromBool(isTrue(target_impl, "CHECK_STACK_NONNULL")), "CHECK_STACK_NONNULL");
-    exportCheck(decl(u32, target_impl, "CHECK_MPF_ALIGN", 1), "CHECK_MPF_ALIGN");
-    exportCheck(@intFromBool(isTrue(target_impl, "CHECK_MPF_NONNULL")), "CHECK_MPF_NONNULL");
+        //
+        //  チェック処理用の定義の生成
+        //
+        exportCheck(0x12345678, "TOPPERS_magic_number");
+        exportCheck(decl(u32, target_impl, "CHECK_USIZE_ALIGN", 1), "CHECK_USIZE_ALIGN");
+        exportCheck(decl(u32, target_impl, "CHECK_USIZE_ALIGN", 1), "CHECK_USIZE_ALIGN");
+        exportCheck(@intFromBool(isTrue(target_impl, "CHECK_USIZE_NONNULL")), "CHECK_USIZE_NONNULL");
+        exportCheck(decl(u32, target_impl, "CHECK_FUNC_ALIGN", 1), "CHECK_FUNC_ALIGN");
+        exportCheck(@intFromBool(isTrue(target_impl, "CHECK_FUNC_NONNULL")), "CHECK_FUNC_NONNULL");
+        exportCheck(decl(u32, target_impl, "CHECK_STACK_ALIGN", 1), "CHECK_STACK_ALIGN");
+        exportCheck(@intFromBool(isTrue(target_impl, "CHECK_STACK_NONNULL")), "CHECK_STACK_NONNULL");
+        exportCheck(decl(u32, target_impl, "CHECK_MPF_ALIGN", 1), "CHECK_MPF_ALIGN");
+        exportCheck(@intFromBool(isTrue(target_impl, "CHECK_MPF_NONNULL")), "CHECK_MPF_NONNULL");
 
-    exportCheck(@sizeOf(usize), "sizeof_usize");
-    exportCheck(@sizeOf(c_uint), "sizeof_UINT");
-    exportCheck(@sizeOf(ID), "sizeof_ID");
-    exportCheck(@sizeOf(ATR), "sizeof_ATR");
-    exportCheck(@sizeOf(NFYHDR), "sizeof_NFYHDR");
-    exportCheck(@sizeOf(EXINF), "sizeof_EXINF");
-    exportCheck(@sizeOf(*u8), "sizeof_ptr_u8");
-    exportCheck(TA_CHECK_USIZE, "TA_CHECK_USIZE");
+        exportCheck(@sizeOf(usize), "sizeof_usize");
+        exportCheck(@sizeOf(c_uint), "sizeof_UINT");
+        exportCheck(@sizeOf(ID), "sizeof_ID");
+        exportCheck(@sizeOf(ATR), "sizeof_ATR");
+        exportCheck(@sizeOf(NFYHDR), "sizeof_NFYHDR");
+        exportCheck(@sizeOf(EXINF), "sizeof_EXINF");
+        exportCheck(@sizeOf(*u8), "sizeof_ptr_u8");
+        exportCheck(TA_CHECK_USIZE, "TA_CHECK_USIZE");
 
-    //
-    //  コンフィギュレーションデータの生成
-    //
-    return struct {
-        // タスクに関するコンフィギュレーションデータの生成
-        usingnamespace task.ExportTskCfg(cfg_data.genTIniB(), cfg_data.genTorderTable());
+        //
+        //  コンフィギュレーションデータの生成
+        //
 
-        // セマフォに関するコンフィギュレーションデータの生成
-        usingnamespace semaphore.ExportSemCfg(cfg_data.genSemIniB());
-
-        // イベントフラグに関するコンフィギュレーションデータの生成
-        usingnamespace eventflag.ExportFlgCfg(cfg_data.genFlgIniB());
-
-        // データキューに関するコンフィギュレーションデータの生成
-        usingnamespace dataqueue.ExportDtqCfg(cfg_data.genDtqIniB());
-
-        // 優先度データキューに関するコンフィギュレーションデータの生成
-        usingnamespace pridataq.ExportPdqCfg(cfg_data.genPdqIniB());
-
-        // ミューテックスに関するコンフィギュレーションデータの生成
-        usingnamespace mutex.ExportMtxCfg(cfg_data.genMtxIniB());
-
-        // 固定長メモリプールに関するコンフィギュレーションデータの生成
-        usingnamespace mempfix.ExportMpfCfg(cfg_data.genMpfIniB());
-
-        // 周期通知に関するコンフィギュレーションデータの生成
-        usingnamespace cyclic.ExportCycCfg(cfg_data.genCycIniB());
-
-        // アラーム通知に関するコンフィギュレーションデータの生成
-        usingnamespace alarm.ExportAlmCfg(cfg_data.genAlmIniB());
-
-        // オーバランハンドラに関するコンフィギュレーションデータの生成
-        usingnamespace if (TOPPERS_SUPPORT_OVRHDR)
-            overrun.ExportOvrIniB(if (cfg_data.p_ovr) |ovr| ovr.inib else null)
-        else
-            struct {};
-
-        // 割込みに関するコンフィギュレーションデータの生成
-        usingnamespace if (@hasDecl(target_impl.mpcore_kernel_impl.core_kernel_impl, "ExportIntIniB"))
-            target_impl.mpcore_kernel_impl.core_kernel_impl.ExportIntIniB(cfg_data.genIntIniB())
-        else
-            interrupt.ExportIntIniB(cfg_data.genIntIniB());
-
-        usingnamespace if (@hasDecl(target_impl.mpcore_kernel_impl.core_kernel_impl, "ExportInhIniB"))
-            target_impl.mpcore_kernel_impl.core_kernel_impl.ExportInhIniB(cfg_data.genInhIniB())
-        else
-            interrupt.ExportInhIniB(cfg_data.genInhIniB());
-
-        // CPU例外に関するコンフィギュレーションデータの生成
-        usingnamespace if (@hasDecl(target_impl.mpcore_kernel_impl.core_kernel_impl, "ExportExcIniB"))
-            target_impl.mpcore_kernel_impl.core_kernel_impl.ExportExcIniB(cfg_data.genExcIniB())
-        else
-            exception.ExportExcIniB(cfg_data.genExcIniB());
-
-        // 非タスクコンテキスト用のスタック領域に関するコンフィギュレー
-        // ションデータの生成
-        const dics = if (cfg_data.p_ics) |ics| ics.dics else T_DICS{
+        const TIniB = cfg_data_processed.genTIniB();
+        const TorderTable = cfg_data_processed.genTorderTable();
+        const SemIniB = cfg_data_processed.genSemIniB();
+        const FlgIniB = cfg_data_processed.genFlgIniB();
+        const DtqIniB = cfg_data_processed.genDtqIniB();
+        const PdqIniB = cfg_data_processed.genPdqIniB();
+        const MtxIniB = cfg_data_processed.genMtxIniB();
+        const MpfIniB = cfg_data_processed.genMpfIniB();
+        const CycIniB = cfg_data_processed.genCycIniB();
+        const AlmIniB = cfg_data_processed.genAlmIniB();
+        const IntIniB = cfg_data_processed.genIntIniB();
+        const InhIniB = cfg_data_processed.genInhIniB();
+        const ExcIniB = cfg_data_processed.genExcIniB();
+        const IniRtnB = cfg_data_processed.genIniRtnB();
+        const TerRtnB = cfg_data_processed.genTerRtnB();
+        const OvrIniB = if (cfg_data_processed.p_ovr) |ovr| ovr.inib else null;
+        const dics_tmp = if (cfg_data_processed.p_ics) |ics| ics.dics else T_DICS{
             .istksz = target_impl.DEFAULT_ISTKSZ,
             .istk = null,
         };
-        usingnamespace startup.ExportIcs(dics);
+        const tnum_tmevt_tmp = cfg_data_processed.tsk_list.length + cfg_data_processed.cyc_list.length + cfg_data_processed.alm_list.length;
 
-        // 初期化ルーチンに関するコンフィギュレーションデータの生成
-        usingnamespace startup.ExportIniRtnB(cfg_data.genIniRtnB());
+        const sem_list_length = cfg_data_processed.sem_list.length;
+        const flg_list_length = cfg_data_processed.flg_list.length;
+        const dtq_list_length = cfg_data_processed.dtq_list.length;
+        const pdq_list_length = cfg_data_processed.pdq_list.length;
+        const mtx_list_length = cfg_data_processed.mtx_list.length;
+        const mpf_list_length = cfg_data_processed.mpf_list.length;
+        const cyc_list_length = cfg_data_processed.cyc_list.length;
+        const alm_list_length = cfg_data_processed.alm_list.length;
 
-        // 終了処理ルーチンに関するコンフィギュレーションデータの生成
-        usingnamespace startup.ExportTerRtnB(cfg_data.genTerRtnB());
+        return struct {
+            // タスクに関するコンフィギュレーションデータの生成
+            usingnamespace task.ExportTskCfg(TIniB, TorderTable);
 
-        // タイムイベントヒープの生成
-        const tnum_tmevt = cfg_data.tsk_list.length + cfg_data.cyc_list.length + cfg_data.alm_list.length;
-        pub export var _kernel_tmevt_heap: [tnum_tmevt]*time_event.TMEVTB = undefined;
+            // セマフォに関するコンフィギュレーションデータの生成
+            usingnamespace semaphore.ExportSemCfg(SemIniB);
 
-        // オブジェクトの初期化関数の生成
-        pub export fn _kernel_initialize_object() void {
-            _kernel_initialize_task();
-            if (comptime cfg_data.sem_list.length > 0) {
-                _kernel_initialize_semaphore();
+            // イベントフラグに関するコンフィギュレーションデータの生成
+            usingnamespace eventflag.ExportFlgCfg(FlgIniB);
+
+            // データキューに関するコンフィギュレーションデータの生成
+            usingnamespace dataqueue.ExportDtqCfg(DtqIniB);
+
+            // 優先度データキューに関するコンフィギュレーションデータの生成
+            usingnamespace pridataq.ExportPdqCfg(PdqIniB);
+
+            // ミューテックスに関するコンフィギュレーションデータの生成
+            usingnamespace mutex.ExportMtxCfg(MtxIniB);
+
+            // 固定長メモリプールに関するコンフィギュレーションデータの生成
+            usingnamespace mempfix.ExportMpfCfg(MpfIniB);
+
+            // 周期通知に関するコンフィギュレーションデータの生成
+            usingnamespace cyclic.ExportCycCfg(CycIniB);
+
+            // アラーム通知に関するコンフィギュレーションデータの生成
+            usingnamespace alarm.ExportAlmCfg(AlmIniB);
+
+            // オーバランハンドラに関するコンフィギュレーションデータの生成
+            usingnamespace if (TOPPERS_SUPPORT_OVRHDR)
+                overrun.ExportOvrIniB(OvrIniB)
+            else
+                struct {};
+
+            // 割込みに関するコンフィギュレーションデータの生成
+            usingnamespace if (@hasDecl(target_impl.mpcore_kernel_impl.core_kernel_impl, "ExportIntIniB"))
+                target_impl.mpcore_kernel_impl.core_kernel_impl.ExportIntIniB(IntIniB)
+            else
+                interrupt.ExportIntIniB(IntIniB);
+
+            usingnamespace if (@hasDecl(target_impl.mpcore_kernel_impl.core_kernel_impl, "ExportInhIniB"))
+                target_impl.mpcore_kernel_impl.core_kernel_impl.ExportInhIniB(InhIniB)
+            else
+                interrupt.ExportInhIniB(InhIniB);
+
+            // CPU例外に関するコンフィギュレーションデータの生成
+            usingnamespace if (@hasDecl(target_impl.mpcore_kernel_impl.core_kernel_impl, "ExportExcIniB"))
+                target_impl.mpcore_kernel_impl.core_kernel_impl.ExportExcIniB(ExcIniB)
+            else
+                exception.ExportExcIniB(ExcIniB);
+
+            // 非タスクコンテキスト用のスタック領域に関するコンフィギュレー
+            // ションデータの生成
+            const dics = dics_tmp;
+            usingnamespace startup.ExportIcs(dics);
+
+            // 初期化ルーチンに関するコンフィギュレーションデータの生成
+            usingnamespace startup.ExportIniRtnB(IniRtnB);
+
+            // 終了処理ルーチンに関するコンフィギュレーションデータの生成
+            usingnamespace startup.ExportTerRtnB(TerRtnB);
+
+            // タイムイベントヒープの生成
+            const tnum_tmevt = tnum_tmevt_tmp;
+            pub export var _kernel_tmevt_heap: [tnum_tmevt]*time_event.TMEVTB = undefined;
+
+            // オブジェクトの初期化関数の生成
+            pub export fn _kernel_initialize_object() void {
+                _kernel_initialize_task();
+                if (comptime sem_list_length > 0) {
+                    _kernel_initialize_semaphore();
+                }
+                if (comptime flg_list_length > 0) {
+                    _kernel_initialize_eventflag();
+                }
+                if (comptime dtq_list_length > 0) {
+                    _kernel_initialize_dataqueue();
+                }
+                if (comptime pdq_list_length > 0) {
+                    _kernel_initialize_pridataq();
+                }
+                if (comptime mtx_list_length > 0) {
+                    _kernel_initialize_mutex();
+                }
+                if (comptime mpf_list_length > 0) {
+                    _kernel_initialize_mempfix();
+                }
+                if (comptime cyc_list_length > 0) {
+                    _kernel_initialize_cyclic();
+                }
+                if (comptime alm_list_length > 0) {
+                    _kernel_initialize_alarm();
+                }
+                _kernel_initialize_interrupt();
+                _kernel_initialize_exception();
             }
-            if (comptime cfg_data.flg_list.length > 0) {
-                _kernel_initialize_eventflag();
-            }
-            if (comptime cfg_data.dtq_list.length > 0) {
-                _kernel_initialize_dataqueue();
-            }
-            if (comptime cfg_data.pdq_list.length > 0) {
-                _kernel_initialize_pridataq();
-            }
-            if (comptime cfg_data.mtx_list.length > 0) {
-                _kernel_initialize_mutex();
-            }
-            if (comptime cfg_data.mpf_list.length > 0) {
-                _kernel_initialize_mempfix();
-            }
-            if (comptime cfg_data.cyc_list.length > 0) {
-                _kernel_initialize_cyclic();
-            }
-            if (comptime cfg_data.alm_list.length > 0) {
-                _kernel_initialize_alarm();
-            }
-            _kernel_initialize_interrupt();
-            _kernel_initialize_exception();
-        }
-    };
+        };
+    }
 }

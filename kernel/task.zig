@@ -238,7 +238,7 @@ pub const TINIB = extern struct {
     task: zig.TASK, // タスクの起動番地
     ipri: c_uint, // タスクの起動時優先度（内部表現）
     tskinictxb: // タスク初期化コンテキストブロック
-    if (@hasDecl(target_impl.mpcore_kernel_impl.core_kernel_impl, "TSKINICTXB"))
+    if (@hasDecl(target_impl.mpcore_kernel_impl.core_kernel_impl, "TSKINICTXB")) // TSKINICTXBの宣言はないため，else文以降の処理に進む
         target_impl.mpcore_kernel_impl.core_kernel_impl.TSKINICTXB
     else
         extern struct {
@@ -729,7 +729,7 @@ pub fn cre_tsk(comptime ctsk: T_CTSK) ItronError!TINIB {
 ///
 ///  タスクに関するコンフィギュレーションデータの生成（静的APIの処理）
 ///
-pub fn ExportTskCfg(comptime tinib_table: []TINIB, comptime torder_table: []ID) type {
+pub fn ExportTskCfg(comptime tinib_table: []const TINIB, comptime torder_table: []const ID) type {
     // チェック処理用の定義の生成
     exportCheck(@sizeOf(TINIB), "sizeof_TINIB");
     exportCheck(@sizeOf(zig.TASK), "sizeof_TASK");

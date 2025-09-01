@@ -290,7 +290,7 @@ pub fn attachTerminateRoutine(ater: T_ATER) ItronError!TERRTNB {
 ///
 ///  初期化ルーチンブロックの生成（静的APIの処理）
 ///
-pub fn ExportIniRtnB(comptime inirtnb_table: []INIRTNB) type {
+pub fn ExportIniRtnB(comptime inirtnb_table: []const INIRTNB) type {
     // チェック処理用の定義の生成
     exportCheck(@sizeOf(INIRTNB), "sizeof_INIRTNB");
     exportCheck(@sizeOf(INIRTN), "sizeof_INIRTN");
@@ -307,7 +307,7 @@ pub fn ExportIniRtnB(comptime inirtnb_table: []INIRTNB) type {
 ///
 ///  終了処理ルーチンブロックの生成（静的APIの処理）
 ///
-pub fn ExportTerRtnB(comptime terrtnb_table: []TERRTNB) type {
+pub fn ExportTerRtnB(comptime terrtnb_table: []const TERRTNB) type {
     // チェック処理用の定義の生成
     exportCheck(@sizeOf(TERRTNB), "sizeof_TERRTNB");
     exportCheck(@sizeOf(TERRTN), "sizeof_TERRTN");

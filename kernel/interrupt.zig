@@ -497,7 +497,7 @@ pub fn cfg_int(intno: INTNO, cint: T_CINT) ItronError!INTINIB {
 ///
 ///  割込み要求ライン初期化ブロックの生成（静的APIの処理）
 ///
-pub fn ExportIntIniB(comptime intinib_table: []INTINIB) type {
+pub fn ExportIntIniB(comptime intinib_table: []const INTINIB) type {
     const tnum_int = intinib_table.len;
     return struct {
         export const _kernel_tnum_cfg_intno: c_uint = tnum_int;
@@ -508,7 +508,7 @@ pub fn ExportIntIniB(comptime intinib_table: []INTINIB) type {
 ///
 ///  割込みハンドラの定義（静的APIの処理）
 ///
-pub fn def_inh(inhno: INHNO, dinh: T_DINH, comptime cfg_data: *static_api.CfgData) ItronError!INHINIB {
+pub fn def_inh(inhno: INHNO, dinh: T_DINH, comptime cfg_data: static_api.CfgData) ItronError!INHINIB {
     // inhnoが有効範囲外の場合（E_PAR）［NGKI3055］
     try checkParameter(validInhnoDefInh(inhno));
 
@@ -545,7 +545,7 @@ pub fn def_inh(inhno: INHNO, dinh: T_DINH, comptime cfg_data: *static_api.CfgDat
 ///
 ///  割込みハンドラ初期化ブロックの生成（静的APIの処理）
 ///
-pub fn ExportInhIniB(comptime inhinib_table: []INHINIB) type {
+pub fn ExportInhIniB(comptime inhinib_table: []const INHINIB) type {
     // チェック処理用の定義の生成
     exportCheck(@sizeOf(INHINIB), "sizeof_INHINIB");
     exportCheck(@sizeOf(INHNO), "sizeof_INHNO");
@@ -563,7 +563,7 @@ pub fn ExportInhIniB(comptime inhinib_table: []INHINIB) type {
 ///
 ///  割込みサービスルーチンの生成（静的APIの処理）
 ///
-pub fn cre_isr(cisr: T_CISR, comptime cfg_data: *static_api.CfgData) ItronError!T_CISR {
+pub fn cre_isr(cisr: T_CISR, comptime cfg_data: static_api.CfgData) ItronError!T_CISR {
     // isratrが無効の場合（E_RSATR）［NGKI2998］［NGKI2952］［NGKI5176］
     //（TARGET_ISRATR以外のビットがセットされている場合）
     try checkValidAtr(cisr.isratr, TARGET_ISRATR);
@@ -639,7 +639,7 @@ fn isrcfgLessThan(context: void, lhs: ISRCFG, rhs: ISRCFG) bool {
 ///
 ///  割込みサービスルーチンを呼び出す割込みハンドラの生成（静的APIの処理）
 ///
-pub fn generateInhForIsr(isrcfg_table: []ISRCFG, comptime cfg_data: *static_api.CfgData) void {
+pub fn generateInhForIsr(isrcfg_table: []ISRCFG, comptime cfg_data: static_api.CfgData) static_api.CfgData {
     // 各ISRに対して割込みハンドラを生成する
     inline for (isrcfg_table) |isrcfg| {
         // 生成済みのISRをスキップ
@@ -668,14 +668,15 @@ pub fn generateInhForIsr(isrcfg_table: []ISRCFG, comptime cfg_data: *static_api.
         std.sort.insertion(ISRCFG, &isrcfg_table_intno, {}, isrcfgLessThan);
 
         // comptime varからconst配列を作成
-        const isrcfg_table_intno_const = isrcfg_table_intno;
+        const isrcfg_table_intno_const: [count]ISRCFG = isrcfg_table_intno;
 
         // ISRを呼び出す割込みハンドラの生成
-        cfg_data.addInh(INHINIB{
+        const new_cfg = cfg_data.addInh(INHINIB{
             .inhno = intnoToInhno(isrcfg.cisr.intno),
             .inhatr = TA_NULL,
             // GenInterruptHandler関数にはconst変数のポインタを渡す
             .inthdr = GenInterruptHandler(&isrcfg_table_intno_const).handler,
         });
+        return new_cfg;
     }
 }

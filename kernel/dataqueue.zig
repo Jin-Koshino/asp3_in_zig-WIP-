@@ -604,7 +604,7 @@ pub fn cre_dtq(comptime cdtq: T_CDTQ) ItronError!DTQINIB {
 ///  データキューに関するコンフィギュレーションデータの生成（静的APIの
 ///  処理）
 ///
-pub fn ExportDtqCfg(comptime dtqinib_table: []DTQINIB) type {
+pub fn ExportDtqCfg(comptime dtqinib_table: []const DTQINIB) type {
     const tnum_dtq = dtqinib_table.len;
 
     return struct {

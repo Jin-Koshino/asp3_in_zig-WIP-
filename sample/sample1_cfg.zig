@@ -67,7 +67,7 @@ fn configuration(comptime arg_cfg: CfgData) CfgData {
     //                          .task = task,
     //                          .itskpri = MID_PRIORITY,
     //                          .stksz = STACK_SIZE, });
-    comptime std.debug.print("{d}", .{cfg.getTskId("TASK1")});
+
     cfg = cfg.CRE_TSK("TASK2", CTSK(TA_NULL, 2, task, MID_PRIORITY, STACK_SIZE, null));
     cfg = cfg.CRE_TSK("TASK3", CTSK(TA_NULL, 3, task, MID_PRIORITY, STACK_SIZE, null));
     cfg = cfg.CRE_TSK("MAIN_TASK", CTSK(TA_ACT, 0, main_task, MAIN_PRIORITY, STACK_SIZE, null));

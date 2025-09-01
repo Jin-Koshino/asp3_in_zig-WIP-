@@ -265,11 +265,15 @@ pub fn ExportOvrIniB(comptime _ovrinib: ?OVRINIB) type {
     exportCheck(@sizeOf(OVRHDR), "sizeof_OVRHDR");
     exportCheck(@offsetOf(OVRINIB, "ovrhdr"), "offsetof_OVRINIB_ovrhdr");
 
+    const kernel_ovrinib_const: OVRINIB = if (_ovrinib) |ovrinib| OVRINIB{
+        .ovratr = ovrinib.ovratr,
+        .ovrhdr = ovrinib.ovrhdr,
+    } else OVRINIB{
+        .ovratr = TA_NULL,
+        .ovrhdr = null,
+    };
+
     return struct {
-        export const _kernel_ovrinib =
-            if (_ovrinib) |ovrinib| ovrinib else OVRINIB{
-            .ovratr = TA_NULL,
-            .ovrhdr = null,
-        };
+        export const _kernel_ovrinib = kernel_ovrinib_const;
     };
 }

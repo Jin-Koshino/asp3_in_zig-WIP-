@@ -1,7 +1,6 @@
 ///
 ///  カーネルのターゲット依存部（CT11MPCore用）
 ///
-// const kernel_impl = @import("kernel").kernel_impl;
 const kernel_impl = @import("kernel").kernel_impl;
 
 ////
