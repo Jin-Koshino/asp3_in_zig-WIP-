@@ -120,7 +120,7 @@ pub fn adj_tim(adjtim: i32) ItronError!void {
 
         update_current_evttim(); //［ASPD1051］
         if (check_adjtim(adjtim)) { //［ASPD1052］
-            return ItronError.ObjectStateError;
+            return @as(ItronError!void, ItronError.ObjectStateError);
         } else {
             const previous_evttim = time_event.current_evttim;
 
@@ -150,7 +150,7 @@ pub fn adj_tim(adjtim: i32) ItronError!void {
 ///
 pub fn fch_hrt() HRTCNT {
     traceLog("fchHrtEnter", .{});
-    const silLock = sil.PRE_LOC();
+    var silLock = sil.PRE_LOC();
     sil.LOC_INT(&silLock);
     const hrtcnt = target_timer.hrt.get_current();
     sil.UNL_INT(&silLock);

@@ -137,7 +137,7 @@ pub fn act_tsk(tskid: ID) ItronError!void {
             make_active(p_tcb); //［NGKI1118］
             requestTaskDispatch();
         } else if ((p_tcb.p_tinib.tskatr & TA_NOACTQUE) != 0 or p_tcb.flags.actque == TMAX_ACTCNT) {
-            return ItronError.QueueingOverflow; //［NGKI3528］
+            return @as(ItronError!void, ItronError.QueueingOverflow); //［NGKI3528］
         } else {
             p_tcb.flags.actque += 1; //［NGKI3527］
         }
@@ -234,9 +234,9 @@ pub fn chg_pri(tskid: ID, tskpri: PRI) ItronError!void {
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (isDormant(p_tcb.tstat)) { //［NGKI1191］
-            return ItronError.ObjectStateError;
+            return @as(ItronError!void, ItronError.ObjectStateError);
         } else if ((p_tcb.p_lastmtx != null or isWaitingMtx(p_tcb.tstat)) and !task.mtxhook_check_ceilpri.?(p_tcb, newbprio)) {
-            return ItronError.IllegalUse; //［NGKI1201］
+            return @as(ItronError!void, ItronError.IllegalUse); //［NGKI1201］
         } else {
             p_tcb.prios.bprio = newbprio; //［NGKI1192］
             if (p_tcb.p_lastmtx == null or !task.mtxhook_scan_ceilmtx.?(p_tcb)) {
@@ -267,7 +267,7 @@ pub fn get_pri(tskid: ID, p_tskpri: *PRI) ItronError!void {
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (isDormant(p_tcb.tstat)) { //［NGKI1209］
-            return ItronError.ObjectStateError;
+            return @as(ItronError!void, ItronError.ObjectStateError);
         } else { //［NGKI1210］
             p_tskpri.* = externalTaskPrio(p_tcb.prios.prio);
         }

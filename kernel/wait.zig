@@ -253,7 +253,7 @@ pub fn wait_complete(p_tcb: *TCB) void {
 ///  いずれの関数も，タイムイベントのコールバック関数として用いるため
 ///  のもので，割込みハンドラから呼び出されることを想定している．
 ///
-pub fn wait_tmout(arg: usize) void {
+pub fn wait_tmout(arg: usize) callconv(.C) void {
     const p_tcb = @as(*TCB, @ptrFromInt(arg));
 
     wait_dequeue_wobj(p_tcb);
@@ -269,7 +269,7 @@ pub fn wait_tmout(arg: usize) void {
     target_impl.mpcore_kernel_impl.core_kernel_impl.lockCpu();
 }
 
-pub fn wait_tmout_ok(arg: usize) void {
+pub fn wait_tmout_ok(arg: usize) callconv(.C) void {
     const p_tcb = @as(*TCB, @ptrFromInt(arg));
 
     p_tcb.p_winfo.* = WINFO{ .werror = null };

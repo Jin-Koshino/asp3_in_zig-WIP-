@@ -1,6 +1,24 @@
 const std = @import("std");
 
 pub fn build(b: *std.Build) !void {
+    // const TARGET: []const u8= "ct11mpcore";
+    // const SRCLANG: []const u8 = "zig";
+    // const SRCDIR: []const u8 = ".";
+    // const OBJEXT: []const u8 = "";
+    // const KERNEL_LIB: []const u8 = "";
+    // const OMIT_TECS: []const u8 = "";
+    // const TECSDIR: []const u8 = SRCDIR ++ "/tecsgen";
+    // const ENABLE_TRACE: []const u8 = "";
+    // const DEVTOOLDIR: []const u8 = "";
+    // const CFG: []const u8 = "ruby" ++ SRCDIR ++ "/cfg/cfg.rb";
+    // const TECSGEN: []const u8 = "ruby" ++ TECSDIR ++ "/tecsgen.rb";
+    // const OBJNAME: []const u8 = "asp";
+    // const OBJFILE = if (OBJEXT.len != 0) {OBJNAME ++ "." ++ OBJEXT;} else {OBJNAME;};
+    // const CFG1_OUT = if (OBJEXT.len != 0) {"cfg1_out." ++ OBJEXT;} else {"cfg1_out";};
+    // const OBJDIR = "objs";
+    // const DEPDiR = "objs";
+    // const TARGETDIR = SRCDIR ++ "/target/" ++ TARGET;
+
     const target = b.resolveTargetQuery(.{
         .cpu_arch = .arm,
         .os_tag = .freestanding,
@@ -27,57 +45,56 @@ pub fn build(b: *std.Build) !void {
     const kernel_mod = b.createModule(.{
         .root_source_file = .{ .path = "kernel/root.zig" },
     });
-    obj.root_module.addImport("kernel", kernel_mod);
 
     // libraryディレクトリのroot.zigをモジュールとして登録
     const library_mod = b.createModule(.{
         .root_source_file = .{ .path = "library/root.zig" },
     });
-    obj.root_module.addImport("library", library_mod);
 
     // archディレクトリのroot.zigをモジュールとして登録
     const arch_mod = b.createModule(.{
         .root_source_file = .{ .path = "arch/root.zig" },
     });
-    obj.root_module.addImport("arch", arch_mod);
 
-    // OBJ-ARMディレクトリのroot.zigをモジュールとして登録
+    // OBJ-ARMディレクトリのtecsgen_cfg.zigをモジュールとして登録
     const objarm_mod = b.createModule(.{
         .root_source_file = .{ .path = "OBJ-ARM/gen/tecsgen_cfg.zig" },
     });
-    obj.root_module.addImport("objarm", objarm_mod);
 
     // includeディレクトリのroot.zigをモジュールとして登録
     const include_mod = b.createModule(.{
         .root_source_file = .{ .path = "include/root.zig" },
     });
-    obj.root_module.addImport("include", include_mod);
 
     // targetディレクトリのroot.zigをモジュールとして登録
     const target_mod = b.createModule(.{
         .root_source_file = .{ .path = "target/root.zig" },
     });
 
-    kernel_mod.addImport("include", include_mod);
-    kernel_mod.addImport("target", target_mod);
+    obj.root_module.addImport("kernel", kernel_mod);
+    obj.root_module.addImport("objarm", objarm_mod);
+
+    // kernel, library, arch, OBJ-ARM, include, target
     kernel_mod.addImport("kernel", kernel_mod);
     kernel_mod.addImport("library", library_mod);
-    target_mod.addImport("arch", arch_mod);
+    kernel_mod.addImport("include", include_mod);
+    kernel_mod.addImport("target", target_mod);
+    library_mod.addImport("include", include_mod);
+    include_mod.addImport("arch", arch_mod);
+    include_mod.addImport("include", include_mod);
+    include_mod.addImport("target", target_mod);
     target_mod.addImport("kernel", kernel_mod);
-    target_mod.addImport("target", target_mod);
+    target_mod.addImport("arch", arch_mod);
     target_mod.addImport("objarm", objarm_mod);
     target_mod.addImport("include", include_mod);
-    include_mod.addImport("target", target_mod);
-    include_mod.addImport("include", include_mod);
-    arch_mod.addImport("arch", arch_mod);
+    target_mod.addImport("target", target_mod);
     arch_mod.addImport("kernel", kernel_mod);
+    arch_mod.addImport("arch", arch_mod);
+    arch_mod.addImport("include", include_mod);
     objarm_mod.addImport("kernel", kernel_mod);
     objarm_mod.addImport("target", target_mod);
 
     // マクロ定義の追加
-    obj.defineCMacro("TARGET", "\"ct11mpcore_gcc\"");
-    obj.defineCMacro("SRCDIR", "\".\"");
-    obj.defineCMacro("TECSGENDIR", "\"OBJ-ARM/gen\"");
     obj.defineCMacro("__TARGET_ARCH_ARM", "6");
     obj.defineCMacro("TOPPERS_USE_QEMU", null);
 
@@ -99,23 +116,34 @@ pub fn build(b: *std.Build) !void {
         obj.addIncludePath(b.path(path_h));
     }
 
-    const c_source_files = [_][]const u8{
-        // "OBJ-ARM/gen/tTask_tecsgen.c",
-        // "OBJ-ARM/gen/tISR_tecsgen.c",
-        // "OBJ-ARM/gen/tInitializeRoutine_tecsgen.c",
-        // "OBJ-ARM/gen/tTerminateRoutine_tecsgen.c",
-    };
+    // objsディレクトリにsample1_cfg.oをコピー
+    const emit_obj = b.addInstallFileWithDir(obj.getEmittedBin(), .{ .custom = "../OBJ-ARM/objs" }, "sample1_cfg.o");
+    // zig buildの一部としてinstall_stepを実行
+    b.getInstallStep().dependOn(&emit_obj.step);
 
-    for (c_source_files) |path_c| {
-        obj.addCSourceFile(.{
-            .file = b.path(path_c),
-            .flags = &[_][]const u8{},
-        });
+    // カーネルライブラリファイルの生成
+    const lib = b.addStaticLibrary(.{
+        .name = "kernel",
+        .root_source_file = .{ .path = "kernel/c_api.zig" },
+        .target = target,
+        .optimize = optimize,
+        .link_libc = false,
+    });
+
+    // lib.step.dependOn(&emit_obj.step);
+
+    for (include_dirs) |path_h| {
+        lib.addIncludePath(b.path(path_h));
+        library_mod.addIncludePath(b.path(path_h));
     }
 
-    // objsディレクトリにsample1_cfg.oをコピー
-    const install_step = b.addInstallFileWithDir(obj.getEmittedBin(), .{ .custom = "OBJ-ARM/objs" }, "sample1_cfg.o");
+    lib.root_module.addImport("kernel", kernel_mod);
+    lib.root_module.addImport("library", library_mod);
 
-    // zig buildの一部としてinstall_stepを実行
-    b.getInstallStep().dependOn(&install_step.step);
+    lib.defineCMacro("__TARGET_ARCH_ARM", "6");
+    lib.defineCMacro("TOPPERS_USE_QEMU", null);
+
+    const emit_lib = b.addInstallFileWithDir(lib.getEmittedBin(), .{ .custom = "../OBJ-ARM/objs" }, "libkernel.a");
+
+    b.getInstallStep().dependOn(&emit_lib.step);
 }

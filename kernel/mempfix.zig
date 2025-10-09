@@ -299,7 +299,7 @@ pub fn get_mpf(mpfid: ID, p_blk: **u8) ItronError!void {
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpuDsp();
 
         if (task.p_runtsk.?.flags.raster) {
-            return ItronError.TerminationRequestRaised;
+            return @as(ItronError!void, ItronError.TerminationRequestRaised);
         } else if (p_mpfcb.fblkcnt > 0) {
             getMpfBlock(p_mpfcb, @as(*[*]u8, @ptrCast(p_blk)));
         } else {
@@ -307,7 +307,7 @@ pub fn get_mpf(mpfid: ID, p_blk: **u8) ItronError!void {
             wobj_make_wait(p_mpfcb, TS_WAITING_MPF, &winfo_mpf);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_mpf.winfo.werror) |werror| {
-                return werror.*;
+                return @as(ItronError!void, werror.*);
             }
         }
     }
@@ -329,7 +329,7 @@ pub fn pget_mpf(mpfid: ID, p_blk: **u8) ItronError!void {
         if (p_mpfcb.fblkcnt > 0) {
             getMpfBlock(p_mpfcb, @as(*[*]u8, @ptrCast(p_blk)));
         } else {
-            return ItronError.TimeoutError;
+            return @as(ItronError!void, ItronError.TimeoutError);
         }
     }
     traceLog("pGetMpfLeave", .{ null, p_blk });
@@ -349,18 +349,18 @@ pub fn tget_mpf(mpfid: ID, p_blk: **u8, tmout: TMO) ItronError!void {
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (task.p_runtsk.?.flags.raster) {
-            return ItronError.TerminationRequestRaised;
+            return @as(ItronError!void, ItronError.TerminationRequestRaised);
         } else if (p_mpfcb.fblkcnt > 0) {
             getMpfBlock(p_mpfcb, @as(*[*]u8, @ptrCast(p_blk)));
         } else if (tmout == TMO_POL) {
-            return ItronError.TimeoutError;
+            return @as(ItronError!void, ItronError.TimeoutError);
         } else {
             var winfo_mpf: WINFO_MPF = undefined;
             var tmevtb: TMEVTB = undefined;
             wobj_make_wait_tmout(p_mpfcb, TS_WAITING_MPF, &winfo_mpf, &tmevtb, tmout);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_mpf.winfo.werror) |werror| {
-                return werror.*;
+                return @as(ItronError!void, werror.*);
             }
         }
     }

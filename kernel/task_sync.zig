@@ -170,7 +170,7 @@ pub fn slp_tsk() ItronError!void {
 
         var p_selftsk = task.p_runtsk.?;
         if (p_selftsk.flags.raster) { //［NGKI3455］
-            return ItronError.TerminationRequestRaised;
+            return @as(ItronError!void, ItronError.TerminationRequestRaised);
         } else if (p_selftsk.flags.wupque > 0) {
             p_selftsk.flags.wupque -= 1; //［NGKI1259］
         } else {
@@ -178,7 +178,7 @@ pub fn slp_tsk() ItronError!void {
             traceLog("taskStateChange", .{p_selftsk});
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo.werror) |werror| {
-                return werror.*;
+                return @as(ItronError!void, werror.*);
             }
         }
     }
@@ -202,17 +202,17 @@ pub fn tslp_tsk(tmout: TMO) ItronError!void {
 
         var p_selftsk = task.p_runtsk.?;
         if (p_selftsk.flags.raster) { //［NGKI3455］
-            return ItronError.TerminationRequestRaised;
+            return @as(ItronError!void, ItronError.TerminationRequestRaised);
         } else if (p_selftsk.flags.wupque > 0) {
             p_selftsk.flags.wupque -= 1; //［NGKI1259］
         } else if (tmout == TMO_POL) {
-            return ItronError.TimeoutError; //［NGKI1257］
+            return @as(ItronError!void, ItronError.TimeoutError); //［NGKI1257］
         } else { //［NGKI1260］
             make_wait_tmout(TS_WAITING_SLP, &winfo, &tmevtb, tmout);
             traceLog("taskStateChange", .{p_selftsk});
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo.werror) |werror| {
-                return werror.*;
+                return @as(ItronError!void, werror.*);
             }
         }
     }
@@ -238,14 +238,14 @@ pub fn wup_tsk(tskid: ID) ItronError!void {
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (isDormant(p_tcb.tstat)) { //［NGKI1270］
-            return ItronError.ObjectStateError;
+            return @as(ItronError!void, ItronError.ObjectStateError);
         } else if (isWaitingSlp(p_tcb.tstat)) {
             wait_complete(p_tcb); //［NGKI1271］
             requestTaskDispatch();
         } else if (p_tcb.flags.wupque < TMAX_WUPCNT) {
             p_tcb.flags.wupque += 1; //［NGKI1273］
         } else {
-            return ItronError.QueueingOverflow; //［NGKI1274］
+            return @as(ItronError!void, ItronError.QueueingOverflow); //［NGKI1274］
         }
     }
     traceLog("wupTskLeave", .{null});
@@ -271,7 +271,7 @@ pub fn can_wup(tskid: ID) ItronError!c_uint {
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (isDormant(p_tcb.tstat)) { //［NGKI1283］
-            return ItronError.ObjectStateError;
+            return @as(ItronError!void, ItronError.ObjectStateError);
         } else {
             retval = p_tcb.flags.wupque; //［NGKI1284］
             p_tcb.flags.wupque = 0; //［NGKI1284］
@@ -296,7 +296,7 @@ pub fn rel_wai(tskid: ID) ItronError!void {
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (!isWaiting(p_tcb.tstat)) { //［NGKI1295］
-            return ItronError.ObjectStateError;
+            return @as(ItronError!void, ItronError.ObjectStateError);
         } else {
             wait_dequeue_wobj(p_tcb); //［NGKI1296］
             wait_dequeue_tmevtb(p_tcb); //［NGKI1297］
@@ -327,11 +327,11 @@ pub fn sus_tsk(tskid: ID) ItronError!void {
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (p_tcb == task.p_runtsk and !task.dspflg) { //［NGKI1311］［NGKI3604］
-            return ItronError.ContextError;
+            return @as(ItronError!void, ItronError.ContextError);
         } else if (isDormant(p_tcb.tstat)) { //［NGKI1305］
-            return ItronError.ObjectStateError;
+            return @as(ItronError!void, ItronError.ObjectStateError);
         } else if (p_tcb.flags.raster) { //［NGKI3605］
-            return ItronError.TerminationRequestRaised;
+            return @as(ItronError!void, ItronError.TerminationRequestRaised);
         } else if (isRunnable(p_tcb.tstat)) {
             // 実行できる状態から強制待ち状態への遷移［NGKI1307］
             p_tcb.tstat = TS_SUSPENDED;
@@ -339,7 +339,7 @@ pub fn sus_tsk(tskid: ID) ItronError!void {
             make_non_runnable(p_tcb);
             taskDispatch();
         } else if (isSuspended(p_tcb.tstat)) { //［NGKI1306］
-            return ItronError.QueueingOverflow;
+            return @as(ItronError!void, ItronError.QueueingOverflow);
         } else {
             // 待ち状態から二重待ち状態への遷移［NGKI1308］
             p_tcb.tstat |= @as(u8, TS_SUSPENDED);
@@ -364,7 +364,7 @@ pub fn rsm_tsk(tskid: ID) ItronError!void {
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (!isSuspended(p_tcb.tstat)) { //［NGKI1319］
-            return ItronError.ObjectStateError;
+            return @as(ItronError!void, ItronError.ObjectStateError);
         } else {
             // 強制待ちからの再開［NGKI1320］
             if (!isWaiting(p_tcb.tstat)) {
@@ -398,7 +398,7 @@ pub fn dly_tsk(dlytim: RELTIM) ItronError!void {
 
         var p_selftsk = task.p_runtsk.?;
         if (p_selftsk.flags.raster) { //［NGKI3456］
-            return ItronError.TerminationRequestRaised;
+            return @as(ItronError!void, ItronError.TerminationRequestRaised);
         } else { //［NGKI1353］
             p_selftsk.tstat = TS_WAITING_DLY;
             make_non_runnable(p_selftsk);
@@ -410,7 +410,7 @@ pub fn dly_tsk(dlytim: RELTIM) ItronError!void {
             traceLog("taskStateChange", .{p_selftsk});
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo.werror) |werror| {
-                return werror.*;
+                return @as(ItronError!void, werror.*);
             }
         }
     }

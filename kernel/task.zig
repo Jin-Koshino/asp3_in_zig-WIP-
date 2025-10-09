@@ -605,7 +605,7 @@ pub fn change_priority(p_tcb: *TCB, newprio: TaskPrio, mtxmode: bool) void {
         if (isWaitingWobjCB(p_tcb.tstat)) {
             // タスクが，同期・通信オブジェクトの管理ブロックの共通部
             // 分（WOBJCB）の待ちキューにつながれている場合
-            wobj_change_priority(@as(WINFO_WOBJ, @fieldParentPtr("winfo", p_tcb.p_winfo)).p_wobjcb, p_tcb);
+            wobj_change_priority(@as(*WINFO_WOBJ, @fieldParentPtr("winfo", p_tcb.p_winfo)).p_wobjcb, p_tcb);
         }
     }
 }

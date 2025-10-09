@@ -292,7 +292,7 @@ pub fn dis_int(intno: INTNO) ItronError!void {
         if (target_impl.mpcore_kernel_impl.gic_kernel_impl.checkIntnoCfg(intno)) {
             target_impl.mpcore_kernel_impl.gic_kernel_impl.disableInt(intno); //［NGKI3086］
         } else { //［NGKI3085］
-            return ItronError.ObjectStateError;
+            return @as(ItronError!void, ItronError.ObjectStateError);
         }
     }
     traceLog("disIntLeave", .{null});
@@ -321,7 +321,7 @@ pub fn ena_int(intno: INTNO) ItronError!void {
         if (target_impl.mpcore_kernel_impl.gic_kernel_impl.checkIntnoCfg(intno)) {
             target_impl.mpcore_kernel_impl.gic_kernel_impl.enableInt(intno); //［NGKI3099］
         } else { //［NGKI3098］
-            return ItronError.ObjectStateError;
+            return @as(ItronError!void, ItronError.ObjectStateError);
         }
     }
     traceLog("enaIntLeave", .{null});
@@ -350,7 +350,7 @@ pub fn clr_int(intno: INTNO) ItronError!void {
         if (target_impl.mpcore_kernel_impl.gic_kernel_impl.checkIntnoCfg(intno) and target_impl.mpcore_kernel_impl.gic_kernel_impl.checkIntnoClear(intno)) {
             target_impl.mpcore_kernel_impl.gic_kernel_impl.clearInt(intno); //［NGKI3924］
         } else { //［NGKI3923］［NGKI3929］
-            return ItronError.ObjectStateError;
+            return @as(ItronError!void, ItronError.ObjectStateError);
         }
     }
     traceLog("clrIntLeave", .{null});
@@ -379,7 +379,7 @@ pub fn ras_int(intno: INTNO) ItronError!void {
         if (target_impl.mpcore_kernel_impl.gic_kernel_impl.checkIntnoCfg(intno) and target_impl.mpcore_kernel_impl.gic_kernel_impl.checkIntnoRaise(intno)) {
             target_impl.mpcore_kernel_impl.gic_kernel_impl.raiseInt(intno); //［NGKI3936］
         } else { //［NGKI3935］［NGKI3941］
-            return ItronError.ObjectStateError;
+            return @as(ItronError!void, ItronError.ObjectStateError);
         }
     }
     traceLog("rasIntLeave", .{null});
@@ -407,7 +407,7 @@ pub fn prb_int(intno: INTNO) ItronError!bool {
         if (target_impl.mpcore_kernel_impl.gic_kernel_impl.checkIntnoCfg(intno)) {
             return target_impl.mpcore_kernel_impl.gic_kernel_impl.probeInt(intno); //［NGKI3948］
         } else { //［NGKI3947］
-            return ItronError.ObjectStateError;
+            return @as(ItronError!void, ItronError.ObjectStateError);
         }
     }
     traceLog("prbIntLeave", .{null});

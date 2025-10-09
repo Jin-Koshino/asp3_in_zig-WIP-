@@ -129,7 +129,7 @@ fn EVTTIM_LE(t1: EVTTIM, t2: EVTTIM) bool {
 ///
 ///  コールバック関数のデータ型の定義
 ///
-pub const CBACK = *const fn (usize) callconv(.Naked) void;
+pub const CBACK = *const fn (usize) callconv(.C) void;
 
 ///
 ///  タイムイベントブロックのデータ型の定義

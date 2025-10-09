@@ -314,9 +314,9 @@ pub fn wai_flg(flgid: ID, waiptn: FLGPTN, wfmode: MODE, p_flgptn: *FLGPTN) Itron
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpuDsp();
 
         if (task.p_runtsk.?.flags.raster) {
-            return ItronError.TerminationRequestRaised;
+            return @as(ItronError!void, ItronError.TerminationRequestRaised);
         } else if ((p_flgcb.p_wobjinib.wobjatr & TA_WMUL) == 0 and !p_flgcb.wait_queue.isEmpty()) {
-            return ItronError.IllegalUse;
+            return @as(ItronError!void, ItronError.IllegalUse);
         } else if (!check_flg_cond(p_flgcb, waiptn, wfmode, p_flgptn)) {
             var winfo_flg: WINFO_FLG = undefined;
             winfo_flg.waiptn = waiptn;
@@ -324,7 +324,7 @@ pub fn wai_flg(flgid: ID, waiptn: FLGPTN, wfmode: MODE, p_flgptn: *FLGPTN) Itron
             wobj_make_wait(p_flgcb, TS_WAITING_FLG, &winfo_flg);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_flg.winfo.werror) |werror| {
-                return werror.*;
+                return @as(ItronError!void, werror.*);
             }
             p_flgptn.* = winfo_flg.waiptn;
         }
@@ -347,9 +347,9 @@ pub fn pol_flg(flgid: ID, waiptn: FLGPTN, wfmode: MODE, p_flgptn: *FLGPTN) Itron
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if ((p_flgcb.p_wobjinib.wobjatr & TA_WMUL) == 0 and !p_flgcb.wait_queue.isEmpty()) {
-            return ItronError.IllegalUse;
+            return @as(ItronError!void, ItronError.IllegalUse);
         } else if (!check_flg_cond(p_flgcb, waiptn, wfmode, p_flgptn)) {
-            return ItronError.TimeoutError;
+            return @as(ItronError!void, ItronError.TimeoutError);
         }
     }
     traceLog("polFlgLeave", .{ null, p_flgptn });
@@ -371,11 +371,11 @@ pub fn twai_flg(flgid: ID, waiptn: FLGPTN, wfmode: MODE, p_flgptn: *FLGPTN, tmou
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpuDsp();
 
         if (task.p_runtsk.?.flags.raster) {
-            return ItronError.TerminationRequestRaised;
+            return @as(ItronError!void, ItronError.TerminationRequestRaised);
         } else if ((p_flgcb.p_wobjinib.wobjatr & TA_WMUL) == 0 and !p_flgcb.wait_queue.isEmpty()) {
-            return ItronError.IllegalUse;
+            return @as(ItronError!void, ItronError.IllegalUse);
         } else if (check_flg_cond(p_flgcb, waiptn, wfmode, p_flgptn)) {} else if (tmout == TMO_POL) {
-            return ItronError.TimeoutError;
+            return @as(ItronError!void, ItronError.TimeoutError);
         } else {
             var winfo_flg: WINFO_FLG = undefined;
             var tmevtb: TMEVTB = undefined;
@@ -384,7 +384,7 @@ pub fn twai_flg(flgid: ID, waiptn: FLGPTN, wfmode: MODE, p_flgptn: *FLGPTN, tmou
             wobj_make_wait_tmout(p_flgcb, TS_WAITING_FLG, &winfo_flg, &tmevtb, tmout);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_flg.winfo.werror) |werror| {
-                return werror.*;
+                return @as(ItronError!void, werror.*);
             }
             p_flgptn.* = winfo_flg.waiptn;
         }

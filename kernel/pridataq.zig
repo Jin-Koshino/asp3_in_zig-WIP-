@@ -403,7 +403,7 @@ pub fn snd_pdq(pdqid: ID, data: usize, datapri: PRI) ItronError!void {
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpuDsp();
 
         if (task.p_runtsk.?.flags.raster) {
-            return ItronError.TerminationRequestRaised;
+            return @as(ItronError!void, ItronError.TerminationRequestRaised);
         } else if (sendPridata(p_pdqcb, data, datapri)) {
             taskDispatch();
         } else {
@@ -413,7 +413,7 @@ pub fn snd_pdq(pdqid: ID, data: usize, datapri: PRI) ItronError!void {
             wobj_make_wait(p_pdqcb, TS_WAITING_SPDQ, &winfo_spdq);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_spdq.winfo.werror) |werror| {
-                return werror.*;
+                return @as(ItronError!void, werror.*);
             }
         }
     }
@@ -436,7 +436,7 @@ pub fn psnd_pdq(pdqid: ID, data: usize, datapri: PRI) ItronError!void {
         if (sendPridata(p_pdqcb, data, datapri)) {
             requestTaskDispatch();
         } else {
-            return ItronError.TimeoutError;
+            return @as(ItronError!void, ItronError.TimeoutError);
         }
     }
     traceLog("psndPdqLeave", .{null});
@@ -457,11 +457,11 @@ pub fn tsnd_pdq(pdqid: ID, data: usize, datapri: PRI, tmout: TMO) ItronError!voi
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpuDsp();
 
         if (task.p_runtsk.?.flags.raster) {
-            return ItronError.TerminationRequestRaised;
+            return @as(ItronError!void, ItronError.TerminationRequestRaised);
         } else if (sendPridata(p_pdqcb, data, datapri)) {
             taskDispatch();
         } else if (tmout == TMO_POL) {
-            return ItronError.TimeoutError;
+            return @as(ItronError!void, ItronError.TimeoutError);
         } else {
             var winfo_spdq: WINFO_SPDQ = undefined;
             var tmevtb: TMEVTB = undefined;
@@ -470,7 +470,7 @@ pub fn tsnd_pdq(pdqid: ID, data: usize, datapri: PRI, tmout: TMO) ItronError!voi
             wobj_make_wait_tmout(p_pdqcb, TS_WAITING_SPDQ, &winfo_spdq, &tmevtb, tmout);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_spdq.winfo.werror) |werror| {
-                return werror.*;
+                return @as(ItronError!void, werror.*);
             }
         }
     }
@@ -490,7 +490,7 @@ pub fn rcv_pdq(pdqid: ID, p_data: *usize, p_datapri: *PRI) ItronError!void {
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpuDsp();
 
         if (task.p_runtsk.?.flags.raster) {
-            return ItronError.TerminationRequestRaised;
+            return @as(ItronError!void, ItronError.TerminationRequestRaised);
         } else if (receivePridata(p_pdqcb, p_data, p_datapri)) {
             taskDispatch();
         } else {
@@ -498,7 +498,7 @@ pub fn rcv_pdq(pdqid: ID, p_data: *usize, p_datapri: *PRI) ItronError!void {
             wobj_make_rwait(p_pdqcb, TS_WAITING_RPDQ, &winfo_rpdq);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_rpdq.winfo.werror) |werror| {
-                return werror.*;
+                return @as(ItronError!void, werror.*);
             }
             p_data.* = winfo_rpdq.data;
             p_datapri.* = winfo_rpdq.datapri;
@@ -522,7 +522,7 @@ pub fn prcv_pdq(pdqid: ID, p_data: *usize, p_datapri: *PRI) ItronError!void {
         if (receivePridata(p_pdqcb, p_data, p_datapri)) {
             taskDispatch();
         } else {
-            return ItronError.TimeoutError;
+            return @as(ItronError!void, ItronError.TimeoutError);
         }
     }
     traceLog("pRcvPdqLeave", .{ null, p_data, p_datapri });
@@ -542,18 +542,18 @@ pub fn trcv_pdq(pdqid: ID, p_data: *usize, p_datapri: *PRI, tmout: TMO) ItronErr
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpuDsp();
 
         if (task.p_runtsk.?.flags.raster) {
-            return ItronError.TerminationRequestRaised;
+            return @as(ItronError!void, ItronError.TerminationRequestRaised);
         } else if (receivePridata(p_pdqcb, p_data, p_datapri)) {
             taskDispatch();
         } else if (tmout == TMO_POL) {
-            return ItronError.TimeoutError;
+            return @as(ItronError!void, ItronError.TimeoutError);
         } else {
             var winfo_rpdq: WINFO_RPDQ = undefined;
             var tmevtb: TMEVTB = undefined;
             wobj_make_rwait_tmout(p_pdqcb, TS_WAITING_RPDQ, &winfo_rpdq, &tmevtb, tmout);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_rpdq.winfo.werror) |werror| {
-                return werror.*;
+                return @as(ItronError!void, werror.*);
             }
             p_data.* = winfo_rpdq.data;
             p_datapri.* = winfo_rpdq.datapri;

@@ -168,7 +168,7 @@ pub fn ras_ter(tskid: ID) ItronError!void {
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (isDormant(p_tcb.tstat)) { //［NGKI3476］
-            return ItronError.ObjectStateError;
+            return @as(ItronError!void, ItronError.ObjectStateError);
         } else if (p_tcb.flags.enater) {
             task_terminate(p_tcb); //［NGKI3477］
             if (task.p_runtsk != task.p_schedtsk) {
@@ -262,7 +262,7 @@ pub fn ter_tsk(tskid: ID) ItronError!void {
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (isDormant(p_tcb.tstat)) { //［NGKI1177］
-            return ItronError.ObjectStateError;
+            return @as(ItronError!void, ItronError.ObjectStateError);
         } else {
             task_terminate(p_tcb); //［NGKI3450］
             if (task.p_runtsk != task.p_schedtsk) {

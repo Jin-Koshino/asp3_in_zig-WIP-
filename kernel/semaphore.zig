@@ -269,7 +269,7 @@ pub fn sig_sem(semid: ID) ItronError!void {
         } else if (p_semcb.semcnt < p_semcb.p_wobjinib.maxsem) {
             p_semcb.semcnt += 1;
         } else {
-            return ItronError.QueueingOverflow;
+            return @as(ItronError!void, ItronError.QueueingOverflow);
         }
     }
     traceLog("sigSemLeave", .{null});
@@ -288,7 +288,7 @@ pub fn wai_sem(semid: ID) ItronError!void {
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpuDsp();
 
         if (task.p_runtsk.?.flags.raster) {
-            return ItronError.TerminationRequestRaised;
+            return @as(ItronError!void, ItronError.TerminationRequestRaised);
         } else if (p_semcb.semcnt >= 1) {
             p_semcb.semcnt -= 1;
         } else {
@@ -296,7 +296,7 @@ pub fn wai_sem(semid: ID) ItronError!void {
             wobj_make_wait(p_semcb, TS_WAITING_SEM, &winfo_sem);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_sem.winfo.werror) |werror| {
-                return werror.*;
+                return @as(ItronError!void, werror.*);
             }
         }
     }
@@ -318,7 +318,7 @@ pub fn pol_sem(semid: ID) ItronError!void {
         if (p_semcb.semcnt >= 1) {
             p_semcb.semcnt -= 1;
         } else {
-            return ItronError.TimeoutError;
+            return @as(ItronError!void, ItronError.TimeoutError);
         }
     }
     traceLog("polSemLeave", .{null});
@@ -338,18 +338,18 @@ pub fn twai_sem(semid: ID, tmout: TMO) ItronError!void {
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpuDsp();
 
         if (task.p_runtsk.?.flags.raster) {
-            return ItronError.TerminationRequestRaised;
+            return @as(ItronError!void, ItronError.TerminationRequestRaised);
         } else if (p_semcb.semcnt >= 1) {
             p_semcb.semcnt -= 1;
         } else if (tmout == TMO_POL) {
-            return ItronError.TimeoutError;
+            return @as(ItronError!void, ItronError.TimeoutError);
         } else {
             var winfo_sem: WINFO_SEM = undefined;
             var tmevtb: TMEVTB = undefined;
             wobj_make_wait_tmout(p_semcb, TS_WAITING_SEM, &winfo_sem, &tmevtb, tmout);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_sem.winfo.werror) |werror| {
-                return werror.*;
+                return @as(ItronError!void, werror.*);
             }
         }
     }

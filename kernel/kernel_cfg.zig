@@ -342,7 +342,8 @@ pub fn NFYINFO(comptime args: anytype, comptime cfg_data: *CfgData) T_NFYINFO {
 ///
 ///  静的APIの処理プログラム（コンフィギュレータ）
 ///
-const static_api = @import("static_api.zig");
+// const static_api = @import("static_api.zig");
+const static_api = @import("kernel").static_api;
 pub const CfgData = static_api.CfgData;
 pub const GenCfgData = static_api.GenCfgData;
 

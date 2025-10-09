@@ -98,7 +98,7 @@ const option = kernel_impl.option;
 ///
 pub const c = @cImport({
     @cDefine("UINT_C(val)", "val");
-    @cInclude("../include/kernel.h");
+    @cInclude("kernel.h");
 });
 
 ///

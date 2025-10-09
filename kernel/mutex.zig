@@ -425,9 +425,9 @@ pub fn loc_mtx(mtxid: ID) ItronError!void {
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpuDsp();
 
         if (task.p_runtsk.?.flags.raster) {
-            return ItronError.TerminationRequestRaised;
+            return @as(ItronError!void, ItronError.TerminationRequestRaised);
         } else if (isCeilingMtx(p_mtxcb) and task.p_runtsk.?.prios.bprio < p_mtxcb.p_wobjinib.ceilpri) {
-            return ItronError.IllegalUse;
+            return @as(ItronError!void, ItronError.IllegalUse);
         } else if (p_mtxcb.p_loctsk == null) {
             mutexAcquire(task.p_runtsk.?, p_mtxcb);
             // 優先度上限ミューテックスをロックした場合，p_runtskの優
@@ -435,13 +435,13 @@ pub fn loc_mtx(mtxid: ID) ItronError!void {
             // とはない．
             assert(task.p_runtsk == task.p_schedtsk, null);
         } else if (p_mtxcb.p_loctsk == task.p_runtsk) {
-            return ItronError.ObjectStateError;
+            return @as(ItronError!void, ItronError.ObjectStateError);
         } else {
             var winfo_mtx: WINFO_MTX = undefined;
             wobj_make_wait(p_mtxcb, TS_WAITING_MTX, &winfo_mtx);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_mtx.winfo.werror) |werror| {
-                return werror.*;
+                return @as(ItronError!void, werror.*);
             }
         }
     }
@@ -461,16 +461,16 @@ pub fn ploc_mtx(mtxid: ID) ItronError!void {
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (isCeilingMtx(p_mtxcb) and task.p_runtsk.?.prios.bprio < p_mtxcb.p_wobjinib.ceilpri) {
-            return ItronError.IllegalUse;
+            return @as(ItronError!void, ItronError.IllegalUse);
         } else if (p_mtxcb.p_loctsk == null) {
             mutexAcquire(task.p_runtsk.?, p_mtxcb);
             // 優先度上限ミューテックスをロックした場合，p_runtskの優先度
             // が上がる可能性があるが，ディスパッチが必要になることはない．
             assert(task.p_runtsk == task.p_schedtsk, null);
         } else if (p_mtxcb.p_loctsk == task.p_runtsk) {
-            return ItronError.ObjectStateError;
+            return @as(ItronError!void, ItronError.ObjectStateError);
         } else {
-            return ItronError.TimeoutError;
+            return @as(ItronError!void, ItronError.TimeoutError);
         }
     }
     traceLog("pLocMtxLeave", .{null});
@@ -490,9 +490,9 @@ pub fn tloc_mtx(mtxid: ID, tmout: TMO) ItronError!void {
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (task.p_runtsk.?.flags.raster) {
-            return ItronError.TerminationRequestRaised;
+            return @as(ItronError!void, ItronError.TerminationRequestRaised);
         } else if (isCeilingMtx(p_mtxcb) and task.p_runtsk.?.prios.bprio < p_mtxcb.p_wobjinib.ceilpri) {
-            return ItronError.IllegalUse;
+            return @as(ItronError!void, ItronError.IllegalUse);
         } else if (p_mtxcb.p_loctsk == null) {
             mutexAcquire(task.p_runtsk.?, p_mtxcb);
             // 優先度上限ミューテックスをロックした場合，p_runtskの優
@@ -500,16 +500,16 @@ pub fn tloc_mtx(mtxid: ID, tmout: TMO) ItronError!void {
             // とはない．
             assert(task.p_runtsk == task.p_schedtsk, null);
         } else if (p_mtxcb.p_loctsk == task.p_runtsk) {
-            return ItronError.ObjectStateError;
+            return @as(ItronError!void, ItronError.ObjectStateError);
         } else if (tmout == TMO_POL) {
-            return ItronError.TimeoutError;
+            return @as(ItronError!void, ItronError.TimeoutError);
         } else {
             var winfo_mtx: WINFO_MTX = undefined;
             var tmevtb: TMEVTB = undefined;
             wobj_make_wait_tmout(p_mtxcb, TS_WAITING_MTX, &winfo_mtx, &tmevtb, tmout);
             target_impl.mpcore_kernel_impl.core_kernel_impl.dispatch();
             if (winfo_mtx.winfo.werror) |werror| {
-                return werror.*;
+                return @as(ItronError!void, werror.*);
             }
         }
     }
@@ -529,7 +529,7 @@ pub fn unl_mtx(mtxid: ID) ItronError!void {
         defer target_impl.mpcore_kernel_impl.core_kernel_impl.unlockCpu();
 
         if (p_mtxcb != task.p_runtsk.?.p_lastmtx) {
-            return ItronError.ObjectStateError;
+            return @as(ItronError!void, ItronError.ObjectStateError);
         } else {
             task.p_runtsk.?.p_lastmtx = p_mtxcb.p_prevmtx;
             mutexDropPriority(task.p_runtsk.?, p_mtxcb);
@@ -701,7 +701,7 @@ fn bitMTXCB(p_mtxcb: *MTXCB) ItronError!void {
     // ミューテックスをロックしているタスクの検査
     // ★未完成
 
-    //    return ItronError.SystemError;
+    //    return @as(ItronError!void, ItronError.SystemError);
 }
 
 ///

@@ -1,5 +1,5 @@
 pub const alarm = @import("alarm.zig");
-pub const c_api = @import("c_api.zig");
+// pub const c_api = @import("c_api.zig");
 pub const check = @import("check.zig");
 pub const cyclic = @import("cyclic.zig");
 pub const dataqueue = @import("dataqueue.zig");
