@@ -184,7 +184,7 @@ ZIGOPTS := $(ZIGOPTS) -DTECSGENDIR=\"OBJ-ARM/gen\"
 ifdef BIND_CFG
 	ZIGOPTS := $(ZIGOPTS) -DBIND_CFG=\"$(BIND_CFG).zig\"
 endif
-ZIGOPTS := --main-pkg-path $(SRCDIR) -ffunction-sections $(ZIGOPTS)
+ZIGOPTS := -ffunction-sections $(ZIGOPTS)
 ZIGOPTS := --cache-dir zig-cache $(ZIGOPTS)
 ZIGOPTS := -O ReleaseSafe $(ZIGOPTS)
 ZIGFLAGS = $(ZIGOPTS) $(CDEFS) $(INCLUDES)
@@ -342,9 +342,10 @@ kernel_cfg.h: $(CFGOBJ)
 #
 .PHONY: libkernel.a
 libkernel.a kernel.o: $(SRCDIR)/kernel/c_api.zig
-	zig build-lib --name kernel $(ZIGFLAGS) $<
-	$(RANLIB) libkernel.a
-	$(AR) x libkernel.a kernel.o
+# 	zig build-lib --name kernel $(ZIGFLAGS) $<
+	zig build lib
+# 	$(RANLIB) libkernel.a
+# 	$(AR) x libkernel.a kernel.o
 
 #
 #  kernel_cfg.hに対する依存関係
@@ -466,7 +467,8 @@ endif
 #
 .PHONY: $(APPL_ZIGOBJS)
 $(APPL_ZIGOBJS): $(OBJDIR)/%.o: %.zig
-	zig build-obj -femit-bin=$@ $(ZIGFLAGS) $<
+# 	zig build-obj -femit-bin=$@ $(ZIGFLAGS) $<
+	zig build obj
 
 $(SYSSVC_COBJS): $(OBJDIR)/%.o: %.c
 	$(CC) -c -o $@ -MD -MP -MF $(DEPDIR)/$*.d $(CFLAGS) $(SYSSVC_CFLAGS) $<
