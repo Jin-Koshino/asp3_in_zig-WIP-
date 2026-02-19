@@ -103,10 +103,11 @@ pub fn build(b: *std.Build) !void {
     // Zigを用いたビルドのためのターゲット指定と最適化設定
     const target = b.resolveTargetQuery(.{
         .cpu_arch = .arm,
+        .cpu_model = .{ .explicit = &std.Target.arm.cpu.mpcore },
         .os_tag = .freestanding,
         .abi = .eabi,
     });
-    const optimize = b.standardOptimizeOption(.{});
+    const optimize = std.builtin.OptimizeMode.ReleaseSafe;
 
     // 定義用変数の初期化
     var cfg_var: configuration_variables = .{};
@@ -251,6 +252,6 @@ pub fn build(b: *std.Build) !void {
     gen_kernel_ar.step.dependOn(&lib_install_step.step); // libkernel.a生成ステップの後に実行
 
     // "lib"としてlibkernel.a, kernel.o生成ステップを実行できるように設定
-    const build_libkernel = b.step("lib", "Build kenrel library .a .o");
+    const build_libkernel = b.step("lib", "Build kernel library .a .o");
     build_libkernel.dependOn(&gen_kernel_ar.step);
 }

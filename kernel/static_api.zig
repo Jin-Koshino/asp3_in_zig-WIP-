@@ -397,7 +397,7 @@ pub const CfgData = struct {
 
     // タスクの生成（0.12対応版）
     pub fn CRE_TSK(comptime self: CfgData, comptime tsk_name: []const u8, comptime ctsk: T_CTSK) CfgData {
-        var tsk = T_TSK{ .name = tsk_name, .inib = task.cre_tsk(ctsk) catch |err| reportError("CRE_TSK", err), .p_next = undefined };
+        var tsk = T_TSK{ .name = tsk_name, .inib = task.cre_tsk(ctsk, tsk_name) catch |err| reportError("CRE_TSK", err), .p_next = undefined };
         const new_list = addItem(T_TSK, &tsk, self.tsk_list);
         var new_cfg = self;
         new_cfg.tsk_list = new_list;

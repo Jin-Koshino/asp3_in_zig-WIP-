@@ -1,0 +1,17 @@
+Breakpoint 1 at [34m0x100d424[m: file [32m/workspaces/asp3_in_zig-0.12/asp3_in_zig/arch/arm_gcc/common/core_kernel_impl.zig[m, line 1037.
+Breakpoint 2 at [34m0x100cea8[m: file [32m/workspaces/asp3_in_zig-0.12/asp3_in_zig/arch/arm_gcc/common/core_kernel_impl.zig[m, line 2084.
+Breakpoint 3 at [34m0x100978c[m: file [32mstartup.zig[m, line 234.
+Breakpoint 4 at [34m0x100b1c0[m: file [32m/workspaces/asp3_in_zig-0.12/asp3_in_zig/arch/arm_gcc/common/core_kernel_impl.zig[m, line 331.
+Breakpoint 5 at [34m0x100b1b4[m: file [32m/workspaces/asp3_in_zig-0.12/asp3_in_zig/arch/arm_gcc/common/core_kernel_impl.zig[m, line 327.
+Breakpoint 6 at [34m0x100b1ac[m: file [32m/workspaces/asp3_in_zig-0.12/asp3_in_zig/arch/arm_gcc/common/core_kernel_impl.zig[m, line 321.
+
+[SAVE CTX] tcb=01801370 sp=018011f4 slot=01801214 retpc=01004e20
+[mHardware access (read/write) watchpoint 7: *(unsigned int*)$slot
+
+Hardware access (read/write) watchpoint 7: *(unsigned int*)$slot
+
+Old value = 16797216
+New value = 16777348
+[34m0x01001784[m in [33mtt_syslog[m ([36mp_logbuf[m=0x1801220 <task.cre_tsk.struct_5190.stack+3936>, [36mp_logbuf@entry[m=0x1801200 <task.cre_tsk.struct_5190.stack+3904>, [36mformat[m=0x100df00 "task%d is running (%03d).   %s", [36mformat@entry[m=0x1001ff4 <tSerialPortMain_eSerialPort_read+124> "", [36map[m=..., [36map@entry[m=...) at [32m../library/vasyslog.c[m:54
+54	{
+Remote communication error.  Target disconnected.: Connection reset by peer.

@@ -678,7 +678,7 @@ pub fn requestTaskDispatch() void {
 ///
 ///  タスクの生成（静的APIの処理）
 ///
-pub fn cre_tsk(comptime ctsk: T_CTSK) ItronError!TINIB {
+pub fn cre_tsk(comptime ctsk: T_CTSK, comptime stack_tag: []const u8) ItronError!TINIB {
     // tskatrが無効の場合（E_RSATR）［NGKI1028］［NGKI3526］［ASPS0009］
     // ［NGKI1016］
     //（TA_ACT，TA_NOACTQUE，TARGET_TSKATR以外のビットがセットされている場合）
@@ -702,11 +702,11 @@ pub fn cre_tsk(comptime ctsk: T_CTSK) ItronError!TINIB {
 
     // タスクのスタック領域の確保
     //
-    // この記述では，タスク毎に別々のスタック領域が割り当てられる保証
-    // がない．コンパイラのバージョンが上がると，誤動作する可能性があ
-    // る．
+    // stack_tag（通常はタスク名）を型情報に含めて，タスク毎に別々の
+    // スタック領域が割り当てられるようにする．
     const stksz = comptime TOPPERS_ROUND_SZ(ctsk.stksz, STACK_ALIGN);
     const stk = comptime if (ctsk.stk) |stk| stk else &struct {
+        const tag = stack_tag;
         var stack: [stksz]u8 align(STACK_ALIGN) = undefined;
     }.stack;
 
@@ -740,7 +740,7 @@ pub fn ExportTskCfg(comptime tinib_table: []const TINIB, comptime torder_table: 
     return struct {
         pub export const _kernel_tmax_tskid: ID = tnum_tsk;
         pub export const _kernel_tinib_table = tinib_table[0..tnum_tsk].*;
-        pub export const _kenrel_tnum_tsk = tnum_tsk;
+        pub export const _kernel_tnum_tsk = tnum_tsk;
         pub export const _kernel_torder_table = torder_table[0..tnum_tsk].*;
         pub export var _kernel_tcb_table: [tnum_tsk]TCB = undefined;
     };
