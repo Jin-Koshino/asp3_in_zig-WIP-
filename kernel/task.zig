@@ -702,6 +702,9 @@ pub fn cre_tsk(comptime ctsk: T_CTSK, comptime stack_tag: []const u8) ItronError
 
     // タスクのスタック領域の確保
     //
+    // この記述では，タスク毎に別々のスタック領域が割り当てられる保証
+    // がない．コンパイラのバージョンが上がると，誤動作する可能性があ
+    // る．
     // stack_tag（通常はタスク名）を型情報に含めて，タスク毎に別々の
     // スタック領域が割り当てられるようにする．
     const stksz = comptime TOPPERS_ROUND_SZ(ctsk.stksz, STACK_ALIGN);

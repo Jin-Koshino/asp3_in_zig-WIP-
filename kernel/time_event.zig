@@ -562,6 +562,7 @@ pub fn signal_time() void {
     // タイムイベントが処理されなかった場合．
     if (nocall == 0) {
         syslog(LOG_NOTICE, "no time event is processed in hrt interrupt.", .{});
+        syslog(LOG_NOTICE, "current_evttim= %d", .{current_evttim});
     }
 
     // 高分解能タイマ割込みの発生タイミングを設定する［ASPD1025］．

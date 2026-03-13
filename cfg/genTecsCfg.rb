@@ -986,10 +986,11 @@ $zigcfg.add
 #$zigcfg.add
 
 # 静的APIに対応する記述の生成
-$zigcfg.add("pub fn configuration(comptime cfg: *CfgData) void {");
+$zigcfg.add("pub fn configuration(comptime arg_cfg: CfgData) CfgData {");
+$zigcfg.add("    comptime var cfg = arg_cfg;")
 $cfgFileInfo.each do |cfgInfo|
   if cfgInfo.has_key?(:APINAME)
-    $zigcfg.append("    cfg.#{cfgInfo[:APINAME]}(")
+    $zigcfg.append("    cfg = cfg.#{cfgInfo[:APINAME]}(")
     case cfgInfo[:APINAME]
     when "CRE_TSK"
       $zigcfg.append("\"#{cfgInfo["tskid"]}\", CTSK(")
@@ -1104,6 +1105,7 @@ $cfgFileInfo.each do |cfgInfo|
     $zigcfg.add(");")
   end
 end
+$zigcfg.add("    return cfg;")
 $zigcfg.add("}")
 
 #
