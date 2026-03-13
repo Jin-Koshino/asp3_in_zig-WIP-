@@ -13,7 +13,7 @@
 TARGET_BASE = sample1
 BASE_DIR = .
 GEN_DIR = $(BASE_DIR)/./gen
-INCLUDES = -I $(BASE_DIR)/. -I $(BASE_DIR)/. -I $(BASE_DIR)/../include -I $(BASE_DIR)/../target/ct11mpcore_gcc -I $(BASE_DIR)/../arch/arm_gcc/common -I $(BASE_DIR)/../arch/gcc -I $(BASE_DIR)/.. -I $(BASE_DIR)/../sample -I $(BASE_DIR)/./gen -I $(BASE_DIR)/../tecs_kernel -I $(TECSPATH) -I $(TECSPATH)/rpc -I $(TECSPATH)/mruby -I $(TECSPATH)/posix -I $(TECSPATH)/TECSInfo -I $(TECSPATH)/TLSFMalloc -I $(GEN_DIR)
+INCLUDES = -I $(BASE_DIR)/. -I $(BASE_DIR)/. -I $(BASE_DIR)/../include -I $(BASE_DIR)/../target/ct11mpcore_gcc -I $(BASE_DIR)/../arch/arm_gcc/common -I $(BASE_DIR)/../arch/gcc -I $(BASE_DIR)/.. -I $(BASE_DIR)/../sample -I $(BASE_DIR)/./gen -I $(BASE_DIR)/../tecs_kernel -I $(TECSPATH) -I $(TECSPATH)/rpc -I $(TECSPATH)/mruby -I $(TECSPATH)/TECSInfo -I $(TECSPATH)/TLSFMalloc -I $(TECSPATH)/posix -I $(GEN_DIR)
 DEFINES =
 
 # end of fixed variable (unchangeable by config or plugin)
@@ -53,8 +53,8 @@ PRE_TECSGEN_TARGET =
 POST_TECSGEN_TARGET =
 
 # vpath for C sources and headers
-vpath %.c $(SRC_DIR) $(GEN_DIR)  ../include ../target/ct11mpcore_gcc ../arch/arm_gcc/common ../arch/gcc .. ../sample ./gen ../tecs_kernel $(TECSPATH) $(TECSPATH)/rpc $(TECSPATH)/mruby $(TECSPATH)/posix $(TECSPATH)/TECSInfo $(TECSPATH)/TLSFMalloc
-vpath %.h $(SRC_DIR) $(GEN_DIR)  ../include ../target/ct11mpcore_gcc ../arch/arm_gcc/common ../arch/gcc .. ../sample ./gen ../tecs_kernel $(TECSPATH) $(TECSPATH)/rpc $(TECSPATH)/mruby $(TECSPATH)/posix $(TECSPATH)/TECSInfo $(TECSPATH)/TLSFMalloc
+vpath %.c $(SRC_DIR) $(GEN_DIR)  ../include ../target/ct11mpcore_gcc ../arch/arm_gcc/common ../arch/gcc .. ../sample ./gen ../tecs_kernel $(TECSPATH) $(TECSPATH)/rpc $(TECSPATH)/mruby $(TECSPATH)/TECSInfo $(TECSPATH)/TLSFMalloc $(TECSPATH)/posix
+vpath %.h $(SRC_DIR) $(GEN_DIR)  ../include ../target/ct11mpcore_gcc ../arch/arm_gcc/common ../arch/gcc .. ../sample ./gen ../tecs_kernel $(TECSPATH) $(TECSPATH)/rpc $(TECSPATH)/mruby $(TECSPATH)/TECSInfo $(TECSPATH)/TLSFMalloc $(TECSPATH)/posix
 
 # Other objects (out of tecsgen)
 OTHER_OBJS =                      # Add objects out of tecs care.

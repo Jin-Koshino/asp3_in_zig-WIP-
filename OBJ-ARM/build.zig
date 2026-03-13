@@ -139,6 +139,7 @@ pub fn build(b: *std.Build) !void {
     const target_mod = b.createModule(.{
         .root_source_file = .{ .path = "../target/root.zig" },
     });
+    target_mod.addCMacro("TOPPERS_USE_QEMU", "");
 
     // kernel, library, arch, include, targetディレクトリに関する.zig間の依存関係
     kernel_mod.addImport("kernel", kernel_mod);
@@ -235,7 +236,7 @@ pub fn build(b: *std.Build) !void {
     lib.root_module.addImport("library", library_mod);
 
     // C言語マクロ定義（必要なければ消す）
-    lib.defineCMacro("__TARGET_ARCH_ARM", "6");
+    // lib.defineCMacro("__TARGET_ARCH_ARM", "6");
     lib.defineCMacro("TOPPERS_USE_QEMU", null);
 
     // libraryモジュールが依存しているC言語ヘッダへのパスを通す
